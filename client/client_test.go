@@ -5,6 +5,7 @@ import (
 	"pluto/client"
 	"github.com/paulormart/assert"
 	"reflect"
+	"net"
 )
 
 func TestClient(t *testing.T){
@@ -20,5 +21,16 @@ func TestClient(t *testing.T){
 	assert.Equal(t, true, len(cfg.Id) > 0)
 	assert.Equal(t, "gopher.client", cfg.Name)
 	assert.Equal(t, "gopher super client", cfg.Description)
+
+	addr, _ := net.ResolveTCPAddr("tcp", "localhost:0")
+	assert.Equal(t, "", addr)
+
+	l, _ := net.ListenTCP("tcp", addr)
+	assert.Equal(t, "", l.Addr().(*net.TCPAddr).Port)
+	defer l.Close()
+
+
+
+
 
 }

@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	Id 			string
+	Id 		string
 	Name 		string
-	Description string
+	Description 	string
 	Version 	string
 }
 

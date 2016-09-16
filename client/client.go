@@ -6,17 +6,17 @@ import (
 
 // Client is an interface to make calls to services
 type Client interface {
-	Init(...ConfigFunc)						error
-	Run() 									error
-	Stop() 									error
-	Config() 								*Config
+	Init(...ConfigFunc)		error
+	Run() 				error
+	Stop() 				error
+	Config() 			*Config
 }
 
 var (
 	DefaultName			= "client"
-	DefaultVersion      = "1.0.0"
+	DefaultVersion      		= "1.0.0"
 	DefaultId			= uuid.New().String()
-	DefaultClient  		= newDefaultClient()
+	DefaultClient  			= newDefaultClient()
 )
 
 // NewClient returns a new client with cfg passed in
