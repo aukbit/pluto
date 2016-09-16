@@ -12,6 +12,8 @@ import (
 	"golang.org/x/net/context"
 	pb "pluto/server/proto"
 	"google.golang.org/grpc"
+	"time"
+	"fmt"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -24,8 +26,18 @@ func Detail(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func _TestDefaultServer(t *testing.T){
+type greeter struct{
+	cfg 			*server.Config
+}
 
+// SayHello implements helloworld.GreeterServer
+func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello " + in.Name, s.cfg.Name)}, nil
+}
+
+func TestServer(t *testing.T){
+
+	// HTTP server
 	//1. create new server
 	s := server.NewServer(
 		server.Name("gopher"),
@@ -36,7 +48,7 @@ func _TestDefaultServer(t *testing.T){
 
 	cfg := s.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.server", cfg.Name)
+	assert.Equal(t, "gopher.server.http", cfg.Name)
 	assert.Equal(t, "gopher super server", cfg.Description)
 	assert.Equal(t, ":8080", cfg.Addr)
 
@@ -49,39 +61,41 @@ func _TestDefaultServer(t *testing.T){
 	s.Init(server.Router(mux))
 
 	//4. Run server
-	if err := s.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
+	go func(){
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	defer s.Stop()
 
-type greeter struct{}
-
-// SayHello implements helloworld.GreeterServer
-func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
-}
-
-func TestGRPCServer(t *testing.T) {
-
+	// GRPC server
 	//1. create new server
-	s := server.NewGRPCServer(
+	g := server.NewGRPCServer(
 		server.Name("gopher"),
 		server.Description("gopher super server"),
-		server.RegisterServerFunc(func(srv *grpc.Server) {
-			pb.RegisterGreeterServer(srv, &greeter{})
-		}),
+
 	)
 
-	//assert.Equal(t, reflect.TypeOf(server.DefaultServer), reflect.TypeOf(s))
+	cfg2 := g.Config()
+	assert.Equal(t, true, len(cfg2.Id) > 0)
+	assert.Equal(t, "gopher.server.grpc", cfg2.Name)
+	assert.Equal(t, "gopher super server", cfg2.Description)
 
-	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.server", cfg.Name)
-	assert.Equal(t, "gopher super server", cfg.Description)
+	// Register RegisterServerFunc
+	g.Init(server.RegisterServerFunc(func(srv *grpc.Server) {
+			pb.RegisterGreeterServer(srv, &greeter{cfg: cfg2})
+		}),)
 
-	//2. Run server
-	if err := s.Run(); err != nil {
-		log.Fatal(err)
-	}
+	// 2. Add some context
+	go func() {
+		//2. Run server
+		if err := g.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	defer g.Stop()
+
+	time.Sleep(time.Second * 600)
 
 }
+

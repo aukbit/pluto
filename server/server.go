@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/google/uuid"
 	"log"
 )
 
@@ -16,7 +15,6 @@ type Server interface {
 var (
 	DefaultName			= "server"
 	DefaultVersion      		= "1.0.0"
-	DefaultId			= uuid.New().String()
 	DefaultServer  			= newDefaultServer()
 )
 

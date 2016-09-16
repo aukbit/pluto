@@ -62,7 +62,7 @@ func (s *gRPCServer) start() error {
 	// start go routine
 	go func(){
 		if err := s.listenAndServe(); err != nil{
-			log.Fatal(fmt.Sprintf("ERROR s.listenAndServe() %v", err))
+			log.Fatalf("ERROR s.listenAndServe() %v", err)
 		}
 	}()
 	return nil

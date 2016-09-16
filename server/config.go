@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strings"
+	"github.com/google/uuid"
 	"pluto/server/router"
 	"google.golang.org/grpc"
 )
@@ -22,7 +23,7 @@ type ConfigFunc func(*Config)
 
 
 var DefaultConfig = Config{
-	Name: 			"default",
+	Name: 			"default.server",
 	Addr:			":8080",
 }
 
@@ -35,7 +36,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.Id) == 0 {
-		cfg.Id = DefaultId
+		cfg.Id = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {
@@ -49,41 +50,42 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	return &cfg
 }
 
-// Server Id
+// Id server id
 func Id(id string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Id = id
 	}
 }
 
-// Server name
+// Name server name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Name = fmt.Sprintf("%s.%s", strings.ToLower(n), DefaultName)
 	}
 }
 
-// Server description
+// Description server description
 func Description(d string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Description = d
 	}
 }
 
-// Server address
+// Addr server address
 func Addr(a string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Addr = a
 	}
 }
 
-// Server router to be used on http servers
+// Router to be used on http servers
 func Router(r *router.Router) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Router = r
 	}
 }
 
+// RegisterServerFunc register gRPC server function
 func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.RegisterServerFunc = fn

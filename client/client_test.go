@@ -4,8 +4,10 @@ import (
 	"testing"
 	"pluto/client"
 	"github.com/paulormart/assert"
-	"reflect"
-	"net"
+	pb "pluto/server/proto"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"log"
 )
 
 func TestClient(t *testing.T){
@@ -14,23 +16,27 @@ func TestClient(t *testing.T){
 	c := client.NewClient(
 		client.Name("gopher"),
 		client.Description("gopher super client"),
+		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
+			return pb.NewGreeterClient(cc)
+		}),
+		client.Target("127.0.0.1:65057"),
 	)
-	assert.Equal(t, reflect.TypeOf(client.DefaultClient), reflect.TypeOf(c))
+	//assert.Equal(t, reflect.TypeOf(client.DefaultClient), reflect.TypeOf(c))
 
 	cfg := c.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.client", cfg.Name)
+	assert.Equal(t, "gopher.client.grpc", cfg.Name)
 	assert.Equal(t, "gopher super client", cfg.Description)
 
-	addr, _ := net.ResolveTCPAddr("tcp", "localhost:0")
-	assert.Equal(t, "", addr)
-
-	l, _ := net.ListenTCP("tcp", addr)
-	assert.Equal(t, "", l.Addr().(*net.TCPAddr).Port)
-	defer l.Close()
-
-
-
-
+	//2.
+	i, err := c.Dial()
+	if err != nil {
+		log.Fatal(err)
+	}
+	r, err := i.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("%s", r.Message)
 
 }

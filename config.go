@@ -8,10 +8,10 @@ import (
 
 type Config struct {
 	Id 			string
-	Name 		string
-	Description string
-	Version 	string
-	Server		server.Server
+	Name 			string
+	Description 		string
+	Version 		string
+	Server			server.Server
 }
 
 type ConfigFunc func(*Config)
