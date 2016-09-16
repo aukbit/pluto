@@ -8,6 +8,7 @@ import (
 	"pluto"
 	"pluto/server/router"
 	"log"
+	"pluto/server"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func TestServer(t *testing.T){
 	mux := router.NewRouter()
 	mux.GET("/", Index)
 	// 3. Define server Router
-	s.Server().Router(mux)
+	s.Server().Init(server.Router(mux))
 
 	// 4. Run service
 	if err := s.Run(); err != nil {

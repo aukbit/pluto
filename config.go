@@ -53,7 +53,7 @@ func Id(id string) ConfigFunc {
 // Server name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Name = fmt.Sprintf("%s.%s", strings.ToLower(n), DefaultName)
+		cfg.Name = fmt.Sprintf("%s.%s", strings.Replace(strings.ToLower(n), " ", "", -1), DefaultName)
 		cfg.Server.Init(server.Name(cfg.Name))
 	}
 }
