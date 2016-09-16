@@ -9,6 +9,9 @@ import (
 	"reflect"
 	"log"
 	"pluto/server/router"
+	"golang.org/x/net/context"
+	pb "pluto/server/proto"
+	"google.golang.org/grpc"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +24,7 @@ func Detail(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func TestServer(t *testing.T){
+func _TestDefaultServer(t *testing.T){
 
 	//1. create new server
 	s := server.NewServer(
@@ -42,11 +45,43 @@ func TestServer(t *testing.T){
 	mux.GET("/home", Home)
 	mux.GET("/home/:id", Detail)
 
-	//3. Define Router
-	s.Router(mux)
+	//3. assign last configs to the server before start, in this case setup a router
+	s.Init(server.Router(mux))
 
 	//4. Run server
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+type greeter struct{}
+
+// SayHello implements helloworld.GreeterServer
+func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
+}
+
+func TestGRPCServer(t *testing.T) {
+
+	//1. create new server
+	s := server.NewGRPCServer(
+		server.Name("gopher"),
+		server.Description("gopher super server"),
+		server.RegisterServerFunc(func(srv *grpc.Server) {
+			pb.RegisterGreeterServer(srv, &greeter{})
+		}),
+	)
+
+	//assert.Equal(t, reflect.TypeOf(server.DefaultServer), reflect.TypeOf(s))
+
+	cfg := s.Config()
+	assert.Equal(t, true, len(cfg.Id) > 0)
+	assert.Equal(t, "gopher.server", cfg.Name)
+	assert.Equal(t, "gopher super server", cfg.Description)
+
+	//2. Run server
+	if err := s.Run(); err != nil {
+		log.Fatal(err)
+	}
+
 }

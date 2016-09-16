@@ -25,22 +25,15 @@ type defaultServer struct {
 // NewServer will instantiate a new Server with the given config
 func newDefaultServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	return &defaultServer{cfg: c, close: make(chan bool)}
+	c.Name = fmt.Sprintf("%s.http", c.Name)
+	return &defaultServer{cfg: c, mux: c.Router, close: make(chan bool)}
 }
 
 func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	return nil
-}
-
-func (s *defaultServer) Router(mux *router.Router) error {
-	if mux == nil {
-		s.mux = router.NewRouter()
-	} else {
-		s.mux = mux
-	}
+	s.mux = s.cfg.Router
 	return nil
 }
 
@@ -62,6 +55,12 @@ func (s *defaultServer) Run() error {
 	return s.Stop()
 }
 
+// Stop sends message to close the listener via channel
+func (s *defaultServer) Stop() error {
+	s.close <-true
+	return nil
+}
+
 // start start the Server
 func (s *defaultServer) start() error {
 	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
@@ -71,15 +70,9 @@ func (s *defaultServer) start() error {
 	// start go routine
 	go func(){
 		if err := s.listenAndServe(); err != nil{
-			log.Fatal(fmt.Sprintf("ERROR s.listenAndServe() %v", err))
+			log.Fatalf("ERROR s.listenAndServe() %v", err)
 		}
 	}()
-	return nil
-}
-
-// Stop sends message to close the listener via channel
-func (s *defaultServer) Stop() error {
-	s.close <-true
 	return nil
 }
 
@@ -117,7 +110,7 @@ func (s *defaultServer) listenAndServe() error {
 	}
 	go func() {
 		if err := httpServer.Serve(ln); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR httpServer.Serve(ln) %v", err))
+			log.Fatalf("ERROR httpServer.Serve(ln) %v", err)
 		}
 	}()
 	//
@@ -129,7 +122,7 @@ func (s *defaultServer) listenAndServe() error {
 		log.Printf("CLOSE %s received", s.cfg.Name)
 		// close listener
 		if err := ln.Close(); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR ln.Close() %v", err))
+			log.Fatalf("ERROR ln.Close() %v", err)
 		}
 		log.Printf("----- %s listener closed", s.cfg.Name)
 	}()
