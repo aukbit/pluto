@@ -73,7 +73,7 @@ func TestServer(t *testing.T){
 	g := server.NewGRPCServer(
 		server.Name("gopher"),
 		server.Description("gopher super server"),
-
+		server.Addr(":65057"),
 	)
 
 	cfg2 := g.Config()

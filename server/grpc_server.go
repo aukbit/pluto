@@ -68,21 +68,23 @@ func (s *gRPCServer) start() error {
 	return nil
 }
 
+func (s *gRPCServer) listenAndServe() (err error) {
 
-
-func (s *gRPCServer) listenAndServe() error {
-
-	addr, err := getNewAddr()
-	if err != nil {
-		return err
-	}
-
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return err
+	addr := s.cfg.Addr
+	if addr == "" {
+		addr, err = getNewAddr()
+		if err != nil {
+			return err
+		}
 	}
 	// set cfg.Addr
-	s.cfg.Addr = ln.Addr().String()
+	s.cfg.Addr = addr
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
 
 	// new gRPC server
 	g := grpc.NewServer()
