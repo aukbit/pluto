@@ -3,21 +3,26 @@ package server
 import (
 	"fmt"
 	"strings"
+	"pluto/server/router"
+	"google.golang.org/grpc"
 )
 
 
 type Config struct {
-	Id 			string
-	Name 		string
-	Description string
-	Version 	string
-	Addr       	string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Id			string
+	Name 			string
+	Description 		string
+	Version			string
+	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Router			*router.Router
+	RegisterServerFunc	func(*grpc.Server)
 }
 
 type ConfigFunc func(*Config)
 
+
 var DefaultConfig = Config{
-	Name: 			"default.server",
+	Name: 			"default",
 	Addr:			":8080",
 }
 
@@ -65,9 +70,23 @@ func Description(d string) ConfigFunc {
 	}
 }
 
-// Server description
+// Server address
 func Addr(a string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Addr = a
 	}
 }
+
+// Server router to be used on http servers
+func Router(r *router.Router) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Router = r
+	}
+}
+
+func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.RegisterServerFunc = fn
+	}
+}
+

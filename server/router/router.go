@@ -16,13 +16,13 @@ type Handler func (http.ResponseWriter, *http.Request)
 
 // Match
 type Match struct {
-	handler Handler
-	ctx 	context.Context
+	handler 	Handler
+	ctx 		context.Context
 }
 
 // Router
 type Router struct {
-	trie 			*Trie
+	trie 		*Trie
 }
 
 // DefaultRootHandler

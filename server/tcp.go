@@ -26,4 +26,12 @@ func (ln TcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	return tc, nil
 }
 
+// getNewAddr lets the system discover a new port available
+func getNewAddr() (*net.TCPAddr, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return nil, err
+	}
+	return addr, nil
+}
 

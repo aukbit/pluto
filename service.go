@@ -6,7 +6,6 @@ import (
 	"syscall"
 	"os/signal"
 	"os"
-	"fmt"
 )
 
 
@@ -50,7 +49,7 @@ func (s *service) start() error {
 	//
 	go func() {
 		if err := s.cfg.Server.Run(); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR s.cfg.Server.Run() %v", err))
+			log.Fatalf("ERROR s.cfg.Server.Run() %v", err)
 		}
 	}()
 
