@@ -6,15 +6,17 @@ import (
 	pb "pluto/examples/user/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"log"
-	"pluto"
 )
 
 func GetHandler (w http.ResponseWriter, r *http.Request){
 	ctx := r.Context()
-	s := ctx.Value("client")
-	log.Printf("GetHandler %v %v", s, s.(pluto.Service).Clients())
-
-	//c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	s := ctx.Value("service")
+	log.Printf("GetHandler %v", s)
+	//
+	//_ := ctx.Value("grpcClient")
+	////client.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	//
+	//client.Call().(pb.UserServiceClient).ReadUser()
 
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }

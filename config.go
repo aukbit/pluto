@@ -1,9 +1,9 @@
 package pluto
 
 import (
-	"pluto/server"
 	"fmt"
 	"strings"
+	"pluto/server"
 	"pluto/client"
 )
 
@@ -12,14 +12,16 @@ type Config struct {
 	Name 			string
 	Description 		string
 	Version 		string
-	Servers			[]server.Server
-	Clients			[]client.Client
+	Servers			map[string]server.Server
+	Clients			map[string]client.Client
 }
 
 type ConfigFunc func(*Config)
 
 var DefaultConfig = Config{
 	Name: 			"default.pluto",
+	Servers:		make(map[string]server.Server),
+	Clients:		make(map[string]client.Client),
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -54,11 +56,8 @@ func Id(id string) ConfigFunc {
 // Name service name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
+		// TODO validate with regex
 		cfg.Name = fmt.Sprintf("%s.%s", strings.Replace(strings.ToLower(n), " ", "", -1), DefaultName)
-		for _, s := range cfg.Servers {
-			s.Init(server.Name(cfg.Name))
-		}
-
 	}
 }
 
@@ -72,15 +71,15 @@ func Description(d string) ConfigFunc {
 // Servers slice of service servers
 func Servers(s server.Server) ConfigFunc {
 	return func(cfg *Config) {
-		s.Init(server.Name(cfg.Name))
-		cfg.Servers = append(cfg.Servers, s)
+		//cfg.Servers = append(cfg.Servers, s)
+		cfg.Servers[s.Config().Name] = s
 	}
 }
 
 // Clients slice of service clients
 func Clients(c client.Client) ConfigFunc {
 	return func(cfg *Config) {
-		c.Init(client.Name(cfg.Name))
-		cfg.Clients = append(cfg.Clients, c)
+		//cfg.Clients = append(cfg.Clients, c)
+		cfg.Clients[c.Config().Name] = c
 	}
 }

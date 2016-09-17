@@ -55,6 +55,7 @@ func Id(id string) ConfigFunc {
 // Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
+		// TODO validate with regex
 		cfg.Name = fmt.Sprintf("%s.%s", strings.ToLower(n), DefaultName)
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"os"
 	"pluto/client"
 	"context"
+	"pluto/server/router"
+	"net/http"
 )
 
 
@@ -28,17 +30,43 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	ctx := context.Background()
-	s.ctx = context.WithValue(ctx, "token", "abc123")
-	s.ctx = context.WithValue(ctx, "service", s)
+
+	// register service in http server handlers context
+	for _, srv := range s.Servers(){
+		if srv.Config().Format == "http" {
+			ctx := context.Background()
+			s.ctx = context.WithValue(ctx, "token", "abc123")
+			//handlers := srv.Config().Mux.Handlers()
+			//// wrap service in context
+			//for _, h := range handlers {
+			//	h = WrapService(s, h)
+			//}
+			//srv.Config().Mux
+			//router := srv.Config().Router
+			srv.Config().Mux.WrapHandlers(s)
+		}
+
+	}
+
+
+
+
 	return nil
 }
 
-func (s *service) Servers() []server.Server {
+func WrapService(s Service, next router.Handler) router.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "service", s)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
+func (s *service) Servers() map[string]server.Server {
 	return s.cfg.Servers
 }
 
-func (s *service) Clients() []client.Client {
+func (s *service) Clients() map[string]client.Client {
 	return s.cfg.Clients
 }
 
@@ -56,7 +84,7 @@ func (s *service) Run() error {
 }
 
 func (s *service) start() error {
-	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
+	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
 	// run servers
 	for _, srv := range s.Servers(){
 		go func(ss server.Server) {

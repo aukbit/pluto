@@ -32,7 +32,7 @@ func TestService(t *testing.T){
 	mux := router.NewRouter()
 	mux.GET("/", Index)
 	// 3. Define server Router
-	httpSrv := server.NewServer(server.Router(mux))
+	httpSrv := server.NewServer(server.Mux(mux))
 
 	// 4. Init service
 	s.Init(pluto.Servers(httpSrv))

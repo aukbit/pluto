@@ -57,7 +57,7 @@ func (s *gRPCServer) Stop() error {
 
 // start start the Server
 func (s *gRPCServer) start() error {
-	log.Printf("START %s %s %s", s.cfg.Name, s.cfg.Format, s.cfg.Id)
+	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
 	// start go routine
 	go func(){
 		if err := s.listenAndServe(); err != nil{
@@ -97,7 +97,7 @@ func (s *gRPCServer) listenAndServe() (err error) {
 		}
 	}()
 	//
-	log.Printf("----- %s %s listening on %s", s.cfg.Name, s.cfg.Format, ln.Addr().String())
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	//
 	go func() {
 		// Waits for call to stop

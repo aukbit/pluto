@@ -10,7 +10,7 @@ import (
 // The zero value for Client is a valid configuration.
 type gRPCClient struct {
 	cfg 			*Config
-	client			interface{}
+	wire			interface{}
 	close 			chan bool
 }
 
@@ -41,11 +41,10 @@ func (g *gRPCClient) Dial() (i interface{}, err error) {
 }
 
 func (g *gRPCClient) Call() (interface{}) {
-	c := g.client
-	if c == nil {
+	if g.wire == nil {
 		return errors.New("gRPC client has not been registered.")
 	}
-	return c
+	return g.wire
 }
 
 func (g *gRPCClient) Close() error {
@@ -55,11 +54,14 @@ func (g *gRPCClient) Close() error {
 }
 
 func (g *gRPCClient) dial() (interface{}, error) {
-	log.Printf("DIAL  %s %s", g.cfg.Name, g.cfg.Id)
+	log.Printf("DIAL  %s %s \t%s", g.cfg.Format, g.cfg.Name, g.cfg.Id)
+	// establishes gRPC client connection
+	// TODO use TLS
 	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("ERROR grpc.Dial %v", err)
 	}
-	g.client = g.cfg.RegisterClientFunc(conn)
-	return g.client, nil
+	// get gRPC client interface
+	g.wire = g.cfg.RegisterClientFunc(conn)
+	return g.wire, nil
 }

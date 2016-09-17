@@ -25,6 +25,17 @@ type Match struct {
 	ctx 		context.Context
 }
 
+// Mux interface to expose Router struct
+type Mux interface {
+	GET(string, Handler)
+	POST(string, Handler)
+	PUT(string, Handler)
+	DELETE(string, Handler)
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+	Handlers()	[]Handler
+	WrapHandlers(interface{})
+}
+
 // Router
 type Router struct {
 	trie 		*Trie
@@ -39,8 +50,7 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }
 
-// NewRouter creates an instance of a new router
-func NewRouter() *Router {
+func NewRouter() Mux {
 	return &Router{trie: NewTrie()}
 }
 
@@ -77,6 +87,24 @@ func (r *Router) PUT(path string, handler Handler) {
 func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
+
+//func (r *Router) WrapHandlers(i interface{}) {
+//	log.Printf("WrapHandlers %v", h)
+//	for _, k := range r.trie.Keys() {
+//		data := r.trie.Get(k)
+//		for _, m := range data.methods {
+//			log
+//		}
+//	}
+//}
+//
+//func wrapper(i interface{}, next router.Handler) router.Handler {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//		ctx := r.Context()
+//		ctx = context.WithValue(ctx, "service", s)
+//		next.ServeHTTP(w, r.WithContext(ctx))
+//	}
+//}
 
 // transformPath returns a tuple with key, value, prefix and params for the
 // for the presented path

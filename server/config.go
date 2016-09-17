@@ -16,7 +16,7 @@ type Config struct {
 	Version			string
 	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format			string
-	Router			*router.Router
+	Mux			router.Mux
 	RegisterServerFunc	func(*grpc.Server)
 }
 
@@ -61,6 +61,7 @@ func Id(id string) ConfigFunc {
 // Name server name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
+		// TODO validate with regex
 		cfg.Name = fmt.Sprintf("%s.%s", strings.ToLower(n), DefaultName)
 	}
 }
@@ -79,10 +80,10 @@ func Addr(a string) ConfigFunc {
 	}
 }
 
-// Router to be used on http servers
-func Router(r *router.Router) ConfigFunc {
+// Mux server multiplexer
+func Mux(m router.Mux) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Router = r
+		cfg.Mux = m
 	}
 }
 

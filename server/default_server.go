@@ -16,7 +16,7 @@ import (
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
 	cfg 			*Config
-	mux 			*router.Router
+	mux			router.Mux
 	// close chan for graceful shutdown
 	close 			chan bool
 }
@@ -25,14 +25,14 @@ type defaultServer struct {
 func newDefaultServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
 	c.Format = "http"
-	return &defaultServer{cfg: c, mux: c.Router, close: make(chan bool)}
+	return &defaultServer{cfg: c, mux: c.Mux, close: make(chan bool)}
 }
 
 func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	s.mux = s.cfg.Router
+	s.mux = s.cfg.Mux
 	return nil
 }
 
@@ -62,7 +62,7 @@ func (s *defaultServer) Stop() error {
 
 // start start the Server
 func (s *defaultServer) start() error {
-	log.Printf("START %s %s %s", s.cfg.Name, s.cfg.Format, s.cfg.Id)
+	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
 	if s.mux == nil{
 		return errors.New("Handlers not set up. Server will not start.")
 	}
@@ -113,7 +113,7 @@ func (s *defaultServer) listenAndServe() error {
 		}
 	}()
 	//
-	log.Printf("----- %s %s listening on %s", s.cfg.Name, s.cfg.Format, ln.Addr().String())
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	//
 	go func() {
 		// Waits for call to stop
