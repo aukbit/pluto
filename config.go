@@ -3,6 +3,7 @@ package pluto
 import (
 	"fmt"
 	"strings"
+	"github.com/google/uuid"
 	"pluto/server"
 	"pluto/client"
 )
@@ -33,7 +34,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.Id) == 0 {
-		cfg.Id = DefaultId
+		cfg.Id = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {

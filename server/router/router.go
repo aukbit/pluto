@@ -31,9 +31,8 @@ type Mux interface {
 	POST(string, Handler)
 	PUT(string, Handler)
 	DELETE(string, Handler)
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
-	Handlers()	[]Handler
-	WrapHandlers(interface{})
+	ServeHTTP(http.ResponseWriter, *http.Request)
+	WrapHandlersWith(key interface{}, val interface{})
 }
 
 // Router
@@ -88,23 +87,25 @@ func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
-//func (r *Router) WrapHandlers(i interface{}) {
-//	log.Printf("WrapHandlers %v", h)
-//	for _, k := range r.trie.Keys() {
-//		data := r.trie.Get(k)
-//		for _, m := range data.methods {
-//			log
-//		}
-//	}
-//}
-//
-//func wrapper(i interface{}, next router.Handler) router.Handler {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		ctx := r.Context()
-//		ctx = context.WithValue(ctx, "service", s)
-//		next.ServeHTTP(w, r.WithContext(ctx))
-//	}
-//}
+// WrapHandlersWith applies a wrapper to all handlers,
+// data is available in the handler context
+func (r *Router) WrapHandlersWith(key interface{}, val interface{}) {
+	for _, k := range r.trie.Keys() {
+		data := r.trie.Get(k)
+		for m, h := range data.methods {
+			data.methods[m] = wrapper(key, val, h)
+			r.trie.Put(k, data)
+		}
+	}
+}
+
+func wrapper(key interface{}, val interface{}, next Handler) Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, key, val)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
 
 // transformPath returns a tuple with key, value, prefix and params for the
 // for the presented path

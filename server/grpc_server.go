@@ -58,12 +58,9 @@ func (s *gRPCServer) Stop() error {
 // start start the Server
 func (s *gRPCServer) start() error {
 	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
-	// start go routine
-	go func(){
-		if err := s.listenAndServe(); err != nil{
-			log.Fatalf("ERROR s.listenAndServe() %v", err)
-		}
-	}()
+	if err := s.listenAndServe(); err != nil{
+		log.Fatalf("ERROR %s s.listenAndServe() %v", s.cfg.Name, err)
+	}
 	return nil
 }
 
@@ -93,7 +90,7 @@ func (s *gRPCServer) listenAndServe() (err error) {
 
 	go func() {
 		if err := g.Serve(ln); err != nil {
-			log.Fatalf("ERROR g.Serve(lis) %v", err)
+			log.Fatalf("ERROR %s g.Serve(lis) %v", s.cfg.Name, err)
 		}
 	}()
 	//
@@ -105,7 +102,7 @@ func (s *gRPCServer) listenAndServe() (err error) {
 		log.Printf("CLOSE %s received", s.cfg.Name)
 		// close listener
 		if err := ln.Close(); err != nil {
-			log.Fatalf("ERROR ln.Close() %v", err)
+			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
 		}
 		log.Printf("----- %s listener closed", s.cfg.Name)
 	}()

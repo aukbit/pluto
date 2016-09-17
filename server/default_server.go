@@ -66,13 +66,11 @@ func (s *defaultServer) start() error {
 	if s.mux == nil{
 		return errors.New("Handlers not set up. Server will not start.")
 	}
-	// start go routine
-	go func(){
-		if err := s.listenAndServe(); err != nil{
-			log.Fatalf("ERROR s.listenAndServe() %v", err)
-		}
-	}()
+	if err := s.listenAndServe(); err != nil{
+		log.Fatalf("ERROR %s s.listenAndServe() %v", s.cfg.Name, err)
+	}
 	return nil
+
 }
 
 // listenAndServe based on http.ListenAndServe
@@ -109,7 +107,7 @@ func (s *defaultServer) listenAndServe() error {
 	}
 	go func() {
 		if err := httpServer.Serve(ln); err != nil {
-			log.Fatalf("ERROR httpServer.Serve(ln) %v", err)
+			log.Fatalf("ERROR %s httpServer.Serve(ln) %v", s.cfg.Name, err)
 		}
 	}()
 	//
@@ -121,7 +119,7 @@ func (s *defaultServer) listenAndServe() error {
 		log.Printf("CLOSE %s received", s.cfg.Name)
 		// close listener
 		if err := ln.Close(); err != nil {
-			log.Fatalf("ERROR ln.Close() %v", err)
+			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
 		}
 		log.Printf("----- %s listener closed", s.cfg.Name)
 	}()

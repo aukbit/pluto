@@ -8,8 +8,6 @@ import (
 	"os"
 	"pluto/client"
 	"context"
-	"pluto/server/router"
-	"net/http"
 )
 
 
@@ -31,35 +29,14 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 		c(s.cfg)
 	}
 
-	// register service in http server handlers context
+	// Wrap this service to all handlers
+	// make it available in handler context
 	for _, srv := range s.Servers(){
 		if srv.Config().Format == "http" {
-			ctx := context.Background()
-			s.ctx = context.WithValue(ctx, "token", "abc123")
-			//handlers := srv.Config().Mux.Handlers()
-			//// wrap service in context
-			//for _, h := range handlers {
-			//	h = WrapService(s, h)
-			//}
-			//srv.Config().Mux
-			//router := srv.Config().Router
-			srv.Config().Mux.WrapHandlers(s)
+			srv.Config().Mux.WrapHandlersWith(s.cfg.Name, s)
 		}
-
 	}
-
-
-
-
 	return nil
-}
-
-func WrapService(s Service, next router.Handler) router.Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "service", s)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
 }
 
 func (s *service) Servers() map[string]server.Server {

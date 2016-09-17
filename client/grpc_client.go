@@ -59,7 +59,7 @@ func (g *gRPCClient) dial() (interface{}, error) {
 	// TODO use TLS
 	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("ERROR grpc.Dial %v", err)
+		log.Fatalf("ERROR %s grpc.Dial %v", g.cfg.Name, err)
 	}
 	// get gRPC client interface
 	g.wire = g.cfg.RegisterClientFunc(conn)

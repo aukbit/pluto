@@ -58,7 +58,7 @@ func TestServer(t *testing.T){
 	mux.GET("/home/:id", Detail)
 
 	//3. assign last configs to the server before start, in this case setup a router
-	s.Init(server.Router(mux))
+	s.Init(server.Mux(mux))
 
 	//4. Run server
 	go func(){

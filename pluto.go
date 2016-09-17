@@ -1,7 +1,6 @@
 package pluto
 
 import (
-	"github.com/google/uuid"
 	"pluto/server"
 	"pluto/client"
 )
@@ -20,7 +19,6 @@ type Service interface {
 var (
 	DefaultName 		= "pluto"
 	DefaultVersion      	= "1.0.0"
-	DefaultId		= uuid.New().String()
 )
 
 // NewService returns a new service with cfg passed in
