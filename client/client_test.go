@@ -25,15 +25,17 @@ func TestClient(t *testing.T){
 
 	cfg := c.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.client.grpc", cfg.Name)
+	assert.Equal(t, "gopher.client", cfg.Name)
+	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
 
 	//2.
-	i, err := c.Dial()
+	_, err := c.Dial()
 	if err != nil {
 		log.Fatal(err)
 	}
-	r, err := i.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	//r, err := i.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}

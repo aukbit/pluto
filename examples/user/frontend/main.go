@@ -4,9 +4,17 @@ import (
 	"pluto"
 	"pluto/server/router"
 	"pluto/server"
+	"pluto/client"
 	"log"
 	"pluto/examples/user/frontend/views"
+	pb "pluto/examples/user/proto"
+	"google.golang.org/grpc"
+	"context"
+	"net/http"
 )
+
+type user struct{}
+
 
 func main(){
 
@@ -18,19 +26,38 @@ func main(){
 
 	// 2. Set server handlers
 	mux := router.NewRouter()
-	mux.GET("/user", frontend.GetHandler)
+	mux.GET("/user", WrapService(s, frontend.GetHandler))
 	mux.POST("/user", frontend.PostHandler)
 	mux.GET("/user/:id", frontend.GetHandlerDetail)
 	mux.PUT("/user/:id", frontend.PutHandler)
 	mux.DELETE("/user/:id", frontend.DeleteHandler)
-	// 3. Define server Router
-	s.Server().Init(server.Router(mux))
 
-	// 4. Run service
+	// 3. Create new http server
+	//httpSrv := server.NewServer(server.Router(WithService(s, mux)))
+	httpSrv := server.NewServer(server.Router(mux))
+
+	// 4. Define grpc Client
+	grpcClient := client.NewClient(
+		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
+			return pb.NewUserServiceClient(cc)
+		}),
+		client.Target("127.0.0.1:65059"),
+	)
+	// 5. Init service
+	s.Init(pluto.Servers(httpSrv), pluto.Clients(grpcClient))
+
+	// 6. Run service
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
 	}
 
 }
 
-
+// TODO WrapService should live inside a service
+func WrapService(s pluto.Service, next router.Handler) router.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "service", s)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}

@@ -15,6 +15,7 @@ type Config struct {
 	Description 		string
 	Version			string
 	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format			string
 	Router			*router.Router
 	RegisterServerFunc	func(*grpc.Server)
 }

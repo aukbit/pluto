@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"os"
 	"google.golang.org/grpc"
-	"fmt"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -21,7 +20,7 @@ type gRPCServer struct {
 // newGRPCServer will instantiate a new Server with the given config
 func newGRPCServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	c.Name = fmt.Sprintf("%s.grpc", c.Name)
+	c.Format = "grpc"
 	return &gRPCServer{cfg: c, close: make(chan bool)}
 }
 
@@ -58,7 +57,7 @@ func (s *gRPCServer) Stop() error {
 
 // start start the Server
 func (s *gRPCServer) start() error {
-	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
+	log.Printf("START %s %s %s", s.cfg.Name, s.cfg.Format, s.cfg.Id)
 	// start go routine
 	go func(){
 		if err := s.listenAndServe(); err != nil{
@@ -98,7 +97,7 @@ func (s *gRPCServer) listenAndServe() (err error) {
 		}
 	}()
 	//
-	log.Printf("----- %s listening on %s", s.cfg.Name, ln.Addr().String())
+	log.Printf("----- %s %s listening on %s", s.cfg.Name, s.cfg.Format, ln.Addr().String())
 	//
 	go func() {
 		// Waits for call to stop

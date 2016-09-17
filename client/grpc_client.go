@@ -3,20 +3,21 @@ package client
 import (
 	"log"
 	"google.golang.org/grpc"
-	"fmt"
+	"errors"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type gRPCClient struct {
 	cfg 			*Config
+	client			interface{}
 	close 			chan bool
 }
 
 // newGRPCClient will instantiate a new Client with the given config
 func newGRPCClient(cfgs ...ConfigFunc) Client {
 	c := newConfig(cfgs...)
-	c.Name = fmt.Sprintf("%s.grpc", c.Name)
+	c.Format = "grpc"
 	return &gRPCClient{cfg: c, close: make(chan bool)}
 }
 
@@ -39,6 +40,14 @@ func (g *gRPCClient) Dial() (i interface{}, err error) {
 	return i, nil
 }
 
+func (g *gRPCClient) Call() (interface{}) {
+	c := g.client
+	if c == nil {
+		return errors.New("gRPC client has not been registered.")
+	}
+	return c
+}
+
 func (g *gRPCClient) Close() error {
 	// TODO
 	g.close <-true
@@ -51,5 +60,6 @@ func (g *gRPCClient) dial() (interface{}, error) {
 	if err != nil {
 		log.Fatalf("ERROR grpc.Dial %v", err)
 	}
-	return g.cfg.RegisterClientFunc(conn), nil
+	g.client = g.cfg.RegisterClientFunc(conn)
+	return g.client, nil
 }

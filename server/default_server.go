@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"os"
 	"errors"
-	"fmt"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -25,7 +24,7 @@ type defaultServer struct {
 // NewServer will instantiate a new Server with the given config
 func newDefaultServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	c.Name = fmt.Sprintf("%s.http", c.Name)
+	c.Format = "http"
 	return &defaultServer{cfg: c, mux: c.Router, close: make(chan bool)}
 }
 
@@ -63,7 +62,7 @@ func (s *defaultServer) Stop() error {
 
 // start start the Server
 func (s *defaultServer) start() error {
-	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
+	log.Printf("START %s %s %s", s.cfg.Name, s.cfg.Format, s.cfg.Id)
 	if s.mux == nil{
 		return errors.New("Handlers not set up. Server will not start.")
 	}
@@ -114,7 +113,7 @@ func (s *defaultServer) listenAndServe() error {
 		}
 	}()
 	//
-	log.Printf("----- %s listening on %s", s.cfg.Name, ln.Addr().String())
+	log.Printf("----- %s %s listening on %s", s.cfg.Name, s.cfg.Format, ln.Addr().String())
 	//
 	go func() {
 		// Waits for call to stop

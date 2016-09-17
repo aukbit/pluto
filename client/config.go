@@ -13,6 +13,7 @@ type Config struct {
 	Description 		string
 	Version 		string
 	Target       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format			string
 	RegisterClientFunc	func(*grpc.ClientConn) interface{}
 }
 

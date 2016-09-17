@@ -4,28 +4,28 @@ import (
 	"pluto/reply"
 	"net/http"
 	pb "pluto/examples/user/proto"
-	"github.com/golang/protobuf/proto"
-	//"io/ioutil"
-	//"encoding/json"
+	"github.com/golang/protobuf/jsonpb"
 	"log"
-	"io/ioutil"
+	"pluto"
 )
 
 func GetHandler (w http.ResponseWriter, r *http.Request){
+	ctx := r.Context()
+	s := ctx.Value("client")
+	log.Printf("GetHandler %v %v", s, s.(pluto.Service).Clients())
+
+	//c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 func PostHandler (w http.ResponseWriter, r *http.Request){
 
+
 	// new user
 	user := &pb.NewUser{}
 
-	// read http body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	if err := jsonpb.Unmarshal(r.Body, user); err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
-	}
-	if err := proto.Unmarshal(body, user); err != nil {
-		reply.Json(w, r, http.StatusNotAcceptable, err.Error())
 	}
 	log.Printf("TESTE %v", user)
 	//
@@ -35,6 +35,7 @@ func PostHandler (w http.ResponseWriter, r *http.Request){
 	//if err != nil {
 	//	reply.Json(w, r, http.StatusInternalServerError, err.Error())
 	//}
+	//log.Printf("TESTE 2 %v", data)
 	//
 	//body, err := ioutil.ReadAll(r.Body)
 	//if err != nil {

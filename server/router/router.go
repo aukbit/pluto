@@ -14,6 +14,11 @@ import (
 // Handler is a function type like "net/http" Handler
 type Handler func (http.ResponseWriter, *http.Request)
 
+// ServeHTTP calls f(w, r).
+func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f(w, r)
+}
+
 // Match
 type Match struct {
 	handler 	Handler
@@ -178,8 +183,8 @@ func (r *Router) FindMatch(req *http.Request) *Match  {
 	return nil
 }
 
-func (m *Match) Execute(w http.ResponseWriter, req *http.Request) {
-	m.handler(w, req.WithContext(m.ctx))
+func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	m.handler.ServeHTTP(w, req.WithContext(m.ctx))
 }
 
 // ServeHTTP
@@ -187,7 +192,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Router ServeHTTP url: %v, path: %v, method: %v", req.URL, req.URL.Path, req.Method)
 	m := r.FindMatch(req)
 	if m != nil{
-		m.Execute(w, req)
+		m.ServeHTTP(w, req)
 	} else {
 		NotFoundHandler(w, req)
 	}

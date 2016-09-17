@@ -18,6 +18,11 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
+import (
+	context "golang.org/x/net/context"
+	grpc "google.golang.org/grpc"
+)
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
@@ -56,6 +61,177 @@ func (*User) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 func init() {
 	proto.RegisterType((*NewUser)(nil), "user.NewUser")
 	proto.RegisterType((*User)(nil), "user.User")
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion3
+
+// Client API for UserService service
+
+type UserServiceClient interface {
+	CreateUser(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*User, error)
+	ReadUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	DeleteUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+}
+
+type userServiceClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewUserServiceClient(cc *grpc.ClientConn) UserServiceClient {
+	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) CreateUser(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/user.UserService/CreateUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ReadUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/user.UserService/ReadUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/user.UserService/UpdateUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
+	err := grpc.Invoke(ctx, "/user.UserService/DeleteUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for UserService service
+
+type UserServiceServer interface {
+	CreateUser(context.Context, *NewUser) (*User, error)
+	ReadUser(context.Context, *User) (*User, error)
+	UpdateUser(context.Context, *User) (*User, error)
+	DeleteUser(context.Context, *User) (*User, error)
+}
+
+func RegisterUserServiceServer(s *grpc.Server, srv UserServiceServer) {
+	s.RegisterService(&_UserService_serviceDesc, srv)
+}
+
+func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewUser)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).CreateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.UserService/CreateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).CreateUser(ctx, req.(*NewUser))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ReadUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ReadUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.UserService/ReadUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ReadUser(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.UserService/UpdateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUser(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.UserService/DeleteUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteUser(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _UserService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "user.UserService",
+	HandlerType: (*UserServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateUser",
+			Handler:    _UserService_CreateUser_Handler,
+		},
+		{
+			MethodName: "ReadUser",
+			Handler:    _UserService_ReadUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _UserService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _UserService_DeleteUser_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: fileDescriptor0,
 }
 
 func init() { proto.RegisterFile("user.proto", fileDescriptor0) }

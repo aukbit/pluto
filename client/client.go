@@ -5,6 +5,7 @@ package client
 type Client interface {
 	Init(...ConfigFunc)		error
 	Dial() 				(interface{}, error)
+	Call()	 			interface{}
 	Close() 			error
 	Config() 			*Config
 }
