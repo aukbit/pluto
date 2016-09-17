@@ -1,31 +1,26 @@
-package server
+package client
 
 import (
 	"fmt"
 	"strings"
 	"github.com/google/uuid"
-	"pluto/server/router"
 	"google.golang.org/grpc"
 )
 
-
 type Config struct {
-	Id			string
+	Id 			string
 	Name 			string
 	Description 		string
-	Version			string
-	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Version 		string
+	Target       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format			string
-	Mux			router.Mux
-	RegisterServerFunc	func(*grpc.Server)
+	RegisterClientFunc	func(*grpc.ClientConn) interface{}
 }
 
 type ConfigFunc func(*Config)
 
-
 var DefaultConfig = Config{
-	Name: 			"default.server",
-	Addr:			":8080",
+	Name: 			"default.client",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -47,18 +42,17 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	if len(cfg.Version) == 0 {
 		cfg.Version = DefaultVersion
 	}
-
 	return &cfg
 }
 
-// Id server id
+// Id cleint id
 func Id(id string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Id = id
 	}
 }
 
-// Name server name
+// Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
 		// TODO validate with regex
@@ -66,31 +60,23 @@ func Name(n string) ConfigFunc {
 	}
 }
 
-// Description server description
+// Description client description
 func Description(d string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Description = d
 	}
 }
 
-// Addr server address
-func Addr(a string) ConfigFunc {
+// Target server address
+func Target(t string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Addr = a
+		cfg.Target = t
 	}
 }
 
-// Mux server multiplexer
-func Mux(m router.Mux) ConfigFunc {
+// RegisterClientFunc register client gRPC function
+func RegisterClientFunc(fn func(*grpc.ClientConn) interface{}) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Mux = m
+		cfg.RegisterClientFunc = fn
 	}
 }
-
-// RegisterServerFunc register gRPC server function
-func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
-	return func(cfg *Config) {
-		cfg.RegisterServerFunc = fn
-	}
-}
-

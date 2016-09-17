@@ -6,13 +6,15 @@ import (
 	"syscall"
 	"os/signal"
 	"os"
-	"fmt"
+	"pluto/client"
+	"context"
 )
 
 
 // Service
 type service struct {
 	cfg 			*Config
+	ctx			context.Context
 	close 			chan bool
 }
 
@@ -26,11 +28,23 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
+
+	// Wrap this service to all handlers
+	// make it available in handler context
+	for _, srv := range s.Servers(){
+		if srv.Config().Format == "http" {
+			srv.Config().Mux.WrapHandlersWith(s.cfg.Name, s)
+		}
+	}
 	return nil
 }
 
-func (s *service) Server() server.Server {
-	return s.cfg.Server
+func (s *service) Servers() map[string]server.Server {
+	return s.cfg.Servers
+}
+
+func (s *service) Clients() map[string]client.Client {
+	return s.cfg.Clients
 }
 
 func (s *service) Run() error {
@@ -43,16 +57,28 @@ func (s *service) Run() error {
 	sig := <-ch
 	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
 	return s.Stop()
+	return nil
 }
 
 func (s *service) start() error {
-	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
-	//
-	go func() {
-		if err := s.cfg.Server.Run(); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR s.cfg.Server.Run() %v", err))
-		}
-	}()
+	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
+	// run servers
+	for _, srv := range s.Servers(){
+		go func(ss server.Server) {
+			if err := ss.Run(); err != nil {
+				log.Fatalf("ERROR srv.Run() %v", err)
+			}
+		}(srv)
+	}
+	// dial clients
+	for _, clt := range s.Clients(){
+		go func(cc client.Client) {
+			_, err := cc.Dial()
+			if err != nil {
+				log.Fatalf("ERROR cc.Dial() %v", err)
+			}
+		}(clt)
+	}
 
 	return nil
 }
