@@ -22,8 +22,9 @@ func PostHandler (w http.ResponseWriter, r *http.Request){
 	// get service from context by service name
 	ctx := r.Context()
 	s := ctx.Value("frontend.pluto")
-	// get gRPC client
+	// get gRPC client from service
 	c := s.(pluto.Service).Clients()["user.client"]
+	// make a call
 	user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
