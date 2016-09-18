@@ -5,27 +5,9 @@ import (
 	"pluto/server"
 	pb "pluto/examples/user/proto"
 	"google.golang.org/grpc"
-	"golang.org/x/net/context"
+	"pluto/examples/user/backend/views"
 )
 
-type user struct{}
-
-// CreateUser implements UserServiceServer
-func (s *user) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
-	return &pb.User{Name: nu.Name, Email: nu.Email, Id: "123"}, nil
-}
-// ReadUser implements UserServiceServer
-func (s *user) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
-	return &pb.User{Name: nu.Name, Email: nu.Email, Id: "123"}, nil
-}
-// ReadUser implements UserServiceServer
-func (s *user) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
-	return &pb.User{Name: nu.Name, Email: nu.Email, Id: "123"}, nil
-}
-// DeleteUser implements UserServiceServer
-func (s *user) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
-	return &pb.User{}, nil
-}
 
 func Run() error {
 
@@ -38,7 +20,7 @@ func Run() error {
 	// 2. Define grpc Server
 	grpcSrv := server.NewGRPCServer(server.Addr(":65060"),
 		server.RegisterServerFunc(func(srv *grpc.Server){
-			pb.RegisterUserServiceServer(srv, &user{})
+			pb.RegisterUserServiceServer(srv, &backend.User{})
 		}),
 	)
 	// 5. Init service
