@@ -16,6 +16,7 @@ type User struct {
 func (s *User) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
 	//serv := ctx.Value("frontend.pluto")
 	log.Printf("CreateUser %v", ctx)
+	s.Cluster.RefreshSession()
 	return &pb.User{Name: nu.Name, Email: nu.Email, Id: "123"}, nil
 }
 // ReadUser implements UserServiceServer

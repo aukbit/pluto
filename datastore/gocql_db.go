@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"github.com/gocql/gocql"
+	"log"
 )
 
 var (
@@ -21,8 +22,9 @@ func newDatastore(cfgs ...ConfigFunc) Datastore {
 }
 
 func (ds *datastore) Connect() {
-	//cluster := gocql.NewCluster(c.Addr)
-	//cluster.Keyspace = c.Keyspace
+	log.Printf("----- %s cluster connected on %s", ds.cfg.Keyspace, ds.cfg.Addr)
+	ds.cluster = gocql.NewCluster(ds.cfg.Addr)
+	ds.cluster.Keyspace = ds.cfg.Keyspace
 }
 
 func (ds *datastore) RefreshSession() error {

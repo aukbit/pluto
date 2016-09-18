@@ -62,6 +62,8 @@ func (s *service) Run() error {
 
 func (s *service) start() error {
 	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
+	// connect datastore
+	s.Config().Datastore.Connect()
 	// run servers
 	for _, srv := range s.Servers(){
 		go func(ss server.Server) {
