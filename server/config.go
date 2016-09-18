@@ -93,4 +93,3 @@ func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
 		cfg.RegisterServerFunc = fn
 	}
 }
-

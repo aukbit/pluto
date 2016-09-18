@@ -15,12 +15,15 @@ func Run() error {
 	s := pluto.NewService(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible to persist data"),
+		pluto.Datastore("127.0.0.1"),
 	)
 
+	// 2. Define datastore
+	//db := server.NewDatastore()
 	// 2. Define grpc Server
 	grpcSrv := server.NewGRPCServer(server.Addr(":65060"),
 		server.RegisterServerFunc(func(srv *grpc.Server){
-			pb.RegisterUserServiceServer(srv, &backend.User{})
+			pb.RegisterUserServiceServer(srv, &backend.User{Cluster: s.Config().Datastore})
 		}),
 	)
 	// 5. Init service
@@ -32,5 +35,7 @@ func Run() error {
 	return nil
 
 }
+
+
 
 

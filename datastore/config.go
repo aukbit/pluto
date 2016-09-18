@@ -1,4 +1,4 @@
-package db
+package datastore
 
 
 type Config struct {

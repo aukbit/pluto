@@ -1,10 +1,11 @@
-package db
+package datastore
 
 import "github.com/gocql/gocql"
 
 type Datastore interface {
+	Connect()
 	Session()		*gocql.Session
-	RefreshSession()
+	RefreshSession()	error
 	Close()
 }
 

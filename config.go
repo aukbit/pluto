@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"pluto/server"
 	"pluto/client"
+	"pluto/datastore"
 )
 
 type Config struct {
@@ -15,6 +16,7 @@ type Config struct {
 	Version 		string
 	Servers			map[string]server.Server
 	Clients			map[string]client.Client
+	Datastore		datastore.Datastore
 }
 
 type ConfigFunc func(*Config)
@@ -82,5 +84,12 @@ func Clients(c client.Client) ConfigFunc {
 	return func(cfg *Config) {
 		//cfg.Clients = append(cfg.Clients, c)
 		cfg.Clients[c.Config().Name] = c
+	}
+}
+
+// Datastore to persist data
+func Datastore(addr string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Datastore = datastore.NewDatastore(datastore.Addr(addr), datastore.Keyspace(cfg.Name))
 	}
 }

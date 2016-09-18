@@ -4,10 +4,12 @@ import (
 	"golang.org/x/net/context"
 	pb "pluto/examples/user/proto"
 	"log"
+	"pluto/datastore"
 )
 
 
-type User struct{
+type User struct {
+	Cluster		datastore.Datastore
 }
 
 // CreateUser implements UserServiceServer
