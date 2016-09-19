@@ -7,6 +7,8 @@ import (
 	"pluto/server"
 	"pluto/client"
 	"pluto/datastore"
+	"regexp"
+	"log"
 )
 
 type Config struct {
@@ -22,7 +24,7 @@ type Config struct {
 type ConfigFunc func(*Config)
 
 var DefaultConfig = Config{
-	Name: 			"default.pluto",
+	Name: 			"pluto_default",
 	Servers:		make(map[string]server.Server),
 	Clients:		make(map[string]client.Client),
 }
@@ -59,8 +61,13 @@ func Id(id string) ConfigFunc {
 // Name service name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
-		// TODO validate with regex
-		cfg.Name = fmt.Sprintf("%s.%s", strings.Replace(strings.ToLower(n), " ", "", -1), DefaultName)
+		// support only alphanumeric and underscore characters
+		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		safe := reg.ReplaceAllString(n, "_")
+		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
 	}
 }
 

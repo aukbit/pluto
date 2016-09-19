@@ -28,6 +28,7 @@ func Run() error {
 	)
 	// 5. Init service
 	s.Init(pluto.Servers(grpcSrv),)
+
 	// 6. Run service
 	if err := s.Run(); err != nil {
 		return err

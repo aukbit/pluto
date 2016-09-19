@@ -1,5 +1,9 @@
 package datastore
 
+import (
+	"regexp"
+	"log"
+)
 
 type Config struct {
 	Keyspace		string
@@ -27,7 +31,14 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 // Keyspace db keyspace
 func Keyspace(ks string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Keyspace = ks
+		// cassandra valid characters
+		//https://docs.datastax.com/en/cql/3.3/cql/cql_reference/ref-lexical-valid-chars.html
+		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		safe := reg.ReplaceAllString(ks, "_")
+		cfg.Keyspace = safe
 	}
 }
 

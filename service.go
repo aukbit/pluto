@@ -7,14 +7,13 @@ import (
 	"os/signal"
 	"os"
 	"pluto/client"
-	"context"
+	"pluto/datastore"
 )
 
 
 // Service
 type service struct {
 	cfg 			*Config
-	ctx			context.Context
 	close 			chan bool
 }
 
@@ -33,7 +32,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	// make it available in handler context
 	for _, srv := range s.Servers(){
 		if srv.Config().Format == "http" {
-			srv.Config().Mux.WrapHandlersWith(s.cfg.Name, s)
+			srv.Config().Mux.AddContextWith(s.cfg.Name, s)
 		}
 	}
 	return nil
@@ -41,6 +40,10 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 
 func (s *service) Servers() map[string]server.Server {
 	return s.cfg.Servers
+}
+
+func (s *service) Datastore() datastore.Datastore {
+	return s.cfg.Datastore
 }
 
 func (s *service) Clients() map[string]client.Client {
@@ -57,13 +60,19 @@ func (s *service) Run() error {
 	sig := <-ch
 	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
 	return s.Stop()
-	return nil
 }
 
 func (s *service) start() error {
 	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
+
 	// connect datastore
-	s.Config().Datastore.Connect()
+	if s.cfg.Datastore != nil {
+		s.cfg.Datastore.Connect()
+		if err := s.cfg.Datastore.RefreshSession(); err != nil {
+			log.Fatalf("ERROR s.cfg.Datastore.RefreshSession() %v", err.Error())
+		}
+	}
+
 	// run servers
 	for _, srv := range s.Servers(){
 		go func(ss server.Server) {

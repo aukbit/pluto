@@ -32,7 +32,7 @@ type Mux interface {
 	PUT(string, Handler)
 	DELETE(string, Handler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
-	WrapHandlersWith(key interface{}, val interface{})
+	AddContextWith(key interface{}, val interface{})
 }
 
 // Router
@@ -87,9 +87,9 @@ func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
-// WrapHandlersWith applies a wrapper to all handlers,
+// AddContextWith applies a wrapper to all handlers,
 // data is available in the handler context
-func (r *Router) WrapHandlersWith(key interface{}, val interface{}) {
+func (r *Router) AddContextWith(key interface{}, val interface{}) {
 	for _, k := range r.trie.Keys() {
 		data := r.trie.Get(k)
 		for m, h := range data.methods {
@@ -218,7 +218,7 @@ func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("Router ServeHTTP url: %v, path: %v, method: %v", req.URL, req.URL.Path, req.Method)
+	log.Printf("----- %v \t%v", req.Method, req.URL)
 	m := r.FindMatch(req)
 	if m != nil{
 		m.ServeHTTP(w, req)

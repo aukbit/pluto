@@ -5,6 +5,8 @@ import (
 	"strings"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"log"
+	"regexp"
 )
 
 type Config struct {
@@ -20,7 +22,7 @@ type Config struct {
 type ConfigFunc func(*Config)
 
 var DefaultConfig = Config{
-	Name: 			"default.client",
+	Name: 			"client_default",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -55,8 +57,13 @@ func Id(id string) ConfigFunc {
 // Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
-		// TODO validate with regex
-		cfg.Name = fmt.Sprintf("%s.%s", strings.ToLower(n), DefaultName)
+		// support only alphanumeric and underscore characters
+		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		safe := reg.ReplaceAllString(n, "_")
+		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
 	}
 }
 

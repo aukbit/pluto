@@ -21,6 +21,4 @@ func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}){
 	if _, err := w.Write(d); err != nil {
 		log.Fatalf("ERROR w.Write(d) %v", err)
 	}
-
-
 }
