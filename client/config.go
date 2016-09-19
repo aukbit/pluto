@@ -1,14 +1,12 @@
-package pluto
+package client
 
 import (
 	"fmt"
 	"strings"
 	"github.com/google/uuid"
-	"pluto/server"
-	"pluto/client"
-	"pluto/datastore"
-	"regexp"
+	"google.golang.org/grpc"
 	"log"
+	"regexp"
 )
 
 type Config struct {
@@ -16,17 +14,15 @@ type Config struct {
 	Name 			string
 	Description 		string
 	Version 		string
-	Servers			map[string]server.Server
-	Clients			map[string]client.Client
-	Datastore		datastore.Datastore
+	Target       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format			string
+	RegisterClientFunc	func(*grpc.ClientConn) interface{}
 }
 
 type ConfigFunc func(*Config)
 
 var DefaultConfig = Config{
-	Name: 			"pluto_default",
-	Servers:		make(map[string]server.Server),
-	Clients:		make(map[string]client.Client),
+	Name: 			"client_default",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -51,14 +47,14 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	return &cfg
 }
 
-// Id service id
+// Id cleint id
 func Id(id string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Id = id
 	}
 }
 
-// Name service name
+// Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
 		// support only alphanumeric and underscore characters
@@ -71,32 +67,23 @@ func Name(n string) ConfigFunc {
 	}
 }
 
-// Description service description
+// Description client description
 func Description(d string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Description = d
 	}
 }
 
-// Servers slice of service servers
-func Servers(s server.Server) ConfigFunc {
+// Target server address
+func Target(t string) ConfigFunc {
 	return func(cfg *Config) {
-		//cfg.Servers = append(cfg.Servers, s)
-		cfg.Servers[s.Config().Name] = s
+		cfg.Target = t
 	}
 }
 
-// Clients slice of service clients
-func Clients(c client.Client) ConfigFunc {
+// RegisterClientFunc register client gRPC function
+func RegisterClientFunc(fn func(*grpc.ClientConn) interface{}) ConfigFunc {
 	return func(cfg *Config) {
-		//cfg.Clients = append(cfg.Clients, c)
-		cfg.Clients[c.Config().Name] = c
-	}
-}
-
-// Datastore to persist data
-func Datastore(addr string) ConfigFunc {
-	return func(cfg *Config) {
-		cfg.Datastore = datastore.NewDatastore(datastore.Addr(addr), datastore.Keyspace(cfg.Name))
+		cfg.RegisterClientFunc = fn
 	}
 }

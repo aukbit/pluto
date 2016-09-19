@@ -45,6 +45,4 @@ func TestAll(t *testing.T){
 		assert.Equal(t, test.B, w.Body.String())
 	}
 
-
-
 }

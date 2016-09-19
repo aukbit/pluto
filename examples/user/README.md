@@ -1,10 +1,8 @@
-# Pluto 
- An implementation of micro-services with golang
+# Service
 
-### Just a simple example available in examples/user
-This example shows how to create json endpoints using pluto services
+This is an example of creating a json backend api using pluto services
 
-### Prerequisites
+## Prerequisites
 You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go) 
 Also the keyspace **pluto_backend** and schema **users** still set up, as mention her [pluto/README-cassandra.md](../../README-cassandra.md)
 README-cassandra.md
@@ -40,22 +38,3 @@ $ go test -v pluto/examples/user -run ^TestAll$
 PASS
 ok      pluto/examples/user     0.037s
 ```
-
-
-## API Design
-
-### Web Api (json)
-Define http json handlers
-
-### Service Api (proto)
-Use gRPC to communicate between services
-
-## Data
-
-## Message Broker
-
-## Registration
-
-## Server
-
-## Client

@@ -10,14 +10,13 @@ import (
 	"os/signal"
 	"os"
 	"errors"
-	"fmt"
 )
 
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
 	cfg 			*Config
-	mux 			*router.Router
+	mux			router.Mux
 	// close chan for graceful shutdown
 	close 			chan bool
 }
@@ -25,22 +24,15 @@ type defaultServer struct {
 // NewServer will instantiate a new Server with the given config
 func newDefaultServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	return &defaultServer{cfg: c, close: make(chan bool)}
+	c.Format = "http"
+	return &defaultServer{cfg: c, mux: c.Mux, close: make(chan bool)}
 }
 
 func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	return nil
-}
-
-func (s *defaultServer) Router(mux *router.Router) error {
-	if mux == nil {
-		s.mux = router.NewRouter()
-	} else {
-		s.mux = mux
-	}
+	s.mux = s.cfg.Mux
 	return nil
 }
 
@@ -62,25 +54,23 @@ func (s *defaultServer) Run() error {
 	return s.Stop()
 }
 
-// start start the Server
-func (s *defaultServer) start() error {
-	log.Printf("START %s %s", s.cfg.Name, s.cfg.Id)
-	if s.mux == nil{
-		return errors.New("Handlers not set up. Server will not start.")
-	}
-	// start go routine
-	go func(){
-		if err := s.listenAndServe(); err != nil{
-			log.Fatal(fmt.Sprintf("ERROR s.listenAndServe() %v", err))
-		}
-	}()
-	return nil
-}
-
 // Stop sends message to close the listener via channel
 func (s *defaultServer) Stop() error {
 	s.close <-true
 	return nil
+}
+
+// start start the Server
+func (s *defaultServer) start() error {
+	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
+	if s.mux == nil{
+		return errors.New("Handlers not set up. Server will not start.")
+	}
+	if err := s.listenAndServe(); err != nil{
+		log.Fatalf("ERROR %s s.listenAndServe() %v", s.cfg.Name, err)
+	}
+	return nil
+
 }
 
 // listenAndServe based on http.ListenAndServe
@@ -117,11 +107,11 @@ func (s *defaultServer) listenAndServe() error {
 	}
 	go func() {
 		if err := httpServer.Serve(ln); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR httpServer.Serve(ln) %v", err))
+			log.Fatalf("ERROR %s httpServer.Serve(ln) %v", s.cfg.Name, err)
 		}
 	}()
 	//
-	log.Printf("----- %s listening on %s", s.cfg.Name, ln.Addr().String())
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	//
 	go func() {
 		// Waits for call to stop
@@ -129,7 +119,7 @@ func (s *defaultServer) listenAndServe() error {
 		log.Printf("CLOSE %s received", s.cfg.Name)
 		// close listener
 		if err := ln.Close(); err != nil {
-			log.Fatal(fmt.Sprintf("ERROR ln.Close() %v", err))
+			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
 		}
 		log.Printf("----- %s listener closed", s.cfg.Name)
 	}()

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"fmt"
 )
 
 func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}){
@@ -20,8 +19,6 @@ func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}){
 	w.WriteHeader(status)
 
 	if _, err := w.Write(d); err != nil {
-		log.Fatal(fmt.Sprintf("ERROR w.Write(d) %v", err))
+		log.Fatalf("ERROR w.Write(d) %v", err)
 	}
-
-
 }

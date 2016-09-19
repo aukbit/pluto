@@ -14,15 +14,30 @@ import (
 // Handler is a function type like "net/http" Handler
 type Handler func (http.ResponseWriter, *http.Request)
 
+// ServeHTTP calls f(w, r).
+func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f(w, r)
+}
+
 // Match
 type Match struct {
-	handler Handler
-	ctx 	context.Context
+	handler 	Handler
+	ctx 		context.Context
+}
+
+// Mux interface to expose Router struct
+type Mux interface {
+	GET(string, Handler)
+	POST(string, Handler)
+	PUT(string, Handler)
+	DELETE(string, Handler)
+	ServeHTTP(http.ResponseWriter, *http.Request)
+	AddContextWith(key interface{}, val interface{})
 }
 
 // Router
 type Router struct {
-	trie 			*Trie
+	trie 		*Trie
 }
 
 // DefaultRootHandler
@@ -34,8 +49,7 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }
 
-// NewRouter creates an instance of a new router
-func NewRouter() *Router {
+func NewRouter() Mux {
 	return &Router{trie: NewTrie()}
 }
 
@@ -71,6 +85,26 @@ func (r *Router) PUT(path string, handler Handler) {
 // Get is a shortcut for Handle with method "GET"
 func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
+}
+
+// AddContextWith applies a wrapper to all handlers,
+// data is available in the handler context
+func (r *Router) AddContextWith(key interface{}, val interface{}) {
+	for _, k := range r.trie.Keys() {
+		data := r.trie.Get(k)
+		for m, h := range data.methods {
+			data.methods[m] = wrapper(key, val, h)
+			r.trie.Put(k, data)
+		}
+	}
+}
+
+func wrapper(key interface{}, val interface{}, next Handler) Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, key, val)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
 }
 
 // transformPath returns a tuple with key, value, prefix and params for the
@@ -178,16 +212,16 @@ func (r *Router) FindMatch(req *http.Request) *Match  {
 	return nil
 }
 
-func (m *Match) Execute(w http.ResponseWriter, req *http.Request) {
-	m.handler(w, req.WithContext(m.ctx))
+func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	m.handler.ServeHTTP(w, req.WithContext(m.ctx))
 }
 
 // ServeHTTP
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("Router ServeHTTP url: %v, path: %v, method: %v", req.URL, req.URL.Path, req.Method)
+	log.Printf("----- %s %s", req.Method, req.URL)
 	m := r.FindMatch(req)
 	if m != nil{
-		m.Execute(w, req)
+		m.ServeHTTP(w, req)
 	} else {
 		NotFoundHandler(w, req)
 	}
