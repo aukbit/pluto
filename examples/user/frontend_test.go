@@ -5,11 +5,11 @@ import (
 	"pluto/examples/user/frontend/service"
 	"testing"
 	"log"
-	"strings"
 	"io"
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"strings"
 )
 
 type User struct {
@@ -18,13 +18,14 @@ type User struct {
 	Email  	string           `json:"email"`
 }
 
+const URL = "http://localhost:8080"
+
 func TestAll(t *testing.T){
 
-	// Note: Run the backend service in a terminal window
+	// Note: Run the backend service in a different terminal window
 
 	// launch frontend service running on
 	// default http://localhost:8080
-	const URL = "http://localhost:8080"
 
 	go func(){
 		if err := frontend.Run(); err != nil {
@@ -36,51 +37,42 @@ func TestAll(t *testing.T){
 	//
 	var tests = []struct {
 		Method       string
-		Path         string
+		Path         func(string)string
 		Body         io.Reader
-		BodyContains string
+		BodyContains func(string)string
 		Status       int
 	}{
-	//	{
-	//	Method:       "GET",
-	//	Path:         "/user",
-	//	Status:       http.StatusOK,
-	//},
 		{
 		Method:       "POST",
-		Path:         "/user",
+		Path:         func(id string) string { return URL + "/user" },
 		Body:         strings.NewReader(`{"name":"Gopher", "email": "gopher@email.com", "password":"123456"}`),
+		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
 		Status:       http.StatusCreated,
 	},
 		{
 		Method:       "GET",
-		Path:         "/user/",
+		Path:         func(id string) string { return URL + "/user/" + id },
+		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
 		Status:       http.StatusOK,
 	},
-	//	{
-	//	Method:       "PUT",
-	//	Path:         "/user/" + user.Id,
-	//	Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-	//	Status:       http.StatusOK,
-	//},
-	//	{
-	//	Method:       "DELETE",
-	//	Path:         "/user/" + user.Id,
-	//	Status:       http.StatusOK,
-	//},
+		{
+		Method:       "PUT",
+		Path:         func(id string) string { return URL + "/user/" + id },
+		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Super Gopher house"}` },
+		Status:       http.StatusOK,
+	},
+		{
+		Method:       "DELETE",
+		Path:         func(id string) string { return URL + "/user/" + id },
+		BodyContains: func(id string) string { return `{}` },
+		Status:       http.StatusOK,
+	},
 	}
-
 
 	for _, test := range tests {
 
-		var url string
-		if user == nil {
-			url = URL + test.Path
-		} else {
-			url = URL + test.Path + user.Id
-		}
-
-		r, err := http.NewRequest(test.Method, url, test.Body)
+		r, err := http.NewRequest(test.Method, test.Path(user.Id), test.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -100,8 +92,26 @@ func TestAll(t *testing.T){
 		}
 		assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
 		assert.Equal(t, test.Status, response.StatusCode)
-		assert.Equal(t, true, len(user.Id) > 0)
-		assert.Equal(t, true, len(user.Email) > 0)
-		assert.Equal(t, "Gopher", user.Name)
+		assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
 	}
+
+	// FilterUsers
+	r, err := http.NewRequest("GET", URL + "/user?name=Gopher", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// call handler
+	response, err := http.DefaultClient.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualBody, err := ioutil.ReadAll(response.Body)
+	defer response.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, response.StatusCode, response.StatusCode)
+	assert.Equal(t, true, len(actualBody) > 0)
+
 }

@@ -218,7 +218,7 @@ func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("----- %v \t%v", req.Method, req.URL)
+	log.Printf("----- %s %s", req.Method, req.URL)
 	m := r.FindMatch(req)
 	if m != nil{
 		m.ServeHTTP(w, req)
