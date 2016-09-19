@@ -6,7 +6,7 @@ This example shows how to create json endpoints using pluto services
 
 ### Prerequisites
 You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go) 
-Also the keyspace **pluto_backend** and schema **users** still set up, as mention her [pluto/README-cassandra.md](../../README-cassandra.md)
+Also the keyspace **pluto_backend** and schema **users** still set up, as mentioned here [pluto/README-cassandra.md](../../README-cassandra.md)
 README-cassandra.md
 
 You should already have a gRPC installed. You can follow instructions here [gRPC](http://www.grpc.io/docs/quickstart/go.html#prerequisites)
