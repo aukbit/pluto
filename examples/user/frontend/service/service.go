@@ -1,13 +1,13 @@
 package frontend
 
 import (
-	"pluto"
-	"pluto/server/router"
-	"pluto/server"
-	"pluto/client"
-	"pluto/examples/user/frontend/views"
-	pb "pluto/examples/user/proto"
 	"google.golang.org/grpc"
+	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/examples/user/frontend/views"
+	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 )
 
 func Run() error {

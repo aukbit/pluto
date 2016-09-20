@@ -3,8 +3,8 @@ package router_test
 import (
 	"testing"
 	"reflect"
-	"pluto/server/router"
 	"github.com/paulormart/assert"
+	"bitbucket.org/aukbit/pluto/server/router"
 )
 func TestStructs(t *testing.T){
 	// comparing structs

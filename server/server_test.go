@@ -3,17 +3,17 @@ package server_test
 import (
 	"testing"
 	"net/http"
-	"pluto/server"
-	"pluto/reply"
 	"github.com/paulormart/assert"
 	"reflect"
 	"log"
-	"pluto/server/router"
 	"golang.org/x/net/context"
-	pb "pluto/server/proto"
 	"google.golang.org/grpc"
 	"time"
 	"fmt"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"bitbucket.org/aukbit/pluto/reply"
+	pb "bitbucket.org/aukbit/pluto/server/proto"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {

@@ -1,11 +1,11 @@
 package frontend
 
 import (
-	"pluto/reply"
 	"net/http"
-	pb "pluto/examples/user/proto"
 	"github.com/golang/protobuf/jsonpb"
-	"pluto"
+	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/reply"
+	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 )
 
 func PostHandler (w http.ResponseWriter, r *http.Request){

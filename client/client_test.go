@@ -2,12 +2,12 @@ package client_test
 
 import (
 	"testing"
-	"pluto/client"
 	"github.com/paulormart/assert"
-	pb "pluto/server/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"log"
+	"bitbucket.org/aukbit/pluto/client"
+	pb "bitbucket.org/aukbit/pluto/server/proto"
 )
 
 func TestClient(t *testing.T){

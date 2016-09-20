@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 	"github.com/google/uuid"
-	"pluto/server"
-	"pluto/client"
-	"pluto/datastore"
 	"regexp"
 	"log"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/datastore"
 )
 
 type Config struct {

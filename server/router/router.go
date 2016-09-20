@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"golang.org/x/net/context"
-	"pluto/reply"
 	"log"
+	"bitbucket.org/aukbit/pluto/reply"
 )
 
 // Handler is a function type like "net/http" Handler
@@ -31,6 +31,7 @@ type Mux interface {
 	POST(string, Handler)
 	PUT(string, Handler)
 	DELETE(string, Handler)
+	Handle(string, string, Handler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
 	AddContextWith(key interface{}, val interface{})
 }

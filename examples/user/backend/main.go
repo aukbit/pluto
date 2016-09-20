@@ -1,7 +1,7 @@
 package main
 
 import (
-	"pluto/examples/user/backend/service"
+	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
 )
 import "log"
 
