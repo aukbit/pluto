@@ -1,11 +1,11 @@
 package backend
 
 import (
-	"pluto"
-	"pluto/server"
-	pb "pluto/examples/user/proto"
 	"google.golang.org/grpc"
-	"pluto/examples/user/backend/views"
+	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/examples/user/backend/views"
+	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 )
 
 

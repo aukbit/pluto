@@ -2,16 +2,15 @@ package router
 
 import (
 	"testing"
-	"github.com/paulormart/assert"
-	"pluto/reply"
-
-	"io/ioutil"
-	"net/http/httptest"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"encoding/json"
 	"log"
 	"strings"
+	"github.com/paulormart/assert"
+	"bitbucket.org/aukbit/pluto/reply"
 )
 
 func TestPaths(t *testing.T){
@@ -47,37 +46,6 @@ func TestPaths(t *testing.T){
 
 func Index (w http.ResponseWriter, r *http.Request){
 	io.WriteString(w, "Hello World")
-}
-
-func TestHandlers(t *testing.T){
-
-	router := NewRouter()
-	router.Handle("GET", "/home", Index)
-	assert.Equal(t, 1, router.trie.Size())
-	assert.Equal(t, true, router.trie.Contains("/home"))
-
-	data := router.trie.Get("/home")
-	assert.Equal(t, "/home", data.value)
-	assert.Equal(t, []string{}, data.vars)
-	assert.Equal(t, 1, len(data.methods))
-	assert.Equal(t, true, data.methods["GET"] != nil)
-
-	router.Handle("POST", "/home", Index)
-	assert.Equal(t, 1, router.trie.Size())
-	assert.Equal(t, 2, len(data.methods))
-	assert.Equal(t, true, data.methods["GET"] != nil)
-	assert.Equal(t, true, data.methods["POST"] != nil)
-
-	router.Handle("GET", "/home/:id", Index)
-	router.Handle("PUT", "/home/:id", Index)
-	router.Handle("DELETE", "/home/:id", Index)
-	data1 := router.trie.Get("/home/:")
-	assert.Equal(t, 2, router.trie.Size())
-	assert.Equal(t, 3, len(data1.methods))
-	assert.Equal(t, true, data1.methods["GET"] != nil)
-	assert.Equal(t, true, data1.methods["PUT"] != nil)
-	assert.Equal(t, true, data1.methods["DELETE"] != nil)
-
 }
 
 func IndexHandler (w http.ResponseWriter, r *http.Request){

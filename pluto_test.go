@@ -3,12 +3,12 @@ package pluto_test
 import (
 	"testing"
 	"net/http"
-	"github.com/paulormart/assert"
-	"pluto/reply"
-	"pluto"
-	"pluto/server/router"
 	"log"
-	"pluto/server"
+	"github.com/paulormart/assert"
+	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/reply"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {

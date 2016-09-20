@@ -3,11 +3,11 @@ package backend
 import (
 	"golang.org/x/net/context"
 	"github.com/google/uuid"
-	pb "pluto/examples/user/proto"
-	"pluto/datastore"
 	"log"
 	"crypto/sha256"
 	"encoding/hex"
+	"bitbucket.org/aukbit/pluto/datastore"
+	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 )
 
 

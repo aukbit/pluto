@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"github.com/paulormart/assert"
-	"pluto/reply"
+	"bitbucket.org/aukbit/pluto/reply"
 )
 
 func TestAll(t *testing.T){

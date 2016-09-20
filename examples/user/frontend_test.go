@@ -2,7 +2,7 @@ package frontend_test
 
 import (
 	"github.com/paulormart/assert"
-	"pluto/examples/user/frontend/service"
+	"bitbucket.org/aukbit/pluto/examples/user/frontend/service"
 	"testing"
 	"log"
 	"io"

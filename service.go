@@ -1,13 +1,13 @@
 package pluto
 
 import (
-	"pluto/server"
 	"log"
 	"syscall"
 	"os/signal"
 	"os"
-	"pluto/client"
-	"pluto/datastore"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/datastore"
 )
 
 

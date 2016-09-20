@@ -1,8 +1,8 @@
 package pluto
 
 import (
-	"pluto/server"
-	"pluto/client"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/client"
 )
 
 
