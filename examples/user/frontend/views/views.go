@@ -13,6 +13,7 @@ func PostHandler (w http.ResponseWriter, r *http.Request){
 	newUser := &pb.NewUser{}
 	if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	// get service from context by service name
 	ctx := r.Context()
@@ -23,6 +24,7 @@ func PostHandler (w http.ResponseWriter, r *http.Request){
 	user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	reply.Json(w, r, http.StatusCreated, user)
 }
@@ -41,6 +43,7 @@ func GetHandlerDetail (w http.ResponseWriter, r *http.Request){
 	user, err := c.Call().(pb.UserServiceClient).ReadUser(ctx, user)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	reply.Json(w, r, http.StatusOK, user)
 }
@@ -54,6 +57,7 @@ func PutHandler (w http.ResponseWriter, r *http.Request){
 	// unmarshal body
 	if err := jsonpb.Unmarshal(r.Body, user); err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	// get service from context by service name
 	s := ctx.Value("pluto_frontend")
@@ -63,6 +67,7 @@ func PutHandler (w http.ResponseWriter, r *http.Request){
 	user, err := c.Call().(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	reply.Json(w, r, http.StatusOK, user)
 }
@@ -81,6 +86,7 @@ func DeleteHandler (w http.ResponseWriter, r *http.Request){
 	user, err := c.Call().(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	reply.Json(w, r, http.StatusOK, user)
 }
@@ -100,6 +106,7 @@ func GetHandler (w http.ResponseWriter, r *http.Request){
 	users, err := c.Call().(pb.UserServiceClient).FilterUsers(ctx, filter)
 	if err != nil {
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
+		return
 	}
 	reply.Json(w, r, http.StatusOK, users)
 }
