@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  frontend:
+    build: ./frontend
+    command: /go/bin/frontend -target=192.168.99.100:65060 -http_port=:8080
+    ports:
+     - "8080:8080"
+    depends_on:
+     - backend
+
+  backend:
+    build: ./backend
+    command: /go/bin/backend -db_addr=192.168.99.100 -grpc_port=:65060
+    ports:
+     - "65060:65060"

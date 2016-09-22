@@ -8,9 +8,15 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/examples/user/frontend/views"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"flag"
 )
 
+var target = flag.String("target", "127.0.0.1:65060", "backend address")
+var http_port = flag.String("http_port", ":8080", "frontend http port")
+
 func Run() error {
+	flag.Parse()
+
 	// 1. Config service
 	s := pluto.NewService(
 		pluto.Name("frontend"),
@@ -27,7 +33,7 @@ func Run() error {
 	mux.DELETE("/user/:id", frontend.DeleteHandler)
 
 	// 3. Create new http server
-	httpSrv := server.NewServer(server.Name("api"), server.Mux(mux))
+	httpSrv := server.NewServer(server.Name("api"), server.Addr(*http_port), server.Mux(mux))
 
 	// 4. Define grpc Client
 	grpcClient := client.NewClient(
@@ -35,7 +41,7 @@ func Run() error {
 		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.Target("127.0.0.1:65060"),
+		client.Target(*target),
 	)
 	// 5. Init service
 	s.Init(pluto.Servers(httpSrv), pluto.Clients(grpcClient))

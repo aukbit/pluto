@@ -23,6 +23,7 @@ const URL = "http://localhost:8080"
 func TestAll(t *testing.T){
 
 	// Note: Run the backend service in a different terminal window
+	// $  go run ./backend/main.go -db_addr=DB_ADDR_ENV
 
 	// launch frontend service running on
 	// default http://localhost:8080
