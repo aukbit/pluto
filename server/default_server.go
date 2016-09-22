@@ -84,14 +84,17 @@ func (s *defaultServer) listenAndServe() error {
 	if addr == "" {
 		addr = ":http"
 	}
+
+	// TODO config option for TLS
+	if s.cfg.TLSConfig != nil {
+		log.Printf("listenAndServe")
+	}
+
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
-
 	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
-
-	// TODO config option for TLS
 
 	httpServer := http.Server{
 		// handler to invoke, http.DefaultServeMux if nil
