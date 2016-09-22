@@ -2,7 +2,7 @@ package web_test
 
 import (
 	"github.com/paulormart/assert"
-	"bitbucket.org/aukbit/pluto/examples/https"
+	"bitbucket.org/aukbit/pluto/examples/https/web"
 	"testing"
 	"log"
 	"io"
@@ -15,7 +15,7 @@ type Message struct {
 	message  string           `json:"message"`
 }
 
-const URL = "https://localhost:8080"
+const URL = "https://localhost:8443"
 
 func TestAll(t *testing.T){
 
@@ -27,7 +27,7 @@ func TestAll(t *testing.T){
 			log.Fatal(err)
 		}
 	}()
-	//
+
 	var tests = []struct {
 		Method       string
 		Path         func()string
@@ -52,6 +52,7 @@ func TestAll(t *testing.T){
 		if err != nil {
 			t.Fatal(err)
 		}
+		assert.Equal(t, 1, 1)
 		// call handler
 		response, err := http.DefaultClient.Do(r)
 		if err != nil {

@@ -30,6 +30,7 @@ type ConfigFunc func(*Config)
 var DefaultConfig = Config{
 	Name: 			"server_default",
 	Addr:			":8080",
+	Format:			"http",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -111,7 +112,12 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 			log.Printf("ERROR tls.LoadX509KeyPair %v",err)
 			return
 		}
-		log.Printf("TLSConfig %v", cer)
-		cfg.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cer}}
+		cfg.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			PreferServerCipherSuites: true,
+			Certificates: []tls.Certificate{cer},
+		}
+		cfg.Format = "https"
 	}
 }

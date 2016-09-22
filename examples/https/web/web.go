@@ -1,22 +1,15 @@
 package web
 
 import (
-	"log"
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"flag"
 )
 
-func main() {
-	log.Printf("teste")
-
-}
-
-var http_port = flag.String("http_port", ":443", "frontend http port")
+var https_port = flag.String("https_port", ":8443", "https port")
 
 func Run() error {
-	log.SetFlags(log.Lshortfile)
 	// 1. Config service
 	s := pluto.NewService(
 		pluto.Name("web"),
@@ -27,8 +20,8 @@ func Run() error {
 	mux.GET("/", GetHandler)
 	// 3. Create new http server
 	httpSrv := server.NewServer(server.Name("api"),
-		//server.TLSConfig("server.crt", "server.key"),
-		server.Addr(*http_port),
+		server.TLSConfig("server.crt", "private.key"),
+		server.Addr(*https_port),
 		server.Mux(mux))
 	// 4. Init service
 	s.Init(pluto.Servers(httpSrv))
