@@ -18,6 +18,10 @@ type User struct {
 	Email  	string           `json:"email"`
 }
 
+type Error struct {
+	string
+}
+
 const URL = "http://localhost:8080"
 
 func TestAll(t *testing.T){
@@ -57,6 +61,12 @@ func TestAll(t *testing.T){
 		Status:       http.StatusOK,
 	},
 		{
+		Method:       "GET",
+		Path:         func(id string) string { return URL + "/user/abc" },
+		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
+		Status:       http.StatusInternalServerError,
+	},
+		{
 		Method:       "PUT",
 		Path:         func(id string) string { return URL + "/user/" + id },
 		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
@@ -64,10 +74,23 @@ func TestAll(t *testing.T){
 		Status:       http.StatusOK,
 	},
 		{
+		Method:       "PUT",
+		Path:         func(id string) string { return URL + "/user/abc" },
+		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Super Gopher house"}` },
+		Status:       http.StatusInternalServerError,
+	},
+		{
 		Method:       "DELETE",
 		Path:         func(id string) string { return URL + "/user/" + id },
 		BodyContains: func(id string) string { return `{}` },
 		Status:       http.StatusOK,
+	},
+		{
+		Method:       "DELETE",
+		Path:         func(id string) string { return URL + "/user/abc" },
+		BodyContains: func(id string) string { return `{}` },
+		Status:       http.StatusInternalServerError,
 	},
 	}
 
@@ -89,11 +112,14 @@ func TestAll(t *testing.T){
 		}
 		err = json.Unmarshal(actualBody, user)
 		if err != nil {
-			t.Fatalf("Unmarshal %v %v", string(actualBody), err)
+			assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, test.Status, response.StatusCode)
+		} else {
+			assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, test.Status, response.StatusCode)
+			assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
 		}
-		assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-		assert.Equal(t, test.Status, response.StatusCode)
-		assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
+
 	}
 
 	// FilterUsers
