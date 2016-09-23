@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"regexp"
+	"crypto/tls"
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 	Format			string
 	Mux			router.Mux
 	RegisterServerFunc	func(*grpc.Server)
+	TLSConfig		*tls.Config   // optional TLS config, used by ListenAndServeTLS
 }
 
 type ConfigFunc func(*Config)
@@ -28,6 +30,7 @@ type ConfigFunc func(*Config)
 var DefaultConfig = Config{
 	Name: 			"server_default",
 	Addr:			":8080",
+	Format:			"http",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -98,5 +101,23 @@ func Mux(m router.Mux) ConfigFunc {
 func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.RegisterServerFunc = fn
+	}
+}
+
+// TLSConfig server multiplexer
+func TLSConfig(certFile, keyFile string) ConfigFunc {
+	return func(cfg *Config) {
+		cer, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			log.Printf("ERROR tls.LoadX509KeyPair %v",err)
+			return
+		}
+		cfg.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			PreferServerCipherSuites: true,
+			Certificates: []tls.Certificate{cer},
+		}
+		cfg.Format = "https"
 	}
 }

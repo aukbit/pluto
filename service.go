@@ -5,9 +5,12 @@ import (
 	"syscall"
 	"os/signal"
 	"os"
+	"net/http"
+	"context"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 
@@ -28,14 +31,25 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 		c(s.cfg)
 	}
 
-	// Wrap this service to all handlers
-	// make it available in handler context
 	for _, srv := range s.Servers(){
+		srv.Init()
+		// Wrap this service to all handlers
+		// make it available in handler context
 		if srv.Config().Format == "http" {
-			srv.Config().Mux.AddContextWith(s.cfg.Name, s)
+			srv.Config().Mux.AddMiddleware(middlewareService(s))
 		}
 	}
 	return nil
+}
+
+func middlewareService(s *service) router.Middleware {
+    return func(h router.Handler) router.Handler {
+        return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, s.cfg.Name, s)
+		h.ServeHTTP(w, r.WithContext(ctx))
+	}
+    }
 }
 
 func (s *service) Servers() map[string]server.Server {

@@ -12,7 +12,7 @@ import (
 )
 
 // Handler is a function type like "net/http" Handler
-type Handler func (http.ResponseWriter, *http.Request)
+type Handler func(http.ResponseWriter, *http.Request)
 
 // ServeHTTP calls f(w, r).
 func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,13 +33,17 @@ type Mux interface {
 	DELETE(string, Handler)
 	Handle(string, string, Handler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
-	AddContextWith(key interface{}, val interface{})
+	AddMiddleware(...Middleware)
 }
 
 // Router
 type Router struct {
 	trie 		*Trie
 }
+
+// Middleware wraps an http.Handler with additional
+// functionality.
+type Middleware func(Handler) Handler
 
 // DefaultRootHandler
 func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,24 +92,22 @@ func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
-// AddContextWith applies a wrapper to all handlers,
-// data is available in the handler context
-func (r *Router) AddContextWith(key interface{}, val interface{}) {
+func (r *Router) AddMiddleware(middlewares ...Middleware) {
 	for _, k := range r.trie.Keys() {
 		data := r.trie.Get(k)
 		for m, h := range data.methods {
-			data.methods[m] = wrapper(key, val, h)
+			data.methods[m] = wrap(h, middlewares...)
 			r.trie.Put(k, data)
 		}
 	}
 }
 
-func wrapper(key interface{}, val interface{}, next Handler) Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, key, val)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
+// wrap h with all specified middlewares.
+func wrap(h Handler, middlewares ...Middleware) Handler {
+    for _, m := range middlewares {
+        h = m(h)
+    }
+    return h
 }
 
 // transformPath returns a tuple with key, value, prefix and params for the

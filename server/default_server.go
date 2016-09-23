@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"crypto/tls"
 	"time"
 	"syscall"
 	"os/signal"
@@ -24,7 +25,6 @@ type defaultServer struct {
 // NewServer will instantiate a new Server with the given config
 func newDefaultServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	c.Format = "http"
 	return &defaultServer{cfg: c, mux: c.Mux, close: make(chan bool)}
 }
 
@@ -33,7 +33,19 @@ func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
 		c(s.cfg)
 	}
 	s.mux = s.cfg.Mux
+	if s.cfg.Format == "https" {
+		s.mux.AddMiddleware(middlewareStrictSecurityHeader())
+	}
 	return nil
+}
+
+func middlewareStrictSecurityHeader() router.Middleware {
+    return func(h router.Handler) router.Handler {
+        return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		h.ServeHTTP(w, r)
+	}
+    }
 }
 
 func (s *defaultServer) Config() *Config {
@@ -61,16 +73,108 @@ func (s *defaultServer) Stop() error {
 }
 
 // start start the Server
-func (s *defaultServer) start() error {
+func (s *defaultServer) start() (err error) {
 	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
 	if s.mux == nil{
 		return errors.New("Handlers not set up. Server will not start.")
 	}
-	if err := s.listenAndServe(); err != nil{
-		log.Fatalf("ERROR %s s.listenAndServe() %v", s.cfg.Name, err)
+	var ln net.Listener
+	if s.cfg.Format == "https" {
+		ln, err = s.listenTLS()
+		if err != nil {
+			return err
+		}
+	} else {
+		ln, err = s.listen()
+		if err != nil {
+			return err
+		}
+	}
+	err = s.serve(ln)
+	if err != nil {
+		return err
 	}
 	return nil
 
+}
+
+// listen based on http.ListenAndServe
+// listens on the TCP network address srv.Addr
+// If srv.Addr is blank, ":http" is used.
+// returns nil or new listener
+func (s *defaultServer) listen() (net.Listener, error) {
+
+	addr := s.cfg.Addr
+	if addr == "" {
+		addr = ":http"
+	}
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
+
+	return ln, nil
+}
+
+// listenTLS based on http.ListenAndServeTLS
+// listens on the TCP network address srv.Addr
+// If srv.Addr is blank, ":https" is used.
+// returns nil or new listener
+func (s *defaultServer) listenTLS() (net.Listener, error) {
+
+	addr := s.cfg.Addr
+	if addr == "" {
+		addr = ":https"
+	}
+
+	ln, err := tls.Listen("tcp", addr, s.cfg.TLSConfig)
+	if err != nil {
+		return nil, err
+	}
+	return ln, nil
+}
+
+// serve based on http.ListenAndServe
+// calls Serve to handle requests on incoming connections.
+// Accepted connections are configured to enable TCP keep-alives.
+// serve always returns a non-nil error.
+func (s *defaultServer) serve(ln net.Listener) error {
+
+	srv := &http.Server{
+		// handler to invoke, http.DefaultServeMux if nil
+		Handler: s.mux,
+
+		// ReadTimeout is used by the http server to set a maximum duration before
+		// timing out read of the request. The default timeout is 10 seconds.
+		ReadTimeout: 10 * time.Second,
+
+		// WriteTimeout is used by the http server to set a maximum duration before
+		// timing out write of the response. The default timeout is 10 seconds.
+		WriteTimeout: 10 * time.Second,
+
+		TLSConfig:    s.cfg.TLSConfig,
+	}
+	go func() {
+		if err := srv.Serve(ln); err != nil {
+			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
+		}
+	}()
+	//
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
+	go func() {
+		// Waits for call to stop
+		<-s.close
+		log.Printf("CLOSE %s received", s.cfg.Name)
+		// close listener
+		if err := ln.Close(); err != nil {
+			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
+		}
+		log.Printf("----- %s listener closed", s.cfg.Name)
+	}()
+
+	return nil
 }
 
 // listenAndServe based on http.ListenAndServe
@@ -84,16 +188,14 @@ func (s *defaultServer) listenAndServe() error {
 	if addr == "" {
 		addr = ":http"
 	}
+
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
-
 	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
 
-	// TODO config option for TLS
-
-	httpServer := http.Server{
+	srv := http.Server{
 		// handler to invoke, http.DefaultServeMux if nil
 		Handler: s.mux,
 
@@ -104,10 +206,12 @@ func (s *defaultServer) listenAndServe() error {
 		// WriteTimeout is used by the http server to set a maximum duration before
 		// timing out write of the response. The default timeout is 10 seconds.
 		WriteTimeout: 10 * time.Second,
+
+		TLSConfig:    s.cfg.TLSConfig,
 	}
 	go func() {
-		if err := httpServer.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s httpServer.Serve(ln) %v", s.cfg.Name, err)
+		if err := srv.Serve(ln); err != nil {
+			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
 		}
 	}()
 	//
