@@ -33,7 +33,19 @@ func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
 		c(s.cfg)
 	}
 	s.mux = s.cfg.Mux
+	if s.cfg.Format == "https" {
+		s.mux.AddMiddleware(middlewareStrictSecurityHeader())
+	}
 	return nil
+}
+
+func middlewareStrictSecurityHeader() router.Middleware {
+    return func(h router.Handler) router.Handler {
+        return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		h.ServeHTTP(w, r)
+	}
+    }
 }
 
 func (s *defaultServer) Config() *Config {

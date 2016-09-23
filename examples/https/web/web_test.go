@@ -7,26 +7,24 @@ import (
 	"log"
 	"io"
 	"net/http"
+	"crypto/tls"
 	"io/ioutil"
 	"encoding/json"
 )
-
-type Message struct {
-	message  string           `json:"message"`
-}
 
 const URL = "https://localhost:8443"
 
 func TestAll(t *testing.T){
 
-	// launch frontend service running on
+	// Note: launch frontend service in a terminal rather than lunching a go routine here
+	// $ go run main.go
 	// default http://localhost:8080
 
-	go func(){
-		if err := web.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	//go func(){
+	//	if err := web.Run(); err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}()
 
 	var tests = []struct {
 		Method       string
@@ -39,22 +37,21 @@ func TestAll(t *testing.T){
 		Method:       "GET",
 		Path:         func() string { return URL + "/" },
 		BodyContains: func() string { return `{"message":"Hello Gopher"}` },
-		Status:       http.StatusCreated,
+		Status:       http.StatusOK,
 	},
 
 	}
 
-	message := &Message{}
+	message := &web.Message{}
 
 	for _, test := range tests {
 
-		r, err := http.NewRequest(test.Method, test.Path(), test.Body)
-		if err != nil {
-			t.Fatal(err)
+		// skip certificate verification
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
 		}
-		assert.Equal(t, 1, 1)
-		// call handler
-		response, err := http.DefaultClient.Do(r)
+		client := &http.Client{Transport: tr}
+		response, err := client.Get(test.Path())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -67,7 +64,8 @@ func TestAll(t *testing.T){
 		if err != nil {
 			log.Fatalf("Unmarshal %v", err)
 		} else {
-			assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+			assert.Equal(t, "max-age=63072000; includeSubDomains", response.Header.Get("Strict-Transport-Security"))
 			assert.Equal(t, test.Status, response.StatusCode)
 			assert.Equal(t, test.BodyContains(), string(actualBody))
 		}
