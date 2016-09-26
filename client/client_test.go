@@ -27,7 +27,7 @@ func TestClient(t *testing.T){
 	pb.RegisterGreeterServer(grpcServer, &greeter{})
 	// Create pluto server
 	s := server.NewServer(
-		server.Addr(":65060"),
+		server.Addr(":65061"),
 		server.GRPCServer(grpcServer),
 	)
 	// Run Server
@@ -42,7 +42,7 @@ func TestClient(t *testing.T){
 	c := client.NewClient(
 		client.Name("gopher"),
 		client.Description("gopher super client"),
-		client.Target("localhost:65060"),
+		client.Target("localhost:65061"),
 		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
