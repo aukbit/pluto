@@ -5,10 +5,41 @@ import (
 	"crypto/tls"
 	"net/http"
 	"bitbucket.org/aukbit/pluto/server/router"
+	"log"
+	"syscall"
+	"os/signal"
+	"os"
 )
 
 type httpsServer struct {
 	defaultServer
+}
+
+// Run Server
+func (s *httpsServer) Run() error {
+	if err := s.start(); err != nil {
+		return err
+	}
+	// parse address for host, port
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+	sig := <-ch
+	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
+	return s.Stop()
+}
+
+func (s *httpsServer) start() error {
+
+	ln, err := s.listen()
+	if err != nil {
+		return err
+	}
+
+	if err := s.serve(ln); err != nil {
+		return err
+	}
+	go s.waitSignal(ln)
+	return nil
 }
 
 // listenTLS based on http.ListenAndServeTLS

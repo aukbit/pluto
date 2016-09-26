@@ -8,7 +8,7 @@ import (
 	"log"
 	"bitbucket.org/aukbit/pluto/client"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
-	//"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server"
 	"fmt"
 )
 
@@ -16,28 +16,27 @@ type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("SayHello")
-	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello " + in.Name)}, nil
+	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
 }
 
 func TestClient(t *testing.T){
 
 	// Create a grpc server
 	// Define gRPC server and register
-	//grpcServer := grpc.NewServer()
-	//pb.RegisterGreeterServer(grpcServer, &greeter{})
-	//// Create pluto server
-	//s := server.NewServer(
-	//	server.Addr(":65060"),
-	//	server.GRPCServer(grpcServer),
-	//)
-	//// Run Server
-	//go func() {
-	//	if err := s.Run(); err != nil {
-	//		log.Fatal(err)
-	//	}
-	//}()
-	//defer s.Stop()
+	grpcServer := grpc.NewServer()
+	pb.RegisterGreeterServer(grpcServer, &greeter{})
+	// Create pluto server
+	s := server.NewServer(
+		server.Addr(":65060"),
+		server.GRPCServer(grpcServer),
+	)
+	// Run Server
+	go func() {
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	defer s.Stop()
 
 	// Create a grpc client
 	c := client.NewClient(
@@ -59,9 +58,9 @@ func TestClient(t *testing.T){
 	if err := c.Dial(); err != nil {
 		log.Fatal(err)
 	}
-	c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{})
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//assert.Equal(t, "", r.Message)
+	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	if err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "Hello client_gopher", r.Message)
 }
