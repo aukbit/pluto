@@ -191,8 +191,8 @@ func TestServer(t *testing.T){
 	}
 
 	server := httptest.NewServer(router)
-    defer server.Close()
-    for _, test := range tests {
+	defer server.Close()
+	for _, test := range tests {
 		r, err := http.NewRequest(test.Method, server.URL + test.Path, test.Body)
 		if err != nil {
 			t.Fatal(err)

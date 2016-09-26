@@ -8,37 +8,59 @@ import (
 	"log"
 	"bitbucket.org/aukbit/pluto/client"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"bitbucket.org/aukbit/pluto/server"
+	"fmt"
 )
+
+type greeter struct{}
+
+// SayHello implements helloworld.GreeterServer
+func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
+}
 
 func TestClient(t *testing.T){
 
-	//1. create a client
+	// Create a grpc server
+	// Define gRPC server and register
+	grpcServer := grpc.NewServer()
+	pb.RegisterGreeterServer(grpcServer, &greeter{})
+	// Create pluto server
+	s := server.NewServer(
+		server.Addr(":65061"),
+		server.GRPCServer(grpcServer),
+	)
+	// Run Server
+	go func() {
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	defer s.Stop()
+
+	// Create a grpc client
 	c := client.NewClient(
 		client.Name("gopher"),
 		client.Description("gopher super client"),
+		client.Target("localhost:65061"),
 		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
-		client.Target("127.0.0.1:65057"),
 	)
-	//assert.Equal(t, reflect.TypeOf(client.DefaultClient), reflect.TypeOf(c))
 
 	cfg := c.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.client", cfg.Name)
+	assert.Equal(t, "client_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
-
-	//2.
-	_, err := c.Dial()
-	if err != nil {
+	//
+	// Connect
+	if err := c.Dial(); err != nil {
 		log.Fatal(err)
 	}
 	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
-	//r, err := i.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Fatal(err)
 	}
-	log.Printf("%s", r.Message)
-
+	assert.Equal(t, "Hello client_gopher", r.Message)
 }

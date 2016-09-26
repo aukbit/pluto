@@ -19,13 +19,17 @@ func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f(w, r)
 }
 
+// Middleware wraps an http.Handler with additional
+// functionality.
+type Middleware func(Handler) Handler
+
 // Match
 type Match struct {
 	handler 	Handler
 	ctx 		context.Context
 }
 
-// Mux interface to expose Router struct
+// Mux interface to expose router struct
 type Mux interface {
 	GET(string, Handler)
 	POST(string, Handler)
@@ -36,14 +40,10 @@ type Mux interface {
 	AddMiddleware(...Middleware)
 }
 
-// Router
-type Router struct {
+// router
+type router struct {
 	trie 		*Trie
 }
-
-// Middleware wraps an http.Handler with additional
-// functionality.
-type Middleware func(Handler) Handler
 
 // DefaultRootHandler
 func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +54,12 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }
 
-func NewRouter() Mux {
-	return &Router{trie: NewTrie()}
+func NewRouter() *router {
+	return &router{trie: NewTrie()}
 }
 
 // Handle takes a method, pattern, and http handler for a route.
-func (r *Router) Handle(method, path string, handler Handler) {
+func (r *router) Handle(method, path string, handler Handler) {
 	if matches, err := regexp.MatchString("^[A-Z]+$", method); !matches || err != nil {
 		panic("Http method " + method + " is not valid")
 	}
@@ -76,23 +76,23 @@ func (r *Router) Handle(method, path string, handler Handler) {
 }
 
 // Get is a shortcut for Handle with method "GET"
-func (r *Router) GET(path string, handler Handler) {
+func (r *router) GET(path string, handler Handler) {
 	r.Handle("GET", path, handler)
 }
 // Post is a shortcut for Handle with method "GET"
-func (r *Router) POST(path string, handler Handler) {
+func (r *router) POST(path string, handler Handler) {
 	r.Handle("POST", path, handler)
 }
 // Get is a shortcut for Handle with method "GET"
-func (r *Router) PUT(path string, handler Handler) {
+func (r *router) PUT(path string, handler Handler) {
 	r.Handle("PUT", path, handler)
 }
 // Get is a shortcut for Handle with method "GET"
-func (r *Router) DELETE(path string, handler Handler) {
+func (r *router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
-func (r *Router) AddMiddleware(middlewares ...Middleware) {
+func (r *router) AddMiddleware(middlewares ...Middleware) {
 	for _, k := range r.trie.Keys() {
 		data := r.trie.Get(k)
 		for m, h := range data.methods {
@@ -136,7 +136,7 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 	return key, value, prefix, params
 }
 
-func (r *Router) findData(method, path, sufix, key, segment string, values []string) (*Data, []string) {
+func findData(r *router, method, path, sufix, key, segment string, values []string) (*Data, []string) {
 	//log.Printf("findData method=%v, path=%v, sufix=%v, key=%v, segment=%v, values=%v", method, path, sufix, key, segment, values)
 
 	// initialize
@@ -189,7 +189,8 @@ func (r *Router) findData(method, path, sufix, key, segment string, values []str
 		sufix = sufix[i+1:]
 	}
 	values = append(values, segment)
-	return r.findData(method, path, sufix, key, segment, values)
+
+	return findData(r, method, path, sufix, key, segment, values)
 }
 
 func setContext (ctx context.Context, vars, values []string) context.Context {
@@ -203,10 +204,10 @@ func setContext (ctx context.Context, vars, values []string) context.Context {
 	return ctx
 }
 
-func (r *Router) FindMatch(req *http.Request) *Match  {
+func (r *router) findMatch(req *http.Request) *Match  {
 	path := req.URL.Path
 	method := req.Method
-	data, values := r.findData(method, path, "", "", "", []string{})
+	data, values := findData(r, method, path, "", "", "", []string{})
 	if data != nil {
 		ctx := setContext(req.Context(), data.vars, values)
 		handler := data.methods[req.Method]
@@ -220,12 +221,12 @@ func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // ServeHTTP
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	log.Printf("----- %s %s", req.Method, req.URL)
-	m := r.FindMatch(req)
-	if m != nil{
-		m.ServeHTTP(w, req)
-	} else {
+	m := r.findMatch(req)
+	if m == nil {
 		NotFoundHandler(w, req)
+		return
 	}
+	m.ServeHTTP(w, req)
 }

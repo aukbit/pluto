@@ -11,7 +11,6 @@ import (
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
-
 type Config struct {
 	Id			string
 	Name 			string
@@ -20,12 +19,11 @@ type Config struct {
 	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format			string
 	Mux			router.Mux
-	RegisterServerFunc	func(*grpc.Server)
 	TLSConfig		*tls.Config   // optional TLS config, used by ListenAndServeTLS
+	GRPCServer		*grpc.Server
 }
 
 type ConfigFunc func(*Config)
-
 
 var DefaultConfig = Config{
 	Name: 			"server_default",
@@ -97,13 +95,6 @@ func Mux(m router.Mux) ConfigFunc {
 	}
 }
 
-// RegisterServerFunc register gRPC server function
-func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
-	return func(cfg *Config) {
-		cfg.RegisterServerFunc = fn
-	}
-}
-
 // TLSConfig server multiplexer
 func TLSConfig(certFile, keyFile string) ConfigFunc {
 	return func(cfg *Config) {
@@ -119,5 +110,12 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 			Certificates: []tls.Certificate{cer},
 		}
 		cfg.Format = "https"
+	}
+}
+
+func GRPCServer(s *grpc.Server) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.GRPCServer = s
+		cfg.Format = "grpc"
 	}
 }
