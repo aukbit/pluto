@@ -60,5 +60,8 @@ func TestClient(t *testing.T){
 		log.Fatal(err)
 	}
 	c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{})
-	//assert.Equal(t, "server_default: Hello client_gopher", r.Message)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//assert.Equal(t, "", r.Message)
 }

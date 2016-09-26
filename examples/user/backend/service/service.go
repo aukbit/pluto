@@ -23,7 +23,7 @@ func Run() error {
 	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name("backend"),
-		pluto.Description("Backend service is responsible to persist data"),
+		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(*db_addr),
 		pluto.Servers(grpcSrv),
 	)
