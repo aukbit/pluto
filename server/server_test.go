@@ -4,7 +4,6 @@ import (
 	"testing"
 	"net/http"
 	"github.com/paulormart/assert"
-	"reflect"
 	"log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -39,13 +38,19 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 func TestServer(t *testing.T){
 
 	// HTTP server
-	//1. create new server
+
+	// Define Router
+	mux := router.NewRouter()
+	mux.GET("/home", Home)
+	mux.GET("/home/:id", Detail)
+
+	// Create pluto server
 	s := server.NewServer(
 		server.Name("gopher"),
 		server.Description("gopher super server"),
 		server.Addr(":8080"),
+		server.Mux(mux),
 	)
-	assert.Equal(t, reflect.TypeOf(server.DefaultServer), reflect.TypeOf(s))
 
 	cfg := s.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
@@ -53,15 +58,7 @@ func TestServer(t *testing.T){
 	assert.Equal(t, "gopher super server", cfg.Description)
 	assert.Equal(t, ":8080", cfg.Addr)
 
-	//2. register handlers
-	mux := router.NewRouter()
-	mux.GET("/home", Home)
-	mux.GET("/home/:id", Detail)
-
-	//3. assign last configs to the server before start, in this case setup a router
-	s.Init(server.Mux(mux))
-
-	//4. Run server
+	// Run server
 	go func(){
 		if err := s.Run(); err != nil {
 			log.Fatal(err)
@@ -70,24 +67,19 @@ func TestServer(t *testing.T){
 	defer s.Stop()
 
 	// GRPC server
-	//1. create new server
-	g := server.NewGRPCServer(
+	// Define gRPC server and register
+	grpcServer := grpc.NewServer()
+	pb.RegisterGreeterServer(grpcServer, &greeter{})
+
+	// Create pluto server
+	g := server.NewServer(
 		server.Name("gopher"),
 		server.Description("gopher super server"),
-		server.Addr(":65057"),
+		server.Addr(":65058"),
+		server.GRPCServer(grpcServer),
 	)
 
-	cfg2 := g.Config()
-	assert.Equal(t, true, len(cfg2.Id) > 0)
-	assert.Equal(t, "server_gopher", cfg2.Name)
-	assert.Equal(t, "gopher super server", cfg2.Description)
-
-	// Register RegisterServerFunc
-	g.Init(server.RegisterServerFunc(func(srv *grpc.Server) {
-			pb.RegisterGreeterServer(srv, &greeter{cfg: cfg2})
-		}),)
-
-	// 2. Add some context
+	// Run Server
 	go func() {
 		//2. Run server
 		if err := g.Run(); err != nil {
@@ -137,9 +129,6 @@ func TestServer(t *testing.T){
 		assert.Equal(t, test.BodyContains, message)
 
 	}
-
-
-
 
 }
 

@@ -19,6 +19,10 @@ func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f(w, r)
 }
 
+// Middleware wraps an http.Handler with additional
+// functionality.
+type Middleware func(Handler) Handler
+
 // Match
 type Match struct {
 	handler 	Handler
@@ -40,10 +44,6 @@ type Mux interface {
 type router struct {
 	trie 		*Trie
 }
-
-// Middleware wraps an http.Handler with additional
-// functionality.
-type Middleware func(Handler) Handler
 
 // DefaultRootHandler
 func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {

@@ -15,23 +15,24 @@ var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
 func Run() error {
 	flag.Parse()
 
-	// 1. Config service
+	// GRPC server
+	// Define gRPC server and register
+	grpcServer := grpc.NewServer()
+	// Define Pluto Server
+	grpcSrv := server.NewServer(server.Addr(*grpc_port), server.GRPCServer(grpcServer))
+	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible to persist data"),
 		pluto.Datastore(*db_addr),
+		pluto.Servers(grpcSrv),
 	)
+	// Register grpc Server
+	pb.RegisterUserServiceServer(grpcServer, &backend.User{Cluster: s.Config().Datastore})
 
-	// 2. Define datastore
-	//db := server.NewDatastore()
-	// 2. Define grpc Server
-	grpcSrv := server.NewGRPCServer(server.Addr(*grpc_port),
-		server.RegisterServerFunc(func(srv *grpc.Server){
-			pb.RegisterUserServiceServer(srv, &backend.User{Cluster: s.Config().Datastore})
-		}),
-	)
 	// 5. Init service
-	s.Init(pluto.Servers(grpcSrv),)
+	// TODO remove init method redundant
+	s.Init()
 
 	// 6. Run service
 	if err := s.Run(); err != nil {

@@ -32,7 +32,6 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	}
 
 	for _, srv := range s.Servers(){
-		srv.Init()
 		// Wrap this service to all handlers
 		// make it available in handler context
 		if srv.Config().Format == "http" {
@@ -98,8 +97,7 @@ func (s *service) start() error {
 	// dial clients
 	for _, clt := range s.Clients(){
 		go func(cc client.Client) {
-			_, err := cc.Dial()
-			if err != nil {
+			if err := cc.Dial(); err != nil {
 				log.Fatalf("ERROR cc.Dial() %v", err)
 			}
 		}(clt)

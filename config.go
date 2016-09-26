@@ -81,7 +81,6 @@ func Description(d string) ConfigFunc {
 // Servers slice of service servers
 func Servers(s server.Server) ConfigFunc {
 	return func(cfg *Config) {
-		//cfg.Servers = append(cfg.Servers, s)
 		cfg.Servers[s.Config().Name] = s
 	}
 }
@@ -89,7 +88,6 @@ func Servers(s server.Server) ConfigFunc {
 // Clients slice of service clients
 func Clients(c client.Client) ConfigFunc {
 	return func(cfg *Config) {
-		//cfg.Clients = append(cfg.Clients, c)
 		cfg.Clients[c.Config().Name] = c
 	}
 }

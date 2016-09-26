@@ -4,56 +4,37 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"crypto/tls"
 	"time"
 	"syscall"
 	"os/signal"
 	"os"
-	"errors"
-	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
 	cfg 			*Config
-	mux			router.Mux
-	// close chan for graceful shutdown
 	close 			chan bool
 }
 
 // NewServer will instantiate a new defaultServer with the given config
-func newDefaultServer(cfgs ...ConfigFunc) *defaultServer {
+func newServer(cfgs ...ConfigFunc) Server {
 	c := newConfig(cfgs...)
-	return &defaultServer{cfg: c, mux: c.Mux, close: make(chan bool)}
-}
-
-func (s *defaultServer) Init(cfgs ...ConfigFunc) error {
-	for _, c := range cfgs {
-		c(s.cfg)
-	}
-	s.mux = s.cfg.Mux
-	if s.cfg.Format == "https" {
-		s.mux.AddMiddleware(middlewareStrictSecurityHeader())
+	switch c.Format {
+	case "grpc":
+		ds := defaultServer{c, make(chan bool)}
+		return &grpcServer{ds}
+	case "https":
+		c.Mux.AddMiddleware(middlewareStrictSecurityHeader())
+		ds := defaultServer{c, make(chan bool)}
+		return &httpsServer{ds}
+	default:
+		return &defaultServer{c, make(chan bool)}
 	}
 	return nil
 }
 
-func middlewareStrictSecurityHeader() router.Middleware {
-    return func(h router.Handler) router.Handler {
-        return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		h.ServeHTTP(w, r)
-	}
-    }
-}
-
-func (s *defaultServer) Config() *Config {
-	cfg := s.cfg
-	return cfg
-}
-
-// Run
+// Run Server
 func (s *defaultServer) Run() error {
 	if err := s.start(); err != nil {
 		return err
@@ -66,36 +47,29 @@ func (s *defaultServer) Run() error {
 	return s.Stop()
 }
 
-// Stop sends message to close the listener via channel
+// Stop stops server by sending a message to close the listener via channel
 func (s *defaultServer) Stop() error {
 	s.close <-true
 	return nil
 }
 
-// start start the Server
-func (s *defaultServer) start() (err error) {
-	log.Printf("START %s %s \t%s", s.cfg.Format, s.cfg.Name, s.cfg.Id)
-	if s.mux == nil{
-		return errors.New("Handlers not set up. Server will not start.")
-	}
-	var ln net.Listener
-	if s.cfg.Format == "https" {
-		ln, err = s.listenTLS()
-		if err != nil {
-			return err
-		}
-	} else {
-		ln, err = s.listen()
-		if err != nil {
-			return err
-		}
-	}
-	err = s.serve(ln)
+func (s *defaultServer) Config() *Config {
+	cfg := s.cfg
+	return cfg
+}
+
+func (s *defaultServer) start() error {
+
+	ln, err := s.listen()
 	if err != nil {
 		return err
 	}
-	return nil
 
+	if err := s.serve(ln); err != nil {
+		return err
+	}
+	go s.waitSignal(ln)
+	return nil
 }
 
 // listen based on http.ListenAndServe
@@ -118,24 +92,6 @@ func (s *defaultServer) listen() (net.Listener, error) {
 	return ln, nil
 }
 
-// listenTLS based on http.ListenAndServeTLS
-// listens on the TCP network address srv.Addr
-// If srv.Addr is blank, ":https" is used.
-// returns nil or new listener
-func (s *defaultServer) listenTLS() (net.Listener, error) {
-
-	addr := s.cfg.Addr
-	if addr == "" {
-		addr = ":https"
-	}
-
-	ln, err := tls.Listen("tcp", addr, s.cfg.TLSConfig)
-	if err != nil {
-		return nil, err
-	}
-	return ln, nil
-}
-
 // serve based on http.ListenAndServe
 // calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
@@ -144,7 +100,7 @@ func (s *defaultServer) serve(ln net.Listener) error {
 
 	srv := &http.Server{
 		// handler to invoke, http.DefaultServeMux if nil
-		Handler: s.mux,
+		Handler: s.cfg.Mux,
 
 		// ReadTimeout is used by the http server to set a maximum duration before
 		// timing out read of the request. The default timeout is 10 seconds.
@@ -161,72 +117,19 @@ func (s *defaultServer) serve(ln net.Listener) error {
 			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
 		}
 	}()
-	//
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
-	go func() {
-		// Waits for call to stop
-		<-s.close
-		log.Printf("CLOSE %s received", s.cfg.Name)
-		// close listener
-		if err := ln.Close(); err != nil {
-			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
-		}
-		log.Printf("----- %s listener closed", s.cfg.Name)
-	}()
 
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	return nil
 }
 
-// listenAndServe based on http.ListenAndServe
-// listens on the TCP network address srv.Addr and then
-// calls Serve to handle requests on incoming connections.
-// Accepted connections are configured to enable TCP keep-alives.
-// If srv.Addr is blank, ":http" is used.
-// ListenAndServe always returns a non-nil error.
-func (s *defaultServer) listenAndServe() error {
-	addr := s.cfg.Addr
-	if addr == "" {
-		addr = ":http"
+// waitSignal to be used as go routine waiting for a signal to stop the service
+func (s *defaultServer) waitSignal (ln net.Listener) {
+	// Waits for call to stop
+	<-s.close
+	log.Printf("CLOSE %s %s received", s.cfg.Format, s.cfg.Name)
+	// close listener
+	if err := ln.Close(); err != nil {
+		log.Fatalf("ERROR %s %s ln.Close() %v", s.cfg.Format, s.cfg.Name, err)
 	}
-
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
-	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
-
-	srv := http.Server{
-		// handler to invoke, http.DefaultServeMux if nil
-		Handler: s.mux,
-
-		// ReadTimeout is used by the http server to set a maximum duration before
-		// timing out read of the request. The default timeout is 10 seconds.
-		ReadTimeout: 10 * time.Second,
-
-		// WriteTimeout is used by the http server to set a maximum duration before
-		// timing out write of the response. The default timeout is 10 seconds.
-		WriteTimeout: 10 * time.Second,
-
-		TLSConfig:    s.cfg.TLSConfig,
-	}
-	go func() {
-		if err := srv.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
-		}
-	}()
-	//
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
-	//
-	go func() {
-		// Waits for call to stop
-		<-s.close
-		log.Printf("CLOSE %s received", s.cfg.Name)
-		// close listener
-		if err := ln.Close(); err != nil {
-			log.Fatalf("ERROR %s ln.Close() %v", s.cfg.Name, err)
-		}
-		log.Printf("----- %s listener closed", s.cfg.Name)
-	}()
-
-	return nil
+	log.Printf("----- %s %s listener closed", s.cfg.Format, s.cfg.Name)
 }
