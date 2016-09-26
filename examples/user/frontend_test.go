@@ -28,6 +28,16 @@ func TestAll(t *testing.T){
 
 	// Note: Run the backend service in a different terminal window
 	// $  go run ./backend/main.go -db_addr=DB_ADDR_ENV
+	// TODO try to run this via exec.commmand
+	//go func(){
+	//	cmd := "go"
+	//	args := []string{"run", "./backend/main.go", "-db_addr=192.168.99.100"}
+	//	out, err := exec.Command(cmd, args...).Output()
+	//	if err != nil {
+	//		log.Fatal(err)
+	//		os.Exit(1)
+	//	}
+	//}()
 
 	// launch frontend service running on
 	// default http://localhost:8080

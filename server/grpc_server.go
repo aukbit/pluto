@@ -17,8 +17,8 @@ type gRPCServer struct {
 	close 			chan bool
 }
 
-// newGRPCServer will instantiate a new Server with the given config
-func newGRPCServer(cfgs ...ConfigFunc) Server {
+// newGRPCServer will instantiate a new gRPCServer with the given config
+func newGRPCServer(cfgs ...ConfigFunc) *gRPCServer {
 	c := newConfig(cfgs...)
 	c.Format = "grpc"
 	return &gRPCServer{cfg: c, close: make(chan bool)}
@@ -38,6 +38,10 @@ func (s *gRPCServer) Config() *Config {
 
 // Run
 func (s *gRPCServer) Run() error {
+	// validate server
+	if s.cfg.RegisterServerFunc == nil {
+		log.Fatal("gRPC server must contain a Register Server func")
+	}
 	if err := s.start(); err != nil {
 		return err
 	}

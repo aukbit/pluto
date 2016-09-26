@@ -22,8 +22,8 @@ type defaultServer struct {
 	close 			chan bool
 }
 
-// NewServer will instantiate a new Server with the given config
-func newDefaultServer(cfgs ...ConfigFunc) Server {
+// NewServer will instantiate a new defaultServer with the given config
+func newDefaultServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
 	return &defaultServer{cfg: c, mux: c.Mux, close: make(chan bool)}
 }

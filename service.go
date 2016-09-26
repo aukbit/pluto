@@ -20,7 +20,7 @@ type service struct {
 	close 			chan bool
 }
 
-func newService (cfgs ...ConfigFunc) Service {
+func newService (cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
 	return &service{cfg: c}
 

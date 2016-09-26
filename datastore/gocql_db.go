@@ -16,7 +16,7 @@ type datastore struct {
 }
 
 // NewServer will instantiate a new Server with the given config
-func newDatastore(cfgs ...ConfigFunc) Datastore {
+func newDatastore(cfgs ...ConfigFunc) *datastore {
 	c := newConfig(cfgs...)
 	return &datastore{cfg: c}
 }

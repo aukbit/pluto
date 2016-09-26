@@ -14,8 +14,8 @@ type gRPCClient struct {
 	close 			chan bool
 }
 
-// newGRPCClient will instantiate a new Client with the given config
-func newGRPCClient(cfgs ...ConfigFunc) Client {
+// newGRPCClient will instantiate a new gRPCClient with the given config
+func newGRPCClient(cfgs ...ConfigFunc) *gRPCClient {
 	c := newConfig(cfgs...)
 	c.Format = "grpc"
 	return &gRPCClient{cfg: c, close: make(chan bool)}

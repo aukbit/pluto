@@ -8,12 +8,14 @@ import (
 	"log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"time"
 	"fmt"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"bitbucket.org/aukbit/pluto/reply"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"io/ioutil"
+	"encoding/json"
+	"io"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +24,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 func Detail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := map[string]string{"message": "Hello Room", "id": ctx.Value("id").(string)}
-	reply.Json(w, r, http.StatusOK, data)
+	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value("id").(string)))
 }
 
 type greeter struct{
@@ -48,7 +49,7 @@ func TestServer(t *testing.T){
 
 	cfg := s.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.server.http", cfg.Name)
+	assert.Equal(t, "server_gopher", cfg.Name)
 	assert.Equal(t, "gopher super server", cfg.Description)
 	assert.Equal(t, ":8080", cfg.Addr)
 
@@ -78,7 +79,7 @@ func TestServer(t *testing.T){
 
 	cfg2 := g.Config()
 	assert.Equal(t, true, len(cfg2.Id) > 0)
-	assert.Equal(t, "gopher.server.grpc", cfg2.Name)
+	assert.Equal(t, "server_gopher", cfg2.Name)
 	assert.Equal(t, "gopher super server", cfg2.Description)
 
 	// Register RegisterServerFunc
@@ -95,7 +96,50 @@ func TestServer(t *testing.T){
 	}()
 	defer g.Stop()
 
-	time.Sleep(time.Second * 600)
+	// Test
+	const URL = "http://localhost:8080"
+	var tests = []struct {
+		Path         string
+		Body         io.Reader
+		BodyContains string
+		Status       int
+	}{
+		{
+		Path:         "/home",
+		BodyContains: `Hello World`,
+		Status:       http.StatusOK,
+	},
+		{
+		Path:         "/home/123",
+		BodyContains: `Hello Room 123`,
+		Status:       http.StatusOK,
+	},
+	}
+	for _, test := range tests {
+
+		r, err := http.Get(URL + test.Path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer r.Body.Close()
+
+
+		var message string
+		if err := json.Unmarshal(b, &message); err != nil {
+			log.Fatal(err)
+		}
+		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		assert.Equal(t, test.Status, r.StatusCode)
+		assert.Equal(t, test.BodyContains, message)
+
+	}
+
+
+
 
 }
 

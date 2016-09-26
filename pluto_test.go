@@ -3,12 +3,14 @@ package pluto_test
 import (
 	"testing"
 	"net/http"
+	"io/ioutil"
 	"log"
 	"github.com/paulormart/assert"
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
+	"encoding/json"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +27,7 @@ func TestService(t *testing.T){
 	//assert.Equal(t, reflect.TypeOf(service.DefaultServer), reflect.TypeOf(s))
 	cfg := s.Config()
 	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "gopher.pluto", cfg.Name)
+	assert.Equal(t, "pluto_gopher", cfg.Name)
 	assert.Equal(t, "gopher super service", cfg.Description)
 
 	// 2. Set http server handlers
@@ -38,8 +40,30 @@ func TestService(t *testing.T){
 	s.Init(pluto.Servers(httpSrv))
 
 	// 5. Run service
-	if err := s.Run(); err != nil {
+	go func() {
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Test
+	r, err := http.Get("http://localhost:8080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer r.Body.Close()
+
+
+	var message string
+	if err := json.Unmarshal(b, &message); err != nil {
 		log.Fatal(err)
 	}
 
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "Hello World", message)
 }
