@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net"
+	"google.golang.org/grpc"
 
 )
 
@@ -15,10 +16,15 @@ type grpcServer struct {
 // serve serves *grpc.Server
 func (s *grpcServer) serve(ln net.Listener) (err error) {
 
-	srv := s.cfg.GRPCServer
+	//srv := s.cfg.GRPCServer
+	// new gRPC server
+	g := grpc.NewServer()
+
+	// pb.RegisterServerFunc
+	s.cfg.RegisterServerFunc(g)
 
 	go func() {
-		if err := srv.Serve(ln); err != nil {
+		if err := g.Serve(ln); err != nil {
 			log.Fatalf("ERROR %s g.Serve(lis) %v", s.cfg.Name, err)
 		}
 	}()

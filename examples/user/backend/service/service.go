@@ -17,22 +17,28 @@ func Run() error {
 
 	// GRPC server
 	// Define gRPC server and register
-	grpcServer := grpc.NewServer()
-	// Define Pluto Server
-	grpcSrv := server.NewServer(server.Addr(*grpc_port), server.GRPCServer(grpcServer))
+	//grpcServer := grpc.NewServer()
+
 	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(*db_addr),
-		pluto.Servers(grpcSrv),
+
 	)
 	// Register grpc Server
-	pb.RegisterUserServiceServer(grpcServer, &backend.User{Cluster: s.Config().Datastore})
+	//pb.RegisterUserServiceServer(grpcServer, &backend.User{Cluster: s.Config().Datastore})
+
+	// Define Pluto Server
+	//grpcSrv := server.NewServer(server.Addr(*grpc_port), server.GRPCServer(grpcServer))
+	grpcSrv := server.NewServer(server.Addr(*grpc_port),
+		server.RegisterServerFunc(func(srv *grpc.Server) interface{} {
+			return pb.RegisterUserServiceServer(srv, &backend.User{Cluster: s.Config().Datastore})
+		}))
 
 	// 5. Init service
 	// TODO remove init method redundant
-	s.Init()
+	s.Init(pluto.Servers(grpcSrv))
 
 	// 6. Run service
 	if err := s.Run(); err != nil {
