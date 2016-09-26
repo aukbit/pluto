@@ -7,6 +7,7 @@ import (
 	"bitbucket.org/aukbit/pluto/examples/user/backend/views"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"flag"
+	"log"
 )
 
 var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
@@ -32,13 +33,14 @@ func Run() error {
 	// Define Pluto Server
 	//grpcSrv := server.NewServer(server.Addr(*grpc_port), server.GRPCServer(grpcServer))
 	grpcSrv := server.NewServer(server.Addr(*grpc_port),
-		server.RegisterServerFunc(func(srv *grpc.Server) interface{} {
-			return pb.RegisterUserServiceServer(srv, &backend.User{Cluster: s.Config().Datastore})
+		server.RegisterServerFunc(func(srv *grpc.Server) {
+			pb.RegisterUserServiceServer(srv, &backend.User{Cluster: s.Config().Datastore})
 		}))
 
 	// 5. Init service
 	// TODO remove init method redundant
 	s.Init(pluto.Servers(grpcSrv))
+	log.Printf("teste %v", grpcSrv)
 
 	// 6. Run service
 	if err := s.Run(); err != nil {

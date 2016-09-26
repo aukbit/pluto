@@ -30,7 +30,6 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-
 	for _, srv := range s.Servers(){
 		// Wrap this service to all handlers
 		// make it available in handler context

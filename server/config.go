@@ -21,7 +21,7 @@ type Config struct {
 	Mux			router.Mux
 	TLSConfig		*tls.Config   // optional TLS config, used by ListenAndServeTLS
 	GRPCServer		*grpc.Server
-	RegisterServerFunc	func(*grpc.Server) interface{}
+	RegisterServerFunc	func(*grpc.Server)
 }
 
 type ConfigFunc func(*Config)
@@ -122,8 +122,9 @@ func GRPCServer(s *grpc.Server) ConfigFunc {
 }
 
 // RegisterServerFunc register client gRPC function
-func RegisterServerFunc(fn func(*grpc.Server) interface{}) ConfigFunc {
+func RegisterServerFunc(fn func(*grpc.Server)) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.RegisterServerFunc = fn
+		cfg.Format = "grpc"
 	}
 }
