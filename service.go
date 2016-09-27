@@ -75,7 +75,7 @@ func (s *service) Run() error {
 }
 
 func (s *service) start() error {
-	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
+	log.Printf("START %s \t%s Total servers:%d clients:%d", s.cfg.Name, s.cfg.Id, len(s.Servers()), len(s.Clients()))
 
 	// connect datastore
 	if s.cfg.Datastore != nil {

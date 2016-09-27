@@ -10,6 +10,7 @@ import (
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"bitbucket.org/aukbit/pluto/server"
 	"fmt"
+	"os"
 )
 
 type greeter struct{}
@@ -19,24 +20,31 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
 }
 
-func TestClient(t *testing.T){
+func TestMain(m *testing.M) {
+	if !testing.Short() {
+		// Create a grpc server
+		// Define gRPC server and register
+		grpcServer := grpc.NewServer()
+		pb.RegisterGreeterServer(grpcServer, &greeter{})
+		// Create pluto server
+		s := server.NewServer(
+			server.Addr(":65061"),
+			server.GRPCServer(grpcServer),
+		)
+		// Run Server
+		go func() {
+			if err := s.Run(); err != nil {
+				log.Fatal(err)
+			}
+		}()
+		defer s.Stop()
+    	}
+	result := m.Run()
+	if !testing.Short() {}
+    	os.Exit(result)
+}
 
-	// Create a grpc server
-	// Define gRPC server and register
-	grpcServer := grpc.NewServer()
-	pb.RegisterGreeterServer(grpcServer, &greeter{})
-	// Create pluto server
-	s := server.NewServer(
-		server.Addr(":65061"),
-		server.GRPCServer(grpcServer),
-	)
-	// Run Server
-	go func() {
-		if err := s.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	defer s.Stop()
+func TestClient(t *testing.T){
 
 	// Create a grpc client
 	c := client.NewClient(
