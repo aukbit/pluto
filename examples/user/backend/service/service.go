@@ -35,13 +35,11 @@ func Run() error {
 	// 5. Init service
 	// TODO remove init method redundant
 	s.Init(pluto.Servers(grpcSrv))
-
 	// 6. Run service
 	if err := s.Run(); err != nil {
 		return err
 	}
 	return nil
-
 }
 
 

@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"strings"
+	"os/exec"
 )
 
 type User struct {
@@ -23,6 +24,22 @@ type Error struct {
 }
 
 const URL = "http://localhost:8080"
+
+func RunBackend(){
+	args := []string{"run", "./backend/main.go", "-db_addr=192.168.99.100"}
+	cmd := exec.Command("go", args...)
+	err := cmd.Run()
+	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+		return
+	}
+}
+
+func RunFrontend(t *testing.T){
+	t.Logf("RunFrontend")
+	if err := frontend.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
 
 func TestAll(t *testing.T){
 
@@ -41,12 +58,7 @@ func TestAll(t *testing.T){
 
 	// launch frontend service running on
 	// default http://localhost:8080
-
-	go func(){
-		if err := frontend.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	go RunFrontend(t)
 	//
 	user := &User{}
 	//
