@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"os/signal"
 	"os"
+	"crypto/tls"
+	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -18,20 +20,9 @@ type defaultServer struct {
 }
 
 // NewServer will instantiate a new defaultServer with the given config
-func newServer(cfgs ...ConfigFunc) Server {
+func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	switch c.Format {
-	case "grpc":
-		ds := defaultServer{c, make(chan bool)}
-		return &grpcServer{ds}
-	case "https":
-		c.Mux.AddMiddleware(middlewareStrictSecurityHeader())
-		ds := defaultServer{c, make(chan bool)}
-		return &httpsServer{ds}
-	default:
-		return &defaultServer{c, make(chan bool)}
-	}
-	return nil
+	return &defaultServer{c, make(chan bool)}
 }
 
 // Run Server
@@ -58,16 +49,34 @@ func (s *defaultServer) Config() *Config {
 	return cfg
 }
 
-func (s *defaultServer) start() error {
+func (s *defaultServer) start() (err error) {
 
-	ln, err := s.listen()
-	if err != nil {
-		return err
+	var ln net.Listener
+
+	switch s.cfg.Format {
+	case "https":
+		ln, err = s.listenTLS()
+		if err != nil {
+			return err
+		}
+	default:
+		ln, err = s.listen()
+		if err != nil {
+			return err
+		}
 	}
 
-	if err := s.serve(ln); err != nil {
-		return err
+	switch s.cfg.Format {
+	case "grpc":
+		if err := s.serveGRPC(ln); err != nil {
+			return err
+		}
+	default:
+		if err := s.serve(ln); err != nil {
+			return err
+		}
 	}
+
 	go s.waitSignal(ln)
 	return nil
 }
@@ -89,6 +98,24 @@ func (s *defaultServer) listen() (net.Listener, error) {
 	}
 	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
 
+	return ln, nil
+}
+
+// listenTLS based on http.ListenAndServeTLS
+// listens on the TCP network address srv.Addr
+// If srv.Addr is blank, ":https" is used.
+// returns nil or new listener
+func (s *defaultServer) listenTLS() (net.Listener, error) {
+
+	addr := s.cfg.Addr
+	if addr == "" {
+		addr = ":https"
+	}
+
+	ln, err := tls.Listen("tcp", addr, s.cfg.TLSConfig)
+	if err != nil {
+		return nil, err
+	}
 	return ln, nil
 }
 
@@ -122,6 +149,21 @@ func (s *defaultServer) serve(ln net.Listener) error {
 	return nil
 }
 
+// serve serves *grpc.Server
+func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
+
+	srv := s.cfg.GRPCServer
+
+	go func() {
+		if err := srv.Serve(ln); err != nil {
+			log.Fatalf("ERROR %s g.Serve(lis) %v", s.cfg.Name, err)
+		}
+	}()
+
+	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
+	return nil
+}
+
 // waitSignal to be used as go routine waiting for a signal to stop the service
 func (s *defaultServer) waitSignal (ln net.Listener) {
 	// Waits for call to stop
@@ -132,4 +174,15 @@ func (s *defaultServer) waitSignal (ln net.Listener) {
 		log.Fatalf("ERROR %s %s ln.Close() %v", s.cfg.Format, s.cfg.Name, err)
 	}
 	log.Printf("----- %s %s listener closed", s.cfg.Format, s.cfg.Name)
+}
+
+// middlewareStrictSecurityHeader Middleware to wrap all handlers with
+// Strict-Transport-Security header
+func middlewareStrictSecurityHeader() router.Middleware {
+    return func(h router.Handler) router.Handler {
+        return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		h.ServeHTTP(w, r)
+	}
+    }
 }

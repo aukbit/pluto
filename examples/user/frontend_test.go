@@ -3,6 +3,7 @@ package frontend_test
 import (
 	"github.com/paulormart/assert"
 	"bitbucket.org/aukbit/pluto/examples/user/frontend/service"
+	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
 	"testing"
 	"log"
 	"io"
@@ -10,7 +11,8 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"strings"
-	"os/exec"
+	"os"
+	"time"
 )
 
 type User struct {
@@ -26,42 +28,33 @@ type Error struct {
 const URL = "http://localhost:8080"
 
 func RunBackend(){
-	args := []string{"run", "./backend/main.go", "-db_addr=192.168.99.100"}
-	cmd := exec.Command("go", args...)
-	err := cmd.Run()
-	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
-		return
+	if err := backend.Run(); err != nil {
+		log.Fatal(err)
 	}
 }
 
-func RunFrontend(t *testing.T){
-	t.Logf("RunFrontend")
+func RunFrontend(){
 	if err := frontend.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
+func TestMain(m *testing.M) {
+	if !testing.Short() {
+		go RunBackend()
+		time.Sleep(time.Millisecond * 100)
+		go RunFrontend()
+		time.Sleep(time.Millisecond * 100)
+    	}
+	result := m.Run()
+	if !testing.Short() {}
+    	os.Exit(result)
+}
+
 func TestAll(t *testing.T){
 
-	// Note: Run the backend service in a different terminal window
-	// $  go run ./backend/main.go -db_addr=DB_ADDR_ENV
-	// TODO try to run this via exec.commmand
-	//go func(){
-	//	cmd := "go"
-	//	args := []string{"run", "./backend/main.go", "-db_addr=192.168.99.100"}
-	//	out, err := exec.Command(cmd, args...).Output()
-	//	if err != nil {
-	//		log.Fatal(err)
-	//		os.Exit(1)
-	//	}
-	//}()
-
-	// launch frontend service running on
-	// default http://localhost:8080
-	go RunFrontend(t)
-	//
 	user := &User{}
-	//
+
 	var tests = []struct {
 		Method       string
 		Path         func(string)string
@@ -141,7 +134,6 @@ func TestAll(t *testing.T){
 			assert.Equal(t, test.Status, response.StatusCode)
 			assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
 		}
-
 	}
 
 	// FilterUsers

@@ -25,18 +25,17 @@ type Config struct {
 
 type ConfigFunc func(*Config)
 
-var DefaultConfig = Config{
-	Name: 			"server_default",
-	Addr:			":8080",
-	Format:			"http",
-}
+var (
+	DefaultAddr			= ":8080"
+	DefaultFormat      		= "http"
+)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := DefaultConfig
+	cfg := &Config{Addr: DefaultAddr, Format:DefaultFormat}
 
 	for _, c := range cfgs {
-		c(&cfg)
+		c(cfg)
 	}
 
 	if len(cfg.Id) == 0 {
@@ -51,7 +50,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 		cfg.Version = DefaultVersion
 	}
 
-	return &cfg
+	return cfg
 }
 
 // Id server id

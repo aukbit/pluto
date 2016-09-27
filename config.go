@@ -23,18 +23,13 @@ type Config struct {
 
 type ConfigFunc func(*Config)
 
-var DefaultConfig = Config{
-	Name: 			"pluto_default",
-	Servers:		make(map[string]server.Server),
-	Clients:		make(map[string]client.Client),
-}
-
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := DefaultConfig
+	cfg := &Config{Servers: make(map[string]server.Server),
+		Clients: make(map[string]client.Client)}
 
 	for _, c := range cfgs {
-		c(&cfg)
+		c(cfg)
 	}
 
 	if len(cfg.Id) == 0 {
@@ -48,7 +43,8 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	if len(cfg.Version) == 0 {
 		cfg.Version = DefaultVersion
 	}
-	return &cfg
+
+	return cfg
 }
 
 // Id service id
