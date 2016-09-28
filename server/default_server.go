@@ -1,22 +1,23 @@
 package server
 
 import (
+	"crypto/tls"
 	"log"
 	"net"
 	"net/http"
-	"time"
-	"syscall"
-	"os/signal"
 	"os"
-	"crypto/tls"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg 			*Config
-	close 			chan bool
+	cfg   *Config
+	close chan bool
 }
 
 // NewServer will instantiate a new defaultServer with the given config
@@ -40,7 +41,7 @@ func (s *defaultServer) Run() error {
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *defaultServer) Stop() error {
-	s.close <-true
+	s.close <- true
 	return nil
 }
 
@@ -137,7 +138,7 @@ func (s *defaultServer) serve(ln net.Listener) error {
 		// timing out write of the response. The default timeout is 10 seconds.
 		WriteTimeout: 10 * time.Second,
 
-		TLSConfig:    s.cfg.TLSConfig,
+		TLSConfig: s.cfg.TLSConfig,
 	}
 	go func() {
 		if err := srv.Serve(ln); err != nil {
@@ -165,7 +166,7 @@ func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 }
 
 // waitSignal to be used as go routine waiting for a signal to stop the service
-func (s *defaultServer) waitSignal (ln net.Listener) {
+func (s *defaultServer) waitSignal(ln net.Listener) {
 	// Waits for call to stop
 	<-s.close
 	log.Printf("CLOSE %s %s received", s.cfg.Format, s.cfg.Name)
@@ -179,10 +180,10 @@ func (s *defaultServer) waitSignal (ln net.Listener) {
 // middlewareStrictSecurityHeader Middleware to wrap all handlers with
 // Strict-Transport-Security header
 func middlewareStrictSecurityHeader() router.Middleware {
-    return func(h router.Handler) router.Handler {
-        return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		h.ServeHTTP(w, r)
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			h.ServeHTTP(w, r)
+		}
 	}
-    }
 }

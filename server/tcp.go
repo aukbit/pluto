@@ -34,4 +34,3 @@ func getNewAddr() (string, error) {
 	}
 	return addr.String(), nil
 }
-

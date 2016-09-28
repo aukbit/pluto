@@ -1,18 +1,19 @@
 package datastore
 
 import (
-	"github.com/gocql/gocql"
 	"log"
+
+	"github.com/gocql/gocql"
 )
 
 var (
-	DefaultCluster="127.0.0.1"
+	DefaultCluster = "127.0.0.1"
 )
 
 type datastore struct {
-	cfg 			*Config
-	cluster			*gocql.ClusterConfig
-	session			*gocql.Session
+	cfg     *Config
+	cluster *gocql.ClusterConfig
+	session *gocql.Session
 }
 
 // NewServer will instantiate a new Server with the given config

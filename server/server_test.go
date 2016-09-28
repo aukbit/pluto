@@ -1,24 +1,25 @@
 package server_test
 
 import (
-	"testing"
-	"net/http"
-	"github.com/paulormart/assert"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"testing"
+
+	"bitbucket.org/aukbit/pluto/reply"
+	"bitbucket.org/aukbit/pluto/server"
+	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"fmt"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
-	"bitbucket.org/aukbit/pluto/reply"
-	pb "bitbucket.org/aukbit/pluto/server/proto"
-	"io/ioutil"
-	"encoding/json"
-	"io"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
-  	reply.Json(w, r, http.StatusOK, "Hello World")
+	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
 func Detail(w http.ResponseWriter, r *http.Request) {
@@ -26,16 +27,16 @@ func Detail(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value("id").(string)))
 }
 
-type greeter struct{
-	cfg 			*server.Config
+type greeter struct {
+	cfg *server.Config
 }
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello " + in.Name, s.cfg.Name)}, nil
+	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello "+in.Name, s.cfg.Name)}, nil
 }
 
-func TestServer(t *testing.T){
+func TestServer(t *testing.T) {
 
 	// HTTP server
 
@@ -59,7 +60,7 @@ func TestServer(t *testing.T){
 	assert.Equal(t, ":8080", cfg.Addr)
 
 	// Run server
-	go func(){
+	go func() {
 		if err := s.Run(); err != nil {
 			log.Fatal(err)
 		}
@@ -97,15 +98,15 @@ func TestServer(t *testing.T){
 		Status       int
 	}{
 		{
-		Path:         "/home",
-		BodyContains: `Hello World`,
-		Status:       http.StatusOK,
-	},
+			Path:         "/home",
+			BodyContains: `Hello World`,
+			Status:       http.StatusOK,
+		},
 		{
-		Path:         "/home/123",
-		BodyContains: `Hello Room 123`,
-		Status:       http.StatusOK,
-	},
+			Path:         "/home/123",
+			BodyContains: `Hello Room 123`,
+			Status:       http.StatusOK,
+		},
 	}
 	for _, test := range tests {
 
@@ -119,7 +120,6 @@ func TestServer(t *testing.T){
 		}
 		defer r.Body.Close()
 
-
 		var message string
 		if err := json.Unmarshal(b, &message); err != nil {
 			log.Fatal(err)
@@ -131,4 +131,3 @@ func TestServer(t *testing.T){
 	}
 
 }
-

@@ -1,19 +1,20 @@
 package router
 
 import (
-	"testing"
+	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
-	"encoding/json"
-	"log"
 	"strings"
-	"github.com/paulormart/assert"
+	"testing"
+
 	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/paulormart/assert"
 )
 
-func TestPaths(t *testing.T){
+func TestPaths(t *testing.T) {
 
 	var path, key, value, prefix string
 	var params []string
@@ -44,17 +45,17 @@ func TestPaths(t *testing.T){
 
 }
 
-func Index (w http.ResponseWriter, r *http.Request){
+func Index(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Hello World")
 }
 
-func IndexHandler (w http.ResponseWriter, r *http.Request){
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
-func GetHandler (w http.ResponseWriter, r *http.Request){
+func GetHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
-func PostHandler (w http.ResponseWriter, r *http.Request){
+func PostHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -67,38 +68,38 @@ func PostHandler (w http.ResponseWriter, r *http.Request){
 
 	reply.Json(w, r, http.StatusCreated, data)
 }
-func GetDetailHandler (w http.ResponseWriter, r *http.Request){
+func GetDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "Hello World", "id": ctx.Value("id").(string)}
 	reply.Json(w, r, http.StatusOK, data)
 }
-func PutDetailHandler (w http.ResponseWriter, r *http.Request){
+func PutDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "Hello World", "id": ctx.Value("id").(string)}
 	reply.Json(w, r, http.StatusOK, data)
 }
-func DeleteDetailHandler (w http.ResponseWriter, r *http.Request){
+func DeleteDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "deleted", "id": ctx.Value("id").(string)}
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func GetRoomHandler (w http.ResponseWriter, r *http.Request){
+func GetRoomHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "Hello World", "id": ctx.Value("id").(string)}
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func GetCategoryDetailHandler (w http.ResponseWriter, r *http.Request){
+func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "Hello World",
-		"id": ctx.Value("id").(string),
+		"id":       ctx.Value("id").(string),
 		"category": ctx.Value("category").(string),
 	}
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func TestServer(t *testing.T){
+func TestServer(t *testing.T) {
 	router := NewRouter()
 	router.Handle("GET", "/", IndexHandler)
 	router.Handle("GET", "/home", GetHandler)
@@ -121,79 +122,79 @@ func TestServer(t *testing.T){
 		Status       int
 	}{
 		{
-		Method:       "GET",
-		Path:         "/",
-		BodyContains: `"Hello World"`,
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         "/",
+			BodyContains: `"Hello World"`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         "/home",
-		BodyContains: `"Hello World"`,
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         "/home",
+			BodyContains: `"Hello World"`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "POST",
-		Path:         "/home",
-		Body:         strings.NewReader(`{"name":"Gopher house"}`),
-		BodyContains: `{"name":"Gopher house"}`,
-		Status:       http.StatusCreated,
-	},
+			Method:       "POST",
+			Path:         "/home",
+			Body:         strings.NewReader(`{"name":"Gopher house"}`),
+			BodyContains: `{"name":"Gopher house"}`,
+			Status:       http.StatusCreated,
+		},
 		{
-		Method:       "GET",
-		Path:         "/home/123",
-		BodyContains: `{"id":"123","message":"Hello World"}`,
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         "/home/123",
+			BodyContains: `{"id":"123","message":"Hello World"}`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "PUT",
-		Path:         "/home/123",
-		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-		BodyContains: `{"id":"123","message":"Hello World"}`,
-		Status:       http.StatusOK,
-	},
+			Method:       "PUT",
+			Path:         "/home/123",
+			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+			BodyContains: `{"id":"123","message":"Hello World"}`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "DELETE",
-		Path:         "/home/123",
-		BodyContains: `{"id":"123","message":"deleted"}`,
-		Status:       http.StatusOK,
-	},
+			Method:       "DELETE",
+			Path:         "/home/123",
+			BodyContains: `{"id":"123","message":"deleted"}`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         "/home/456/room",
-		BodyContains: `{"id":"456","message":"Hello World"}`,
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         "/home/456/room",
+			BodyContains: `{"id":"456","message":"Hello World"}`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         "/home/456/room/999",
-		BodyContains: `{"category":"999","id":"456","message":"Hello World"}`,
-		Status:       http.StatusOK,
-	},
-	 	{
-		Method:       "GET",
-		Path:         "/home/",
-		BodyContains: `"Hello World"`,
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         "/home/456/room/999",
+			BodyContains: `{"category":"999","id":"456","message":"Hello World"}`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         "/abc",
-		BodyContains: `"404 page not found"`,
-		Status:       http.StatusNotFound,
-	},
+			Method:       "GET",
+			Path:         "/home/",
+			BodyContains: `"Hello World"`,
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         "/somethingelse/123/w444/f444",
-		BodyContains: `"404 page not found"`,
-		Status:       http.StatusNotFound,
-	},
+			Method:       "GET",
+			Path:         "/abc",
+			BodyContains: `"404 page not found"`,
+			Status:       http.StatusNotFound,
+		},
+		{
+			Method:       "GET",
+			Path:         "/somethingelse/123/w444/f444",
+			BodyContains: `"404 page not found"`,
+			Status:       http.StatusNotFound,
+		},
 	}
 
 	server := httptest.NewServer(router)
 	defer server.Close()
 	for _, test := range tests {
-		r, err := http.NewRequest(test.Method, server.URL + test.Path, test.Body)
+		r, err := http.NewRequest(test.Method, server.URL+test.Path, test.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
