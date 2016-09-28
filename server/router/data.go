@@ -1,19 +1,19 @@
 package router
 
 type Data struct {
-	value			string
-	prefix			string
-	isDynamic		bool
-	vars			[]string
-	methods			map[string]Handler
+	value     string
+	prefix    string
+	isDynamic bool
+	vars      []string
+	methods   map[string]Handler
 }
 
 // NewData
 func NewData() *Data {
 	return &Data{
-		value: "",
-		prefix: "",
-		vars: []string{},
+		value:   "",
+		prefix:  "",
+		vars:    []string{},
 		methods: make(map[string]Handler)}
 }
 

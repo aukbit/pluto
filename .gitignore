@@ -26,4 +26,7 @@ _testmain.go
 *.prof
 
 .idea/
+examples/https/letsencrypt/
 
+server.crt
+private.key

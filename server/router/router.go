@@ -2,13 +2,14 @@
 package router
 
 import (
-	"net/http"
 	"fmt"
+	"log"
+	"net/http"
 	"regexp"
 	"strings"
-	"golang.org/x/net/context"
-	"log"
+
 	"bitbucket.org/aukbit/pluto/reply"
+	"golang.org/x/net/context"
 )
 
 // Handler is a function type like "net/http" Handler
@@ -25,8 +26,8 @@ type Middleware func(Handler) Handler
 
 // Match
 type Match struct {
-	handler 	Handler
-	ctx 		context.Context
+	handler Handler
+	ctx     context.Context
 }
 
 // Mux interface to expose router struct
@@ -42,12 +43,12 @@ type Mux interface {
 
 // router
 type router struct {
-	trie 		*Trie
+	trie *Trie
 }
 
 // DefaultRootHandler
 func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
-  fmt.Fprint(w, "Hello World!\n")
+	fmt.Fprint(w, "Hello World!\n")
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,14 +80,17 @@ func (r *router) Handle(method, path string, handler Handler) {
 func (r *router) GET(path string, handler Handler) {
 	r.Handle("GET", path, handler)
 }
+
 // Post is a shortcut for Handle with method "GET"
 func (r *router) POST(path string, handler Handler) {
 	r.Handle("POST", path, handler)
 }
+
 // Get is a shortcut for Handle with method "GET"
 func (r *router) PUT(path string, handler Handler) {
 	r.Handle("PUT", path, handler)
 }
+
 // Get is a shortcut for Handle with method "GET"
 func (r *router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
@@ -104,10 +108,10 @@ func (r *router) AddMiddleware(middlewares ...Middleware) {
 
 // wrap h with all specified middlewares.
 func wrap(h Handler, middlewares ...Middleware) Handler {
-    for _, m := range middlewares {
-        h = m(h)
-    }
-    return h
+	for _, m := range middlewares {
+		h = m(h)
+	}
+	return h
 }
 
 // transformPath returns a tuple with key, value, prefix and params for the
@@ -123,14 +127,14 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 	}
 	segments := strings.Split(path, "/")[1:]
 	for _, s := range segments {
-		if s[0] == ':'{
+		if s[0] == ':' {
 			params = append(params, s[1:])
 			path = strings.Replace(path, s, ":", 1)
 		}
 	}
 	key = path
 	value = path[strings.LastIndex(key, "/"):]
-	if i := strings.LastIndex(key, "/"); i !=0 {
+	if i := strings.LastIndex(key, "/"); i != 0 {
 		prefix = path[:i]
 	}
 	return key, value, prefix, params
@@ -160,7 +164,7 @@ func findData(r *router, method, path, sufix, key, segment string, values []stri
 			return nil, []string{}
 		}
 		// restore values
-		if len (values) > 1 {
+		if len(values) > 1 {
 			// remove last segment in the slice
 			values = append(values[:len(values)-1], values[:len(values)-2]...)
 		} else {
@@ -184,7 +188,7 @@ func findData(r *router, method, path, sufix, key, segment string, values []stri
 		key = strings.Replace(path, segment, ":", 1)
 		sufix = ""
 	} else {
-		segment = sufix[1:i+1]
+		segment = sufix[1 : i+1]
 		key = strings.Replace(path, segment, ":", 1)
 		sufix = sufix[i+1:]
 	}
@@ -193,8 +197,8 @@ func findData(r *router, method, path, sufix, key, segment string, values []stri
 	return findData(r, method, path, sufix, key, segment, values)
 }
 
-func setContext (ctx context.Context, vars, values []string) context.Context {
-	if (len(vars) != len(values)){
+func setContext(ctx context.Context, vars, values []string) context.Context {
+	if len(vars) != len(values) {
 		return ctx
 	}
 	for i, value := range values {
@@ -204,7 +208,7 @@ func setContext (ctx context.Context, vars, values []string) context.Context {
 	return ctx
 }
 
-func (r *router) findMatch(req *http.Request) *Match  {
+func (r *router) findMatch(req *http.Request) *Match {
 	path := req.URL.Path
 	method := req.Method
 	data, values := findData(r, method, path, "", "", "", []string{})

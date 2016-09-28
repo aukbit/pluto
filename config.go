@@ -2,25 +2,28 @@ package pluto
 
 import (
 	"fmt"
-	"strings"
-	"github.com/google/uuid"
-	"regexp"
 	"log"
-	"bitbucket.org/aukbit/pluto/server"
+	"regexp"
+	"strings"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/server"
+	"github.com/google/uuid"
 )
 
+// Config
 type Config struct {
-	Id 			string
-	Name 			string
-	Description 		string
-	Version 		string
-	Servers			map[string]server.Server
-	Clients			map[string]client.Client
-	Datastore		datastore.Datastore
+	Id          string
+	Name        string
+	Description string
+	Version     string
+	Servers     map[string]server.Server
+	Clients     map[string]client.Client
+	Datastore   datastore.Datastore
 }
 
+// ConfigFunc
 type ConfigFunc func(*Config)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -37,11 +40,11 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultName
+		cfg.Name = defaultName
 	}
 
 	if len(cfg.Version) == 0 {
-		cfg.Version = DefaultVersion
+		cfg.Version = defaultVersion
 	}
 
 	return cfg
@@ -63,7 +66,7 @@ func Name(n string) ConfigFunc {
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
 	}
 }
 

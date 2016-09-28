@@ -1,14 +1,15 @@
 package frontend
 
 import (
-	"google.golang.org/grpc"
+	"flag"
+
 	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/examples/user/frontend/views"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"flag"
+	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"google.golang.org/grpc"
 )
 
 var target = flag.String("target", "127.0.0.1:65060", "backend address")
@@ -53,4 +54,3 @@ func Run() error {
 	}
 	return nil
 }
-

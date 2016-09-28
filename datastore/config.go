@@ -1,20 +1,20 @@
 package datastore
 
 import (
-	"regexp"
 	"log"
+	"regexp"
 )
 
 type Config struct {
-	Keyspace		string
-	Addr			string
+	Keyspace string
+	Addr     string
 }
 
 type ConfigFunc func(*Config)
 
 var DefaultConfig = Config{
-	Keyspace:		"default",
-	Addr:			"127.0.0.1",
+	Keyspace: "default",
+	Addr:     "127.0.0.1",
 }
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -48,4 +48,3 @@ func Addr(a string) ConfigFunc {
 		cfg.Addr = a
 	}
 }
-

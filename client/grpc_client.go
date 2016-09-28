@@ -1,17 +1,18 @@
 package client
 
 import (
-	"log"
-	"google.golang.org/grpc"
 	"errors"
+	"log"
+
+	"google.golang.org/grpc"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type gRPCClient struct {
-	cfg 			*Config
-	wire			interface{}
-	close 			chan bool
+	cfg   *Config
+	wire  interface{}
+	close chan bool
 }
 
 // newGRPCClient will instantiate a new Client with the given config
@@ -40,7 +41,7 @@ func (g *gRPCClient) Dial() error {
 	return nil
 }
 
-func (g *gRPCClient) Call() (interface{}) {
+func (g *gRPCClient) Call() interface{} {
 	if g.wire == nil {
 		return errors.New("gRPC client has not been registered.")
 	}
@@ -49,7 +50,7 @@ func (g *gRPCClient) Call() (interface{}) {
 
 func (g *gRPCClient) Close() error {
 	// TODO
-	g.close <-true
+	g.close <- true
 	return nil
 }
 

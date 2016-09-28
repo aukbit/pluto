@@ -1,26 +1,26 @@
 package pluto
 
 import (
-	"log"
-	"syscall"
-	"os/signal"
-	"os"
-	"net/http"
 	"context"
-	"bitbucket.org/aukbit/pluto/server"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
-
 // Service
 type service struct {
-	cfg 			*Config
-	close 			chan bool
+	cfg   *Config
+	close chan bool
 }
 
-func newService (cfgs ...ConfigFunc) *service {
+func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
 	return &service{cfg: c}
 
@@ -30,7 +30,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	for _, srv := range s.Servers(){
+	for _, srv := range s.Servers() {
 		// Wrap this service to all handlers
 		// make it available in handler context
 		if srv.Config().Format == "http" {
@@ -41,13 +41,13 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 }
 
 func middlewareService(s *service) router.Middleware {
-    return func(h router.Handler) router.Handler {
-        return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, s.cfg.Name, s)
-		h.ServeHTTP(w, r.WithContext(ctx))
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, s.cfg.Name, s)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
 	}
-    }
 }
 
 func (s *service) Servers() map[string]server.Server {
@@ -86,7 +86,7 @@ func (s *service) start() error {
 	}
 
 	// run servers
-	for _, srv := range s.Servers(){
+	for _, srv := range s.Servers() {
 		go func(ss server.Server) {
 			if err := ss.Run(); err != nil {
 				log.Fatalf("ERROR srv.Run() %v", err)
@@ -94,7 +94,7 @@ func (s *service) start() error {
 		}(srv)
 	}
 	// dial clients
-	for _, clt := range s.Clients(){
+	for _, clt := range s.Clients() {
 		go func(cc client.Client) {
 			if err := cc.Dial(); err != nil {
 				log.Fatalf("ERROR cc.Dial() %v", err)
@@ -106,7 +106,7 @@ func (s *service) start() error {
 }
 
 func (s *service) Stop() error {
-	s.close <-true
+	s.close <- true
 	return nil
 }
 

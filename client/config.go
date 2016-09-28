@@ -2,21 +2,22 @@ package client
 
 import (
 	"fmt"
-	"strings"
-	"github.com/google/uuid"
-	"google.golang.org/grpc"
 	"log"
 	"regexp"
+	"strings"
+
+	"github.com/google/uuid"
+	"google.golang.org/grpc"
 )
 
 type Config struct {
-	Id 			string
-	Name 			string
-	Description 		string
-	Version 		string
-	Target       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format			string
-	RegisterClientFunc	func(*grpc.ClientConn) interface{}
+	Id                 string
+	Name               string
+	Description        string
+	Version            string
+	Target             string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format             string
+	RegisterClientFunc func(*grpc.ClientConn) interface{}
 }
 
 type ConfigFunc func(*Config)

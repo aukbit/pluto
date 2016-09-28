@@ -1,12 +1,14 @@
 package router_test
 
 import (
-	"testing"
 	"reflect"
-	"github.com/paulormart/assert"
+	"testing"
+
 	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/paulormart/assert"
 )
-func TestStructs(t *testing.T){
+
+func TestStructs(t *testing.T) {
 	// comparing structs
 	type A struct {
 		val int
@@ -24,8 +26,7 @@ func TestStructs(t *testing.T){
 	assert.Equal(t, true, reflect.DeepEqual(*(new(A)), A{}))
 }
 
-
-func TestTrie(t *testing.T){
+func TestTrie(t *testing.T) {
 
 	data := router.NewData()
 	assert.Equal(t, reflect.TypeOf(&router.Data{}), reflect.TypeOf(data))
