@@ -1,23 +1,24 @@
 package pluto_test
 
 import (
-	"testing"
-	"net/http"
+	"encoding/json"
 	"io/ioutil"
 	"log"
-	"github.com/paulormart/assert"
+	"net/http"
+	"testing"
+
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"encoding/json"
+	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
-  	reply.Json(w, r, http.StatusOK, "Hello World")
+	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
-func TestService(t *testing.T){
+func TestService(t *testing.T) {
 
 	// 1. Config service
 	s := pluto.NewService(
@@ -56,7 +57,6 @@ func TestService(t *testing.T){
 		log.Fatal(err)
 	}
 	defer r.Body.Close()
-
 
 	var message string
 	if err := json.Unmarshal(b, &message); err != nil {
