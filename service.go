@@ -8,11 +8,15 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/uber-go/zap"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 )
+
+var logger = zap.New(zap.NewJSONEncoder())
 
 // Service
 type service struct {
@@ -75,7 +79,12 @@ func (s *service) Run() error {
 }
 
 func (s *service) start() error {
-	log.Printf("START %s \t%s Total servers:%d clients:%d", s.cfg.Name, s.cfg.Id, len(s.Servers()), len(s.Clients()))
+	logger.Info("START",
+		zap.String("service", s.cfg.Name),
+		zap.String("id", s.cfg.Id),
+		zap.Nest("content", zap.Int("servers", len(s.Servers())), zap.Int("clients", len(s.Clients()))),
+	)
+	// log.Printf("START %s \t%s Total servers:%d clients:%d", s.cfg.Name, s.cfg.Id, len(s.Servers()), len(s.Clients()))
 
 	// connect datastore
 	if s.cfg.Datastore != nil {

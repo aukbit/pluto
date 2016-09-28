@@ -1,6 +1,6 @@
 {
   "commands": [
-    "*.go : go test pluto_test.go",
+    "*.go : go test -v pluto_test.go",
     "**/user/**/*.* : go test examples/user/frontend_test.go -db_addr=192.168.99.100",
     "**/server/**/*.* : go test server/server_test.go",
     "**/router/**/*.* : go test server/router/router_test.go",
