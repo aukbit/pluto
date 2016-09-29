@@ -12,20 +12,20 @@ type Config struct {
 
 type ConfigFunc func(*Config)
 
-var DefaultConfig = Config{
-	Keyspace: "default",
-	Addr:     "127.0.0.1",
-}
+var (
+	defaultKeyspace = "default"
+	defaultAddr     = "127.0.0.1"
+)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := DefaultConfig
+	cfg := &Config{Keyspace: defaultKeyspace, Addr: defaultAddr}
 
 	for _, c := range cfgs {
-		c(&cfg)
+		c(cfg)
 	}
 
-	return &cfg
+	return cfg
 }
 
 // Keyspace db keyspace

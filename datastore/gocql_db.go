@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	DefaultCluster = "127.0.0.1"
+	defaultCluster = "127.0.0.1"
 )
 
 type datastore struct {
@@ -33,10 +33,6 @@ func (ds *datastore) RefreshSession() error {
 	s, err := ds.cluster.CreateSession()
 	if err != nil {
 		return err
-		if err == gocql.ErrNoConnectionsStarted {
-			// TODO currently gocql driver as an func createKeyspace
-			return err
-		}
 	}
 	ds.session = s
 	return nil

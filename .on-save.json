@@ -14,6 +14,11 @@
       "watch": "**/client/*.go",
       "base": "pluto",
       "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/client  && go tool cover -html=.coverage.out -o .coverage.html"
+    },
+    {
+      "watch": "**/datastore/*.go",
+      "base": "pluto",
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/datastore  && go tool cover -html=.coverage.out -o .coverage.html"
     }
   ],
   "config": {
