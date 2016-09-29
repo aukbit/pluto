@@ -31,7 +31,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
 	}
-	for _, srv := range s.Servers() {
+	for _, srv := range s.cfg.Servers {
 		// Wrap this service to all handlers
 		// make it available in handler context
 		if srv.Config().Format == "http" {
@@ -51,17 +51,33 @@ func middlewareService(s *service) router.Middleware {
 	}
 }
 
-func (s *service) Servers() map[string]server.Server {
-	return s.cfg.Servers
+func (s *service) Server(name string) (srv server.Server) {
+	var ok bool
+	if srv, ok = s.cfg.Servers[name]; !ok {
+		return nil
+	}
+	return srv
 }
+
+func (s *service) Client(name string) (clt client.Client) {
+	var ok bool
+	if clt, ok = s.cfg.Clients[name]; !ok {
+		return nil
+	}
+	return clt
+}
+
+// func (s *service) Servers() map[string]server.Server {
+// 	return s.cfg.Servers
+// }
 
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
 }
 
-func (s *service) Clients() map[string]client.Client {
-	return s.cfg.Clients
-}
+// func (s *service) Clients() map[string]client.Client {
+// 	return s.cfg.Clients
+// }
 
 func (s *service) Run() error {
 	if err := s.start(); err != nil {
@@ -82,7 +98,9 @@ func (s *service) start() error {
 	logger.Info("START",
 		zap.String("service", s.cfg.Name),
 		zap.String("id", s.cfg.ID),
-		zap.Nest("content", zap.Int("servers", len(s.Servers())), zap.Int("clients", len(s.Clients()))),
+		zap.Nest("content",
+			zap.Int("servers", len(s.cfg.Servers)),
+			zap.Int("clients", len(s.cfg.Clients))),
 	)
 
 	// connect datastore
@@ -98,7 +116,7 @@ func (s *service) start() error {
 	}
 
 	// run servers
-	for _, srv := range s.Servers() {
+	for _, srv := range s.cfg.Servers {
 		go func(ss server.Server) {
 			if err := ss.Run(); err != nil {
 				logger.Error("Run()",
@@ -110,7 +128,7 @@ func (s *service) start() error {
 		}(srv)
 	}
 	// dial clients
-	for _, clt := range s.Clients() {
+	for _, clt := range s.cfg.Clients {
 		go func(cc client.Client) {
 			if err := cc.Dial(); err != nil {
 				logger.Error("Dial()",

@@ -1,12 +1,18 @@
 package pluto
 
-import "github.com/uber-go/zap"
+import (
+	"github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/server"
+	"github.com/uber-go/zap"
+)
 
 // Service is the basic interface that defines what to expect from any server.
 type Service interface {
 	Init(...ConfigFunc) error
 	// Servers() map[string]server.Server
 	// Clients() map[string]client.Client
+	Client(string) client.Client
+	Server(string) server.Server
 	Run() error
 	Stop() error
 	Config() *Config
