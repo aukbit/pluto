@@ -1,7 +1,6 @@
 package pluto_test
 
 import (
-	"assert"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {

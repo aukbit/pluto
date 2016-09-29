@@ -2,7 +2,8 @@ package client
 
 import (
 	"errors"
-	"log"
+
+	"github.com/uber-go/zap"
 
 	"google.golang.org/grpc"
 )
@@ -54,12 +55,16 @@ func (g *gRPCClient) Close() error {
 }
 
 func (g *gRPCClient) dial() error {
-	log.Printf("DIAL  %s %s \t%s", g.cfg.Format, g.cfg.Name, g.cfg.ID)
+	logger.Info("DIAL",
+		zap.String("client", g.cfg.Name),
+		zap.String("id", g.cfg.ID),
+		zap.String("format", g.cfg.Format),
+	)
 	// establishes gRPC client connection
 	// TODO use TLS
 	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("ERROR %s grpc.Dial %v", g.cfg.Name, err)
+		return err
 	}
 	// get gRPC client interface
 	g.wire = g.cfg.RegisterClientFunc(conn)
