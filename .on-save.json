@@ -1,0 +1,19 @@
+{
+  "commands": [
+    {
+      "watch": "*.go",
+      "base": "pluto",
+      "command": "go test -v -coverprofile .coverage.out bitbucket.org/aukbit/pluto && go tool cover -html=.coverage.out -o .coverage.html"
+    },
+    {
+      "watch": "**/server/*.go",
+      "base": "pluto",
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/server  && go tool cover -html=.coverage.out -o .coverage.html"
+    }
+  ],
+  "config": {
+    "showSuccess": true,
+    "autohideSuccess": true,
+    "autohideSuccessTimeout": 1200
+  }
+}

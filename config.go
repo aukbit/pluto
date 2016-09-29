@@ -2,7 +2,6 @@ package pluto
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
@@ -10,11 +9,12 @@ import (
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
 	"github.com/google/uuid"
+	"github.com/uber-go/zap"
 )
 
-// Config
+// Config pluto service config
 type Config struct {
-	Id          string
+	ID          string
 	Name        string
 	Description string
 	Version     string
@@ -23,7 +23,7 @@ type Config struct {
 	Datastore   datastore.Datastore
 }
 
-// ConfigFunc
+// ConfigFunc registers the Config
 type ConfigFunc func(*Config)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
@@ -35,8 +35,8 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 		c(cfg)
 	}
 
-	if len(cfg.Id) == 0 {
-		cfg.Id = uuid.New().String()
+	if len(cfg.ID) == 0 {
+		cfg.ID = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {
@@ -50,10 +50,10 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	return cfg
 }
 
-// Id service id
-func Id(id string) ConfigFunc {
+// ID service id
+func ID(id string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Id = id
+		cfg.ID = id
 	}
 }
 
@@ -63,7 +63,9 @@ func Name(n string) ConfigFunc {
 		// support only alphanumeric and underscore characters
 		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
-			log.Fatal(err)
+			logger.Error("Name",
+				zap.String("err", err.Error()),
+			)
 		}
 		safe := reg.ReplaceAllString(n, "_")
 		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))

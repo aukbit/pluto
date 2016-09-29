@@ -12,8 +12,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Config server configuaration options
 type Config struct {
-	Id          string
+	ID          string
 	Name        string
 	Description string
 	Version     string
@@ -24,6 +25,7 @@ type Config struct {
 	GRPCServer  *grpc.Server
 }
 
+// ConfigFunc registers the Config
 type ConfigFunc func(*Config)
 
 var (
@@ -39,25 +41,25 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 		c(cfg)
 	}
 
-	if len(cfg.Id) == 0 {
-		cfg.Id = uuid.New().String()
+	if len(cfg.ID) == 0 {
+		cfg.ID = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultName
+		cfg.Name = defaultName
 	}
 
 	if len(cfg.Version) == 0 {
-		cfg.Version = DefaultVersion
+		cfg.Version = defaultVersion
 	}
 
 	return cfg
 }
 
-// Id server id
-func Id(id string) ConfigFunc {
+// ID server id
+func ID(id string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Id = id
+		cfg.ID = id
 	}
 }
 
@@ -70,7 +72,7 @@ func Name(n string) ConfigFunc {
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
 	}
 }
 
@@ -113,6 +115,7 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 	}
 }
 
+// GRPCServer grpc server instance from grpc library
 func GRPCServer(s *grpc.Server) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.GRPCServer = s

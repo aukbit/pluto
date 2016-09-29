@@ -5,18 +5,20 @@ import (
 	"time"
 )
 
-// TcpKeepAliveListener is a copy of tcpKeepAliveListener
+// TCPKeepAliveListener is a copy of tcpKeepAliveListener
 // source: net/http/server.go
 //
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
 // connections. It's used by ListenAndServe and ListenAndServeTLS so
 // dead TCP connections (e.g. closing laptop mid-download) eventually
 // go away.
-type TcpKeepAliveListener struct {
+type TCPKeepAliveListener struct {
 	*net.TCPListener
 }
 
-func (ln TcpKeepAliveListener) Accept() (c net.Conn, err error) {
+// Accept implements the Accept method in the Listener interface;
+// it waits for the next call and returns a generic Conn.
+func (ln TCPKeepAliveListener) Accept() (c net.Conn, err error) {
 	tc, err := ln.AcceptTCP()
 	if err != nil {
 		return

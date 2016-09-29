@@ -2,7 +2,6 @@ package pluto
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,8 +14,6 @@ import (
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 )
-
-var logger = zap.New(zap.NewJSONEncoder())
 
 // Service
 type service struct {
@@ -74,23 +71,29 @@ func (s *service) Run() error {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
 	sig := <-ch
-	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
+	logger.Info("signal received",
+		zap.String("service", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("signal", sig.String()))
 	return s.Stop()
 }
 
 func (s *service) start() error {
 	logger.Info("START",
 		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.Id),
+		zap.String("id", s.cfg.ID),
 		zap.Nest("content", zap.Int("servers", len(s.Servers())), zap.Int("clients", len(s.Clients()))),
 	)
-	// log.Printf("START %s \t%s Total servers:%d clients:%d", s.cfg.Name, s.cfg.Id, len(s.Servers()), len(s.Clients()))
 
 	// connect datastore
 	if s.cfg.Datastore != nil {
 		s.cfg.Datastore.Connect()
 		if err := s.cfg.Datastore.RefreshSession(); err != nil {
-			log.Fatalf("ERROR s.cfg.Datastore.RefreshSession() %v", err.Error())
+			logger.Error("RefreshSession()",
+				zap.String("service", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("err", err.Error()),
+			)
 		}
 	}
 
@@ -98,7 +101,11 @@ func (s *service) start() error {
 	for _, srv := range s.Servers() {
 		go func(ss server.Server) {
 			if err := ss.Run(); err != nil {
-				log.Fatalf("ERROR srv.Run() %v", err)
+				logger.Error("Run()",
+					zap.String("service", s.cfg.Name),
+					zap.String("id", s.cfg.ID),
+					zap.String("err", err.Error()),
+				)
 			}
 		}(srv)
 	}
@@ -106,7 +113,11 @@ func (s *service) start() error {
 	for _, clt := range s.Clients() {
 		go func(cc client.Client) {
 			if err := cc.Dial(); err != nil {
-				log.Fatalf("ERROR cc.Dial() %v", err)
+				logger.Error("Dial()",
+					zap.String("service", s.cfg.Name),
+					zap.String("id", s.cfg.ID),
+					zap.String("err", err.Error()),
+				)
 			}
 		}(clt)
 	}
@@ -116,6 +127,10 @@ func (s *service) start() error {
 
 func (s *service) Stop() error {
 	s.close <- true
+	logger.Info("STOP",
+		zap.String("service", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+	)
 	return nil
 }
 

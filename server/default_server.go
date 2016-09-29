@@ -2,13 +2,14 @@ package server
 
 import (
 	"crypto/tls"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/uber-go/zap"
 
 	"bitbucket.org/aukbit/pluto/server/router"
 )
@@ -35,13 +36,22 @@ func (s *defaultServer) Run() error {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
 	sig := <-ch
-	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
+	logger.Info("signal received",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+		zap.String("signal", sig.String()))
 	return s.Stop()
 }
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *defaultServer) Stop() error {
 	s.close <- true
+	logger.Info("STOP",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+	)
 	return nil
 }
 
@@ -97,7 +107,7 @@ func (s *defaultServer) listen() (net.Listener, error) {
 	if err != nil {
 		return nil, err
 	}
-	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
+	ln = net.Listener(TCPKeepAliveListener{ln.(*net.TCPListener)})
 
 	return ln, nil
 }
@@ -142,11 +152,20 @@ func (s *defaultServer) serve(ln net.Listener) error {
 	}
 	go func() {
 		if err := srv.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
+			logger.Error("Serve(ln)",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()),
+				zap.String("err", err.Error()))
+			os.Exit(1)
 		}
+		logger.Info("LIVE",
+			zap.String("server", s.cfg.Name),
+			zap.String("id", s.cfg.ID),
+			zap.String("format", s.cfg.Format),
+			zap.String("port", ln.Addr().String()))
 	}()
-
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	return nil
 }
 
@@ -157,11 +176,20 @@ func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
 	go func() {
 		if err := srv.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s g.Serve(lis) %v", s.cfg.Name, err)
+			logger.Error("Serve(ln)",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()),
+				zap.String("err", err.Error()))
+			os.Exit(1)
 		}
+		logger.Info("LIVE",
+			zap.String("server", s.cfg.Name),
+			zap.String("id", s.cfg.ID),
+			zap.String("format", s.cfg.Format),
+			zap.String("port", ln.Addr().String()))
 	}()
-
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	return nil
 }
 
@@ -169,12 +197,21 @@ func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 func (s *defaultServer) waitSignal(ln net.Listener) {
 	// Waits for call to stop
 	<-s.close
-	log.Printf("CLOSE %s %s received", s.cfg.Format, s.cfg.Name)
 	// close listener
 	if err := ln.Close(); err != nil {
-		log.Fatalf("ERROR %s %s ln.Close() %v", s.cfg.Format, s.cfg.Name, err)
+		logger.Error("Close()",
+			zap.String("server", s.cfg.Name),
+			zap.String("id", s.cfg.ID),
+			zap.String("format", s.cfg.Format),
+			zap.String("port", ln.Addr().String()),
+			zap.String("err", err.Error()))
+		os.Exit(1)
 	}
-	log.Printf("----- %s %s listener closed", s.cfg.Format, s.cfg.Name)
+	logger.Info("EXIT",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+		zap.String("port", ln.Addr().String()))
 }
 
 // middlewareStrictSecurityHeader Middleware to wrap all handlers with

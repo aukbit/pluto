@@ -57,6 +57,7 @@ func Name(n string) ConfigFunc {
 		// support only alphanumeric and underscore characters
 		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
+
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")

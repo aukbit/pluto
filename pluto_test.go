@@ -1,9 +1,9 @@
 package pluto_test
 
 import (
+	"assert"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"testing"
 
@@ -11,7 +11,6 @@ import (
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +26,7 @@ func TestService(t *testing.T) {
 
 	//assert.Equal(t, reflect.TypeOf(service.DefaultServer), reflect.TypeOf(s))
 	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
+	assert.Equal(t, true, len(cfg.ID) > 0)
 	assert.Equal(t, "pluto_gopher", cfg.Name)
 	assert.Equal(t, "gopher super service", cfg.Description)
 
@@ -43,27 +42,31 @@ func TestService(t *testing.T) {
 	// 5. Run service
 	go func() {
 		if err := s.Run(); err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 	}()
 
 	// Test
 	r, err := http.Get("http://localhost:8080")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer r.Body.Close()
 
 	var message string
 	if err := json.Unmarshal(b, &message); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
+
+	// Stop service
+	// syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	// t.Logf("format %v", syscall.Getpid())
 }

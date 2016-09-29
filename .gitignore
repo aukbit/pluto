@@ -30,3 +30,7 @@ examples/https/letsencrypt/
 
 server.crt
 private.key
+
+# coverage
+*.coverage.out
+*.coverage.html

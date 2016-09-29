@@ -1,5 +1,7 @@
 package server
 
+import "github.com/uber-go/zap"
+
 // Server is the basic interface that defines what to expect from any server.
 type Server interface {
 	//Init(...ConfigFunc)		error	// TODO remove init! tere is no need
@@ -9,8 +11,9 @@ type Server interface {
 }
 
 var (
-	DefaultName    = "server"
-	DefaultVersion = "1.0.0"
+	defaultName    = "server"
+	defaultVersion = "1.0.0"
+	logger         = zap.New(zap.NewJSONEncoder())
 )
 
 // NewServer returns a new http server with cfg passed in

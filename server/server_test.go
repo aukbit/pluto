@@ -54,7 +54,7 @@ func TestServer(t *testing.T) {
 	)
 
 	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
+	assert.Equal(t, true, len(cfg.ID) > 0)
 	assert.Equal(t, "server_gopher", cfg.Name)
 	assert.Equal(t, "gopher super server", cfg.Description)
 	assert.Equal(t, ":8080", cfg.Addr)
@@ -65,7 +65,7 @@ func TestServer(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
-	defer s.Stop()
+	// defer s.Stop()
 
 	// GRPC server
 	// Define gRPC server and register
@@ -87,7 +87,7 @@ func TestServer(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
-	defer g.Stop()
+	// defer g.Stop()
 
 	// Test
 	const URL = "http://localhost:8080"
@@ -129,5 +129,7 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, test.BodyContains, message)
 
 	}
+	// Stop server
+	// syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 
 }
