@@ -9,8 +9,8 @@ type Client interface {
 }
 
 var (
-	DefaultName    = "client"
-	DefaultVersion = "1.0.0"
+	defaultName    = "client"
+	defaultVersion = "1.0.0"
 )
 
 // NewClient returns a new client with cfg passed in

@@ -28,7 +28,8 @@ type ConfigFunc func(*Config)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := &Config{Servers: make(map[string]server.Server),
+	cfg := &Config{Version: defaultVersion,
+		Servers: make(map[string]server.Server),
 		Clients: make(map[string]client.Client)}
 
 	for _, c := range cfgs {
@@ -41,10 +42,6 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 
 	if len(cfg.Name) == 0 {
 		cfg.Name = defaultName
-	}
-
-	if len(cfg.Version) == 0 {
-		cfg.Version = defaultVersion
 	}
 
 	return cfg

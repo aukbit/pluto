@@ -18,7 +18,6 @@ type gRPCClient struct {
 // newGRPCClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFunc) *gRPCClient {
 	c := newConfig(cfgs...)
-	c.Format = "grpc"
 	return &gRPCClient{cfg: c, close: make(chan bool)}
 }
 
@@ -43,7 +42,7 @@ func (g *gRPCClient) Dial() error {
 
 func (g *gRPCClient) Call() interface{} {
 	if g.wire == nil {
-		return errors.New("gRPC client has not been registered.")
+		return errors.New("gRPC client has not been registered")
 	}
 	return g.wire
 }
@@ -55,7 +54,7 @@ func (g *gRPCClient) Close() error {
 }
 
 func (g *gRPCClient) dial() error {
-	log.Printf("DIAL  %s %s \t%s", g.cfg.Format, g.cfg.Name, g.cfg.Id)
+	log.Printf("DIAL  %s %s \t%s", g.cfg.Format, g.cfg.Name, g.cfg.ID)
 	// establishes gRPC client connection
 	// TODO use TLS
 	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())

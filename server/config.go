@@ -35,7 +35,7 @@ var (
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := &Config{Addr: defaultAddr, Format: defaultFormat}
+	cfg := &Config{Addr: defaultAddr, Format: defaultFormat, Version: defaultVersion}
 
 	for _, c := range cfgs {
 		c(cfg)
@@ -47,10 +47,6 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 
 	if len(cfg.Name) == 0 {
 		cfg.Name = defaultName
-	}
-
-	if len(cfg.Version) == 0 {
-		cfg.Version = defaultVersion
 	}
 
 	return cfg

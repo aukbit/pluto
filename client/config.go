@@ -10,8 +10,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Config client configuaration options
 type Config struct {
-	Id                 string
+	ID                 string
 	Name               string
 	Description        string
 	Version            string
@@ -20,34 +21,37 @@ type Config struct {
 	RegisterClientFunc func(*grpc.ClientConn) interface{}
 }
 
+// ConfigFunc registers the Config
 type ConfigFunc func(*Config)
+
+var (
+	defaultTarget = "localhost:65060"
+	defaultFormat = "grpc"
+)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := &Config{}
+	cfg := &Config{Target: defaultTarget, Format: defaultFormat, Version: defaultVersion}
 
 	for _, c := range cfgs {
 		c(cfg)
 	}
 
-	if len(cfg.Id) == 0 {
-		cfg.Id = uuid.New().String()
+	if len(cfg.ID) == 0 {
+		cfg.ID = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultName
+		cfg.Name = defaultName
 	}
 
-	if len(cfg.Version) == 0 {
-		cfg.Version = DefaultVersion
-	}
 	return cfg
 }
 
-// Id cleint id
-func Id(id string) ConfigFunc {
+// ID client id
+func ID(id string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Id = id
+		cfg.ID = id
 	}
 }
 
@@ -61,7 +65,7 @@ func Name(n string) ConfigFunc {
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
 	}
 }
 

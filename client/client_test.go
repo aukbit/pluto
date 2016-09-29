@@ -59,7 +59,7 @@ func TestClient(t *testing.T) {
 	)
 
 	cfg := c.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
+	assert.Equal(t, true, len(cfg.ID) > 0)
 	assert.Equal(t, "client_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
