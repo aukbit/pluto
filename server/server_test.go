@@ -65,7 +65,7 @@ func TestServer(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
-	// defer s.Stop()
+	defer s.Stop()
 
 	// GRPC server
 	// Define gRPC server and register
@@ -87,7 +87,7 @@ func TestServer(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
-	// defer g.Stop()
+	defer g.Stop()
 
 	// Test
 	const URL = "http://localhost:8080"
@@ -129,7 +129,4 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, test.BodyContains, message)
 
 	}
-	// Stop server
-	// syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
-
 }

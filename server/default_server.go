@@ -2,11 +2,10 @@ package server
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 	"time"
 
 	"github.com/uber-go/zap"
@@ -19,12 +18,13 @@ import (
 type defaultServer struct {
 	cfg   *Config
 	close chan bool
+	wg    *sync.WaitGroup
 }
 
 // NewServer will instantiate a new defaultServer with the given config
 func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	return &defaultServer{c, make(chan bool)}
+	return &defaultServer{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
 }
 
 // Run Server
@@ -32,27 +32,24 @@ func (s *defaultServer) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
-	// parse address for host, port
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	sig := <-ch
-	logger.Info("signal received",
-		zap.String("server", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-		zap.String("format", s.cfg.Format),
-		zap.String("signal", sig.String()))
-	return s.Stop()
-}
-
-// Stop stops server by sending a message to close the listener via channel
-func (s *defaultServer) Stop() error {
-	s.close <- true
-	logger.Info("STOP",
+	// wait for go routines to finish
+	s.wg.Wait()
+	logger.Info("exit",
 		zap.String("server", s.cfg.Name),
 		zap.String("id", s.cfg.ID),
 		zap.String("format", s.cfg.Format),
 	)
 	return nil
+}
+
+// Stop stops server by sending a message to close the listener via channel
+func (s *defaultServer) Stop() {
+	logger.Info("stop",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+	)
+	s.close <- true
 }
 
 func (s *defaultServer) Config() *Config {
@@ -61,7 +58,10 @@ func (s *defaultServer) Config() *Config {
 }
 
 func (s *defaultServer) start() (err error) {
-
+	logger.Info("start",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format))
 	var ln net.Listener
 
 	switch s.cfg.Format {
@@ -88,7 +88,7 @@ func (s *defaultServer) start() (err error) {
 		}
 	}
 
-	go s.waitSignal(ln)
+	s.waitUntilStop(ln)
 	return nil
 }
 
@@ -150,68 +150,84 @@ func (s *defaultServer) serve(ln net.Listener) error {
 
 		TLSConfig: s.cfg.TLSConfig,
 	}
+	//  serve requests
 	go func() {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
+			if err.Error() == errClosing(ln).Error() {
+				return
+			}
 			logger.Error("Serve(ln)",
 				zap.String("server", s.cfg.Name),
 				zap.String("id", s.cfg.ID),
 				zap.String("format", s.cfg.Format),
 				zap.String("port", ln.Addr().String()),
 				zap.String("err", err.Error()))
-			os.Exit(1)
+			return
 		}
-		logger.Info("LIVE",
-			zap.String("server", s.cfg.Name),
-			zap.String("id", s.cfg.ID),
-			zap.String("format", s.cfg.Format),
-			zap.String("port", ln.Addr().String()))
 	}()
 	return nil
+}
+
+// errClosing is the currently error raised when we gracefull
+// close the listener. If this is the case there is no point to log
+func errClosing(ln net.Listener) error {
+	return fmt.Errorf("accept tcp %v: use of closed network connection", ln.Addr().String())
 }
 
 // serve serves *grpc.Server
 func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
 	srv := s.cfg.GRPCServer
-
+	//  serve requests
 	go func() {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
+			if err.Error() == errClosing(ln).Error() {
+				return
+			}
 			logger.Error("Serve(ln)",
 				zap.String("server", s.cfg.Name),
 				zap.String("id", s.cfg.ID),
 				zap.String("format", s.cfg.Format),
 				zap.String("port", ln.Addr().String()),
 				zap.String("err", err.Error()))
-			os.Exit(1)
+			return
 		}
-		logger.Info("LIVE",
-			zap.String("server", s.cfg.Name),
-			zap.String("id", s.cfg.ID),
-			zap.String("format", s.cfg.Format),
-			zap.String("port", ln.Addr().String()))
 	}()
 	return nil
 }
 
-// waitSignal to be used as go routine waiting for a signal to stop the service
-func (s *defaultServer) waitSignal(ln net.Listener) {
-	// Waits for call to stop
-	<-s.close
-	// close listener
-	if err := ln.Close(); err != nil {
-		logger.Error("Close()",
-			zap.String("server", s.cfg.Name),
-			zap.String("id", s.cfg.ID),
-			zap.String("format", s.cfg.Format),
-			zap.String("port", ln.Addr().String()),
-			zap.String("err", err.Error()))
-		os.Exit(1)
+// waitUntilStop waits for close channel
+func (s *defaultServer) waitUntilStop(ln net.Listener) {
+outer:
+	for {
+		select {
+		case <-s.close:
+			// Waits for call to stop
+			if err := ln.Close(); err != nil {
+				logger.Error("Close()",
+					zap.String("server", s.cfg.Name),
+					zap.String("id", s.cfg.ID),
+					zap.String("format", s.cfg.Format),
+					zap.String("port", ln.Addr().String()),
+					zap.String("err", err.Error()))
+			}
+			break outer
+		default:
+			logger.Info("live",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()))
+			time.Sleep(time.Second * 1)
+			continue
+		}
 	}
-	logger.Info("EXIT",
-		zap.String("server", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-		zap.String("format", s.cfg.Format),
-		zap.String("port", ln.Addr().String()))
 }
 
 // middlewareStrictSecurityHeader Middleware to wrap all handlers with

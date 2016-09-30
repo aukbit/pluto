@@ -17,6 +17,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
+const URL = "http://localhost:8083"
+
 func TestService(t *testing.T) {
 	// 1. Config service
 	s := pluto.NewService(
@@ -34,7 +36,7 @@ func TestService(t *testing.T) {
 	mux := router.NewRouter()
 	mux.GET("/", Index)
 	// 3. Define server Router
-	httpSrv := server.NewServer(server.Mux(mux))
+	httpSrv := server.NewServer(server.Addr(":8083"), server.Mux(mux))
 
 	// 4. Init service
 	s.Init(pluto.Servers(httpSrv))
@@ -45,9 +47,10 @@ func TestService(t *testing.T) {
 			t.Fatal(err)
 		}
 	}()
+	defer s.Stop()
 
 	// Test
-	r, err := http.Get("http://localhost:8080")
+	r, err := http.Get(URL)
 	if err != nil {
 		t.Fatal(err)
 	}

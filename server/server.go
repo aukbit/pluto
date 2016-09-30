@@ -6,7 +6,7 @@ import "github.com/uber-go/zap"
 type Server interface {
 	//Init(...ConfigFunc)		error	// TODO remove init! tere is no need
 	Run() error
-	Stop() error
+	Stop()
 	Config() *Config
 }
 

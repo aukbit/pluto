@@ -12,7 +12,7 @@ type Service interface {
 	Client(string) client.Client
 	Server(string) server.Server
 	Run() error
-	Stop() error
+	Stop()
 	Config() *Config
 }
 
