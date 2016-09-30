@@ -67,17 +67,9 @@ func (s *service) Client(name string) (clt client.Client) {
 	return clt
 }
 
-// func (s *service) Servers() map[string]server.Server {
-// 	return s.cfg.Servers
-// }
-
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
 }
-
-// func (s *service) Clients() map[string]client.Client {
-// 	return s.cfg.Clients
-// }
 
 func (s *service) Run() error {
 	if err := s.start(); err != nil {

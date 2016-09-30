@@ -20,7 +20,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	s := ctx.Value("pluto_frontend")
 	// get gRPC client from service
-	// c := s.(pluto.Service).Clients()["client_user"]
 	c := s.(pluto.Service).Client("client_user")
 	// make a call the backend service
 	user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
@@ -40,7 +39,6 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get service from context by service name
 	s := ctx.Value("pluto_frontend")
 	// get gRPC client from service
-	// c := s.(pluto.Service).Clients()["client_user"]
 	c := s.(pluto.Service).Client("client_user")
 	// make a call the backend service
 	user, err := c.Call().(pb.UserServiceClient).ReadUser(ctx, user)
@@ -65,7 +63,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// get service from context by service name
 	s := ctx.Value("pluto_frontend")
 	// get gRPC client from service
-	// c := s.(pluto.Service).Clients()["client_user"]
 	c := s.(pluto.Service).Client("client_user")
 	// make a call the backend service
 	user, err := c.Call().(pb.UserServiceClient).UpdateUser(ctx, user)
@@ -85,7 +82,6 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get service from context by service name
 	s := ctx.Value("pluto_frontend")
 	// get gRPC client from service
-	// c := s.(pluto.Service).Clients()["client_user"]
 	c := s.(pluto.Service).Client("client_user")
 	// make a call the backend service
 	user, err := c.Call().(pb.UserServiceClient).DeleteUser(ctx, user)
@@ -106,7 +102,6 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// get service from context by service name
 	s := ctx.Value("pluto_frontend")
 	// get gRPC client from service
-	// c := s.(pluto.Service).Clients()["client_user"]
 	c := s.(pluto.Service).Client("client_user")
 	// make a call the backend service
 	users, err := c.Call().(pb.UserServiceClient).FilterUsers(ctx, filter)

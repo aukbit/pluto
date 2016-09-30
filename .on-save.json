@@ -8,27 +8,27 @@
     {
       "watch": "**/server/*.go",
       "base": "pluto",
-      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/server  && go tool cover -html=.coverage.out -o .coverage.html"
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/server && go tool cover -html=.coverage.out -o .coverage.html"
     },
     {
       "watch": "**/client/*.go",
       "base": "pluto",
-      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/client  && go tool cover -html=.coverage.out -o .coverage.html"
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/client && go tool cover -html=.coverage.out -o .coverage.html"
     },
     {
       "watch": "**/datastore/*.go",
       "base": "pluto",
-      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/datastore  && go tool cover -html=.coverage.out -o .coverage.html"
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/datastore && go tool cover -html=.coverage.out -o .coverage.html"
     },
     {
       "watch": "**/reply/*.go",
       "base": "pluto",
-      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/reply  && go tool cover -html=.coverage.out -o .coverage.html"
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/reply && go tool cover -html=.coverage.out -o .coverage.html"
     },
     {
       "watch": "**/examples/user/**/*.go",
       "base": "pluto",
-      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/examples/user  && go tool cover -html=.coverage.out -o .coverage.html"
+      "command": "go test -coverprofile .coverage.out bitbucket.org/aukbit/pluto/examples/user -db_addr=192.168.99.100 && go tool cover -html=.coverage.out -o .coverage.html"
     }
   ],
   "config": {

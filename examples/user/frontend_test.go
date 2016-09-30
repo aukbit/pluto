@@ -45,7 +45,6 @@ func TestMain(m *testing.M) {
 		go RunBackend()
 		time.Sleep(time.Millisecond * 100)
 		go RunFrontend()
-		time.Sleep(time.Millisecond * 100)
 	}
 	result := m.Run()
 	if !testing.Short() {
