@@ -88,7 +88,9 @@ func (s *defaultServer) start() (err error) {
 		}
 	}
 
-	s.waitUntilStop(ln)
+	// add go routine to WaitGroup
+	s.wg.Add(1)
+	go s.waitUntilStop(ln)
 	return nil
 }
 
@@ -202,6 +204,7 @@ func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
 // waitUntilStop waits for close channel
 func (s *defaultServer) waitUntilStop(ln net.Listener) {
+	defer s.wg.Done()
 outer:
 	for {
 		select {

@@ -9,11 +9,11 @@ import (
 // Service is the basic interface that defines what to expect from any server.
 type Service interface {
 	Init(...ConfigFunc) error
-	Client(string) client.Client
-	Server(string) server.Server
 	Run() error
 	Stop()
 	Config() *Config
+	Client(string) client.Client
+	Server(string) server.Server
 }
 
 var (

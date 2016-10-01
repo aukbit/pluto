@@ -37,6 +37,7 @@ func newService(cfgs ...ConfigFunc) *service {
 	return s
 }
 
+// Init TODO should be removed.. redundant makes initialization confusing
 func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(s.cfg)
@@ -51,36 +52,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	return nil
 }
 
-func middlewareService(s *service) router.Middleware {
-	return func(h router.Handler) router.Handler {
-		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, s.cfg.Name, s)
-			h.ServeHTTP(w, r.WithContext(ctx))
-		}
-	}
-}
-
-func (s *service) Server(name string) (srv server.Server) {
-	var ok bool
-	if srv, ok = s.cfg.Servers[name]; !ok {
-		return nil
-	}
-	return srv
-}
-
-func (s *service) Client(name string) (clt client.Client) {
-	var ok bool
-	if clt, ok = s.cfg.Clients[name]; !ok {
-		return nil
-	}
-	return clt
-}
-
-func (s *service) Datastore() datastore.Datastore {
-	return s.cfg.Datastore
-}
-
+// Run starts service
 func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
@@ -92,6 +64,44 @@ func (s *service) Run() error {
 		zap.String("id", s.cfg.ID),
 	)
 	return nil
+}
+
+// Stop stops service
+func (s *service) Stop() {
+	logger.Info("stop",
+		zap.String("service", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+	)
+	s.close <- true
+}
+
+// Config service configration options
+func (s *service) Config() *Config {
+	cfg := s.cfg
+	return cfg
+}
+
+// Server returns a server instance by name if initialized in service
+func (s *service) Server(name string) (srv server.Server) {
+	var ok bool
+	if srv, ok = s.cfg.Servers[name]; !ok {
+		return nil
+	}
+	return srv
+}
+
+// Client returns a client instance by name if initialized in service
+func (s *service) Client(name string) (clt client.Client) {
+	var ok bool
+	if clt, ok = s.cfg.Clients[name]; !ok {
+		return nil
+	}
+	return clt
+}
+
+// Datastore TODO there is no need to be public
+func (s *service) Datastore() datastore.Datastore {
+	return s.cfg.Datastore
 }
 
 func (s *service) start() error {
@@ -162,9 +172,6 @@ func (s *service) startClients() {
 
 // waitUntilStopOrSig waits for close channel or syscall Signal
 func (s *service) waitUntilStopOrSig() {
-	logger.Info("wait",
-		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.ID))
 	defer s.wg.Done()
 	//  Stop also in case of any host signal
 	sigch := make(chan os.Signal, 1)
@@ -190,7 +197,7 @@ outer:
 				zap.String("service", s.cfg.Name),
 				zap.String("id", s.cfg.ID))
 			time.Sleep(time.Second * 1)
-			continue outer
+			continue
 		}
 	}
 }
@@ -206,15 +213,12 @@ func (s *service) stopServers() {
 	}
 }
 
-func (s *service) Stop() {
-	logger.Info("stop",
-		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-	)
-	s.close <- true
-}
-
-func (s *service) Config() *Config {
-	cfg := s.cfg
-	return cfg
+func middlewareService(s *service) router.Middleware {
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, s.cfg.Name, s)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
 }
