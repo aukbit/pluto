@@ -150,10 +150,9 @@ func (s *defaultServer) serve(ln net.Listener) error {
 
 		TLSConfig: s.cfg.TLSConfig,
 	}
-	//  serve requests
+	// add go routine to WaitGroup
+	s.wg.Add(1)
 	go func() {
-		// add go routine to WaitGroup
-		s.wg.Add(1)
 		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
@@ -181,10 +180,9 @@ func errClosing(ln net.Listener) error {
 func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
 	srv := s.cfg.GRPCServer
-	//  serve requests
+	// add go routine to WaitGroup
+	s.wg.Add(1)
 	go func() {
-		// add go routine to WaitGroup
-		s.wg.Add(1)
 		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
@@ -219,7 +217,7 @@ outer:
 			}
 			break outer
 		default:
-			logger.Info("live",
+			logger.Info("pulse",
 				zap.String("server", s.cfg.Name),
 				zap.String("id", s.cfg.ID),
 				zap.String("format", s.cfg.Format),

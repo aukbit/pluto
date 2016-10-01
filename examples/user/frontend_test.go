@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,13 +29,17 @@ type Error struct {
 
 const URL = "http://localhost:8080"
 
+var wg sync.WaitGroup
+
 func RunBackend() {
+	defer wg.Done()
 	if err := backend.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func RunFrontend() {
+	defer wg.Done()
 	if err := frontend.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -42,12 +47,14 @@ func RunFrontend() {
 
 func TestMain(m *testing.M) {
 	if !testing.Short() {
+		wg.Add(2)
 		go RunBackend()
 		time.Sleep(time.Millisecond * 100)
 		go RunFrontend()
 	}
 	result := m.Run()
 	if !testing.Short() {
+		wg.Wait()
 	}
 	os.Exit(result)
 }

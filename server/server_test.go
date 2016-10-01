@@ -86,6 +86,7 @@ func TestServer(t *testing.T) {
 		if err := g.Run(); err != nil {
 			log.Fatal(err)
 		}
+
 	}()
 	defer g.Stop()
 

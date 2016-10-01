@@ -20,26 +20,19 @@ func Index(w http.ResponseWriter, r *http.Request) {
 const URL = "http://localhost:8083"
 
 func TestService(t *testing.T) {
-	// 1. Config service
+
+	// Define Router
+	mux := router.NewRouter()
+	mux.GET("/", Index)
+	// Define server
+	httpSrv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
+
+	// Define Service
 	s := pluto.NewService(
 		pluto.Name("gopher"),
 		pluto.Description("gopher super service"),
+		pluto.Servers(httpSrv),
 	)
-
-	//assert.Equal(t, reflect.TypeOf(service.DefaultServer), reflect.TypeOf(s))
-	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.ID) > 0)
-	assert.Equal(t, "pluto_gopher", cfg.Name)
-	assert.Equal(t, "gopher super service", cfg.Description)
-
-	// 2. Set http server handlers
-	mux := router.NewRouter()
-	mux.GET("/", Index)
-	// 3. Define server Router
-	httpSrv := server.NewServer(server.Addr(":8083"), server.Mux(mux))
-
-	// 4. Init service
-	s.Init(pluto.Servers(httpSrv))
 
 	// 5. Run service
 	go func() {
@@ -48,6 +41,12 @@ func TestService(t *testing.T) {
 		}
 	}()
 	defer s.Stop()
+
+	// Assert Config
+	cfg := s.Config()
+	assert.Equal(t, true, len(cfg.ID) > 0)
+	assert.Equal(t, "pluto_gopher", cfg.Name)
+	assert.Equal(t, "gopher super service", cfg.Description)
 
 	// Test
 	r, err := http.Get(URL)
@@ -69,7 +68,4 @@ func TestService(t *testing.T) {
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
 
-	// Stop service
-	// syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
-	// t.Logf("format %v", syscall.Getpid())
 }

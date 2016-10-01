@@ -3,7 +3,10 @@ package pluto
 import (
 	"context"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/uber-go/zap"
@@ -23,8 +26,15 @@ type service struct {
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	return &service{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
-
+	s := &service{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
+	for _, srv := range c.Servers {
+		// Wrap this service to all handlers
+		// make it available in handler context
+		if srv.Config().Format == "http" {
+			srv.Config().Mux.AddMiddleware(middlewareService(s))
+		}
+	}
+	return s
 }
 
 func (s *service) Init(cfgs ...ConfigFunc) error {
@@ -75,17 +85,7 @@ func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
-	// parse address for host, port
-	// ch := make(chan os.Signal, 1)
-	// signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	// sig := <-ch
-	// logger.Info("signal received",
-	// 	zap.String("service", s.cfg.Name),
-	// 	zap.String("id", s.cfg.ID),
-	// 	zap.String("signal", sig.String()))
-	// return s.Stop()
-
-	// wait for go routines to finish
+	// wait for all go routines to finish
 	s.wg.Wait()
 	logger.Info("exit",
 		zap.String("service", s.cfg.Name),
@@ -115,11 +115,22 @@ func (s *service) start() error {
 		}
 	}
 
+	// TODO: manage errors
 	// run servers
+	s.startServers()
+	// dial clients
+	s.startClients()
+	// add go routine to WaitGroup
+	s.wg.Add(1)
+	go s.waitUntilStopOrSig()
+	return nil
+}
+
+func (s *service) startServers() {
 	for _, srv := range s.cfg.Servers {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
 		go func(ss server.Server) {
-			// add go routine to WaitGroup
-			s.wg.Add(1)
 			defer s.wg.Done()
 			if err := ss.Run(); err != nil {
 				logger.Error("Run()",
@@ -130,11 +141,13 @@ func (s *service) start() error {
 			}
 		}(srv)
 	}
-	// dial clients
+}
+
+func (s *service) startClients() {
 	for _, clt := range s.cfg.Clients {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
 		go func(cc client.Client) {
-			// add go routine to WaitGroup
-			s.wg.Add(1)
 			defer s.wg.Done()
 			if err := cc.Dial(); err != nil {
 				logger.Error("Dial()",
@@ -145,33 +158,51 @@ func (s *service) start() error {
 			}
 		}(clt)
 	}
-	s.waitUntilStopOrSig()
-	return nil
 }
 
 // waitUntilStopOrSig waits for close channel or syscall Signal
 func (s *service) waitUntilStopOrSig() {
+	logger.Info("wait",
+		zap.String("service", s.cfg.Name),
+		zap.String("id", s.cfg.ID))
+	defer s.wg.Done()
+	//  Stop also in case of any host signal
+	sigch := make(chan os.Signal, 1)
+	signal.Notify(sigch, syscall.SIGTERM, syscall.SIGINT)
+
 outer:
 	for {
 		select {
 		case <-s.close:
 			// Waits for call to stop
-			for _, srv := range s.cfg.Servers {
-				go func(ss server.Server) {
-					// add go routine to WaitGroup
-					s.wg.Add(1)
-					defer s.wg.Done()
-					ss.Stop()
-				}(srv)
-			}
+			s.stopServers()
+			break outer
+		case sig := <-sigch:
+			// Waits for signal to stop
+			logger.Info("signal received",
+				zap.String("service", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("signal", sig.String()))
+			s.stopServers()
 			break outer
 		default:
-			logger.Info("live",
+			logger.Info("pulse",
 				zap.String("service", s.cfg.Name),
 				zap.String("id", s.cfg.ID))
 			time.Sleep(time.Second * 1)
-			continue
+			continue outer
 		}
+	}
+}
+
+func (s *service) stopServers() {
+	for _, srv := range s.cfg.Servers {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(ss server.Server) {
+			defer s.wg.Done()
+			ss.Stop()
+		}(srv)
 	}
 }
 
