@@ -1,34 +1,35 @@
 package reply_test
 
 import (
-	"testing"
 	"net/http"
 	"net/http/httptest"
-	"github.com/paulormart/assert"
+	"testing"
+
 	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/paulormart/assert"
 )
 
-func TestAll(t *testing.T){
+func TestAll(t *testing.T) {
 
 	// Table tests
-	var tests = []struct{
+	var tests = []struct {
 		Fn func(w http.ResponseWriter, r *http.Request)
-		S int // status code
-		B string //body
+		S  int    // status code
+		B  string //body
 	}{{
-		Fn: func(w http.ResponseWriter, r *http.Request){
+		Fn: func(w http.ResponseWriter, r *http.Request) {
 			reply.Json(w, r, http.StatusOK, "Hello World")
 		},
 		S: 200,
 		B: `"Hello World"`,
-	},{
-		Fn: func(w http.ResponseWriter, r *http.Request){
+	}, {
+		Fn: func(w http.ResponseWriter, r *http.Request) {
 			reply.Json(w, r, http.StatusNotFound, "not found")
 		},
 		S: http.StatusNotFound,
 		B: `"not found"`,
-	},{
-		Fn: func(w http.ResponseWriter, r *http.Request){
+	}, {
+		Fn: func(w http.ResponseWriter, r *http.Request) {
 			data := map[string]interface{}{"url": "golang.org"}
 			reply.Json(w, r, http.StatusCreated, data)
 		},

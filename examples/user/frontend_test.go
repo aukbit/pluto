@@ -1,24 +1,26 @@
 package frontend_test
 
 import (
-	"github.com/paulormart/assert"
-	"bitbucket.org/aukbit/pluto/examples/user/frontend/service"
-	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
-	"testing"
-	"log"
-	"io"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
-	"strings"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
+	"strings"
+	"sync"
+	"testing"
 	"time"
+
+	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
+	"bitbucket.org/aukbit/pluto/examples/user/frontend/service"
+	"github.com/paulormart/assert"
 )
 
 type User struct {
-	Id  	string           `json:"id"`
-	Name  	string           `json:"name"`
-	Email  	string           `json:"email"`
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type Error struct {
@@ -27,13 +29,17 @@ type Error struct {
 
 const URL = "http://localhost:8080"
 
-func RunBackend(){
+var wg sync.WaitGroup
+
+func RunBackend() {
+	defer wg.Done()
 	if err := backend.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func RunFrontend(){
+func RunFrontend() {
+	defer wg.Done()
 	if err := frontend.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -41,72 +47,74 @@ func RunFrontend(){
 
 func TestMain(m *testing.M) {
 	if !testing.Short() {
+		wg.Add(2)
 		go RunBackend()
 		time.Sleep(time.Millisecond * 100)
 		go RunFrontend()
-		time.Sleep(time.Millisecond * 100)
-    	}
+	}
 	result := m.Run()
-	if !testing.Short() {}
-    	os.Exit(result)
+	if !testing.Short() {
+		wg.Wait()
+	}
+	os.Exit(result)
 }
 
-func TestAll(t *testing.T){
+func TestAll(t *testing.T) {
 
 	user := &User{}
 
 	var tests = []struct {
 		Method       string
-		Path         func(string)string
+		Path         func(string) string
 		Body         io.Reader
-		BodyContains func(string)string
+		BodyContains func(string) string
 		Status       int
 	}{
 		{
-		Method:       "POST",
-		Path:         func(id string) string { return URL + "/user" },
-		Body:         strings.NewReader(`{"name":"Gopher", "email": "gopher@email.com", "password":"123456"}`),
-		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
-		Status:       http.StatusCreated,
-	},
+			Method:       "POST",
+			Path:         func(id string) string { return URL + "/user" },
+			Body:         strings.NewReader(`{"name":"Gopher", "email": "gopher@email.com", "password":"123456"}`),
+			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Gopher","email":"gopher@email.com"}` },
+			Status:       http.StatusCreated,
+		},
 		{
-		Method:       "GET",
-		Path:         func(id string) string { return URL + "/user/" + id },
-		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
-		Status:       http.StatusOK,
-	},
+			Method:       "GET",
+			Path:         func(id string) string { return URL + "/user/" + id },
+			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Gopher","email":"gopher@email.com"}` },
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "GET",
-		Path:         func(id string) string { return URL + "/user/abc" },
-		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Gopher","email":"gopher@email.com"}` },
-		Status:       http.StatusInternalServerError,
-	},
+			Method:       "GET",
+			Path:         func(id string) string { return URL + "/user/abc" },
+			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Gopher","email":"gopher@email.com"}` },
+			Status:       http.StatusInternalServerError,
+		},
 		{
-		Method:       "PUT",
-		Path:         func(id string) string { return URL + "/user/" + id },
-		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Super Gopher house"}` },
-		Status:       http.StatusOK,
-	},
+			Method:       "PUT",
+			Path:         func(id string) string { return URL + "/user/" + id },
+			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Super Gopher house"}` },
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "PUT",
-		Path:         func(id string) string { return URL + "/user/abc" },
-		Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-		BodyContains: func(id string) string { return `{"id":"`+id+`","name":"Super Gopher house"}` },
-		Status:       http.StatusInternalServerError,
-	},
+			Method:       "PUT",
+			Path:         func(id string) string { return URL + "/user/abc" },
+			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Super Gopher house"}` },
+			Status:       http.StatusInternalServerError,
+		},
 		{
-		Method:       "DELETE",
-		Path:         func(id string) string { return URL + "/user/" + id },
-		BodyContains: func(id string) string { return `{}` },
-		Status:       http.StatusOK,
-	},
+			Method:       "DELETE",
+			Path:         func(id string) string { return URL + "/user/" + id },
+			BodyContains: func(id string) string { return `{}` },
+			Status:       http.StatusOK,
+		},
 		{
-		Method:       "DELETE",
-		Path:         func(id string) string { return URL + "/user/abc" },
-		BodyContains: func(id string) string { return `{}` },
-		Status:       http.StatusInternalServerError,
-	},
+			Method:       "DELETE",
+			Path:         func(id string) string { return URL + "/user/abc" },
+			BodyContains: func(id string) string { return `{}` },
+			Status:       http.StatusInternalServerError,
+		},
 	}
 
 	for _, test := range tests {
@@ -137,7 +145,7 @@ func TestAll(t *testing.T){
 	}
 
 	// FilterUsers
-	r, err := http.NewRequest("GET", URL + "/user?name=Gopher", nil)
+	r, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,55 +2,55 @@ package pluto
 
 import (
 	"fmt"
-	"strings"
-	"github.com/google/uuid"
 	"regexp"
-	"log"
-	"bitbucket.org/aukbit/pluto/server"
+	"strings"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/server"
+	"github.com/google/uuid"
+	"github.com/uber-go/zap"
 )
 
+// Config pluto service config
 type Config struct {
-	Id 			string
-	Name 			string
-	Description 		string
-	Version 		string
-	Servers			map[string]server.Server
-	Clients			map[string]client.Client
-	Datastore		datastore.Datastore
+	ID          string
+	Name        string
+	Description string
+	Version     string
+	Servers     map[string]server.Server
+	Clients     map[string]client.Client
+	Datastore   datastore.Datastore
 }
 
+// ConfigFunc registers the Config
 type ConfigFunc func(*Config)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := &Config{Servers: make(map[string]server.Server),
+	cfg := &Config{Version: defaultVersion,
+		Servers: make(map[string]server.Server),
 		Clients: make(map[string]client.Client)}
 
 	for _, c := range cfgs {
 		c(cfg)
 	}
 
-	if len(cfg.Id) == 0 {
-		cfg.Id = uuid.New().String()
+	if len(cfg.ID) == 0 {
+		cfg.ID = uuid.New().String()
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultName
-	}
-
-	if len(cfg.Version) == 0 {
-		cfg.Version = DefaultVersion
+		cfg.Name = defaultName
 	}
 
 	return cfg
 }
 
-// Id service id
-func Id(id string) ConfigFunc {
+// ID service id
+func ID(id string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Id = id
+		cfg.ID = id
 	}
 }
 
@@ -60,10 +60,12 @@ func Name(n string) ConfigFunc {
 		// support only alphanumeric and underscore characters
 		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
-			log.Fatal(err)
+			logger.Error("Name",
+				zap.String("err", err.Error()),
+			)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
 	}
 }
 

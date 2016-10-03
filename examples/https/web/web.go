@@ -1,10 +1,11 @@
 package web
 
 import (
+	"flag"
+
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"flag"
 )
 
 var https_port = flag.String("https_port", ":8443", "https port")
@@ -16,7 +17,7 @@ func Run() error {
 		pluto.Description("web server serving handlers with https/tls"),
 	)
 	// 2. Set server handlers
-	mux := router.NewRouter()
+	mux := router.NewMux()
 	mux.GET("/", GetHandler)
 	// 3. Create new http server
 	httpSrv := server.NewServer(server.Name("api"),

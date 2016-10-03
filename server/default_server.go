@@ -1,28 +1,30 @@
 package server
 
 import (
-	"log"
+	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"time"
-	"syscall"
-	"os/signal"
-	"os"
-	"crypto/tls"
+
+	"github.com/uber-go/zap"
+
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg 			*Config
-	close 			chan bool
+	cfg   *Config
+	close chan bool
+	wg    *sync.WaitGroup
 }
 
 // NewServer will instantiate a new defaultServer with the given config
 func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	return &defaultServer{c, make(chan bool)}
+	return &defaultServer{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
 }
 
 // Run Server
@@ -30,18 +32,24 @@ func (s *defaultServer) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
-	// parse address for host, port
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	sig := <-ch
-	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
-	return s.Stop()
+	// wait for go routines to finish
+	s.wg.Wait()
+	logger.Info("exit",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+	)
+	return nil
 }
 
 // Stop stops server by sending a message to close the listener via channel
-func (s *defaultServer) Stop() error {
-	s.close <-true
-	return nil
+func (s *defaultServer) Stop() {
+	logger.Info("stop",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format),
+	)
+	s.close <- true
 }
 
 func (s *defaultServer) Config() *Config {
@@ -50,7 +58,10 @@ func (s *defaultServer) Config() *Config {
 }
 
 func (s *defaultServer) start() (err error) {
-
+	logger.Info("start",
+		zap.String("server", s.cfg.Name),
+		zap.String("id", s.cfg.ID),
+		zap.String("format", s.cfg.Format))
 	var ln net.Listener
 
 	switch s.cfg.Format {
@@ -77,7 +88,9 @@ func (s *defaultServer) start() (err error) {
 		}
 	}
 
-	go s.waitSignal(ln)
+	// add go routine to WaitGroup
+	s.wg.Add(1)
+	go s.waitUntilStop(ln)
 	return nil
 }
 
@@ -96,7 +109,7 @@ func (s *defaultServer) listen() (net.Listener, error) {
 	if err != nil {
 		return nil, err
 	}
-	ln = net.Listener(TcpKeepAliveListener{ln.(*net.TCPListener)})
+	ln = net.Listener(TCPKeepAliveListener{ln.(*net.TCPListener)})
 
 	return ln, nil
 }
@@ -137,52 +150,94 @@ func (s *defaultServer) serve(ln net.Listener) error {
 		// timing out write of the response. The default timeout is 10 seconds.
 		WriteTimeout: 10 * time.Second,
 
-		TLSConfig:    s.cfg.TLSConfig,
+		TLSConfig: s.cfg.TLSConfig,
 	}
+	// add go routine to WaitGroup
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s srv.Serve(ln) %v", s.cfg.Name, err)
+			if err.Error() == errClosing(ln).Error() {
+				return
+			}
+			logger.Error("Serve(ln)",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()),
+				zap.String("err", err.Error()))
+			return
 		}
 	}()
-
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	return nil
+}
+
+// errClosing is the currently error raised when we gracefull
+// close the listener. If this is the case there is no point to log
+func errClosing(ln net.Listener) error {
+	return fmt.Errorf("accept tcp %v: use of closed network connection", ln.Addr().String())
 }
 
 // serve serves *grpc.Server
 func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
 	srv := s.cfg.GRPCServer
-
+	// add go routine to WaitGroup
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		if err := srv.Serve(ln); err != nil {
-			log.Fatalf("ERROR %s g.Serve(lis) %v", s.cfg.Name, err)
+			if err.Error() == errClosing(ln).Error() {
+				return
+			}
+			logger.Error("Serve(ln)",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()),
+				zap.String("err", err.Error()))
+			return
 		}
 	}()
-
-	log.Printf("----- %s %s listening on %s", s.cfg.Format, s.cfg.Name, ln.Addr().String())
 	return nil
 }
 
-// waitSignal to be used as go routine waiting for a signal to stop the service
-func (s *defaultServer) waitSignal (ln net.Listener) {
-	// Waits for call to stop
-	<-s.close
-	log.Printf("CLOSE %s %s received", s.cfg.Format, s.cfg.Name)
-	// close listener
-	if err := ln.Close(); err != nil {
-		log.Fatalf("ERROR %s %s ln.Close() %v", s.cfg.Format, s.cfg.Name, err)
+// waitUntilStop waits for close channel
+func (s *defaultServer) waitUntilStop(ln net.Listener) {
+	defer s.wg.Done()
+outer:
+	for {
+		select {
+		case <-s.close:
+			// Waits for call to stop
+			if err := ln.Close(); err != nil {
+				logger.Error("Close()",
+					zap.String("server", s.cfg.Name),
+					zap.String("id", s.cfg.ID),
+					zap.String("format", s.cfg.Format),
+					zap.String("port", ln.Addr().String()),
+					zap.String("err", err.Error()))
+			}
+			break outer
+		default:
+			logger.Info("pulse",
+				zap.String("server", s.cfg.Name),
+				zap.String("id", s.cfg.ID),
+				zap.String("format", s.cfg.Format),
+				zap.String("port", ln.Addr().String()))
+			time.Sleep(time.Second * 1)
+			continue
+		}
 	}
-	log.Printf("----- %s %s listener closed", s.cfg.Format, s.cfg.Name)
 }
 
 // middlewareStrictSecurityHeader Middleware to wrap all handlers with
 // Strict-Transport-Security header
 func middlewareStrictSecurityHeader() router.Middleware {
-    return func(h router.Handler) router.Handler {
-        return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		h.ServeHTTP(w, r)
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			h.ServeHTTP(w, r)
+		}
 	}
-    }
 }

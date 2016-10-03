@@ -2,15 +2,22 @@ package reply
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
+
+	"github.com/uber-go/zap"
 )
 
-func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}){
+var logger = zap.New(zap.NewJSONEncoder())
+
+func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
 
 	d, err := json.Marshal(data)
 	if err != nil {
-		//With(w, r, http.StatusInternalServerError, map[string]interface{}{"error": err.Error()})
+		logger.Error("Marshal()",
+			zap.String("method", r.Method),
+			zap.String("url", r.URL.String()),
+			zap.String("err", err.Error()),
+		)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -19,6 +26,8 @@ func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}){
 	w.WriteHeader(status)
 
 	if _, err := w.Write(d); err != nil {
-		log.Fatalf("ERROR w.Write(d) %v", err)
+		logger.Error("Write()",
+			zap.String("err", err.Error()),
+		)
 	}
 }

@@ -1,16 +1,17 @@
 package client_test
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"testing"
+
+	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/server"
+	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"log"
-	"bitbucket.org/aukbit/pluto/client"
-	pb "bitbucket.org/aukbit/pluto/server/proto"
-	"bitbucket.org/aukbit/pluto/server"
-	"fmt"
-	"os"
 )
 
 type greeter struct{}
@@ -38,13 +39,14 @@ func TestMain(m *testing.M) {
 			}
 		}()
 		defer s.Stop()
-    	}
+	}
 	result := m.Run()
-	if !testing.Short() {}
-    	os.Exit(result)
+	if !testing.Short() {
+	}
+	os.Exit(result)
 }
 
-func TestClient(t *testing.T){
+func TestClient(t *testing.T) {
 
 	// Create a grpc client
 	c := client.NewClient(
@@ -57,7 +59,7 @@ func TestClient(t *testing.T){
 	)
 
 	cfg := c.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
+	assert.Equal(t, true, len(cfg.ID) > 0)
 	assert.Equal(t, "client_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)

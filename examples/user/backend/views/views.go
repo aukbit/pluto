@@ -1,18 +1,18 @@
 package backend
 
 import (
-	"golang.org/x/net/context"
-	"github.com/google/uuid"
-	"log"
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
+
 	"bitbucket.org/aukbit/pluto/datastore"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"github.com/google/uuid"
+	"golang.org/x/net/context"
 )
 
-
 type User struct {
-	Cluster		datastore.Datastore
+	Cluster datastore.Datastore
 }
 
 // CreateUser implements UserServiceServer
@@ -34,9 +34,10 @@ func (s *User) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error)
 		newId, nu.Name, nu.Email, sha256_hash).Exec(); err != nil {
 		log.Printf("ERROR CreateUser Query() %v", err)
 		return &pb.User{}, err
-	    }
+	}
 	return &pb.User{Name: nu.Name, Email: nu.Email, Id: newId}, nil
 }
+
 // ReadUser implements UserServiceServer
 func (s *User) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// refresh session
@@ -54,6 +55,7 @@ func (s *User) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	}
 	return u, nil
 }
+
 // ReadUser implements UserServiceServer
 func (s *User) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// refresh session
@@ -69,6 +71,7 @@ func (s *User) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	}
 	return nu, nil
 }
+
 // DeleteUser implements UserServiceServer
 func (s *User) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// refresh session
@@ -100,11 +103,11 @@ func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error)
 	u := &pb.User{}
 	for iter.Scan(&u.Id, &u.Name, &u.Email) {
 		users.Data = append(users.Data, u)
-    	}
-    	if err := iter.Close(); err != nil {
+	}
+	if err := iter.Close(); err != nil {
 		log.Printf("ERROR FilterUsers Close() %v", err)
 		return &pb.Users{}, err
-    	}
+	}
 
 	return users, nil
 }

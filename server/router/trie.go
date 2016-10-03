@@ -1,3 +1,5 @@
+// Package router trie based on a 256-way trie expressed on the textbook
+// Algorithms, 4th Edition by Robert Sedgewick and Kevin Wayne
 // A string symbol table for extended ASCII strings, implemented
 // using a 256-way trie.
 // http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/TrieST.java.html
@@ -11,32 +13,33 @@ import (
 // R extended ASCII
 const R = 256
 
+// Trie struct
 type Trie struct {
 	// root of trie
-	root 			*Node
+	root *Node
 	// number of keys in trie
-	n				int
+	n int
 }
 
-// R-way trie node
+// Node trie node
 type Node struct {
-	data			*Data
-	next			[R]*Node
+	data *Data
+	next [R]*Node
 }
 
-// NewNode
+// NewNode creates new instace node
 func NewNode() *Node {
 	//return &Node{data: &Data{}}
 	return &Node{data: NewData()}
 }
 
-// newTrie
+// NewTrie creates new instace trie
 func NewTrie() *Trie {
 	return &Trie{root: NewNode()}
 }
 
 // Get returns the value associated with the given key
-func (t *Trie) Get (key string) *Data {
+func (t *Trie) Get(key string) *Data {
 	n := get(t.root, key, 0)
 	if n == nil {
 		//return &Data{}
@@ -47,7 +50,7 @@ func (t *Trie) Get (key string) *Data {
 }
 
 // get
-func get (n *Node, key string, d int) *Node {
+func get(n *Node, key string, d int) *Node {
 	if n == nil {
 		return nil
 	}
@@ -57,8 +60,8 @@ func get (n *Node, key string, d int) *Node {
 	return get(n.next[key[d]], key, d+1)
 }
 
-// contains verify if a key exists in the Trie
-func (t *Trie) Contains (key string) bool {
+// Contains verify if a key exists in the Trie
+func (t *Trie) Contains(key string) bool {
 	return t.Get(key).value != ""
 }
 
@@ -74,7 +77,7 @@ func (t *Trie) Put(key string, data *Data) {
 }
 
 // put
-func (t *Trie) put(n *Node, key string, data *Data, d int) *Node{
+func (t *Trie) put(n *Node, key string, data *Data, d int) *Node {
 	//log.Printf("put n=%v key=%v data=%v d=%v", &n, key, data, d)
 	if n == nil {
 		n = NewNode()
@@ -91,7 +94,7 @@ func (t *Trie) put(n *Node, key string, data *Data, d int) *Node{
 	}
 	c := key[d]
 	//log.Printf("put n.next[c]=%v", n.next[c])
-	n.next[c] = t.put(n.next[c], key, data, d+1);
+	n.next[c] = t.put(n.next[c], key, data, d+1)
 	return n
 }
 
@@ -104,7 +107,7 @@ func (t *Trie) remove(n *Node, key string, d int) *Node {
 	if n == nil {
 		return nil
 	}
-	if (d == len(key)) {
+	if d == len(key) {
 		if n.data.value != "" {
 			t.n--
 		}
@@ -120,7 +123,7 @@ func (t *Trie) remove(n *Node, key string, d int) *Node {
 	if n.data.value != "" {
 		return n
 	}
-	for i:=0; i < R; i++ {
+	for i := 0; i < R; i++ {
 		if n.next[i] != nil {
 			return n
 		}
@@ -133,7 +136,7 @@ func (t *Trie) Size() int {
 	return t.n
 }
 
-// Size returns the number of key-value pairs in this trie
+// IsEmpty returns the number of key-value pairs in this trie
 func (t *Trie) IsEmpty() bool {
 	return t.n == 0
 }
@@ -159,7 +162,7 @@ func (t *Trie) collectKeysWithPrefix(n *Node, prefix string, results *[]string) 
 	if n.data.value != "" {
 		*results = append(*results, prefix)
 	}
-	for c:=0; c < R; c++ {
+	for c := 0; c < R; c++ {
 		buffer := bytes.NewBufferString(prefix)
 		buffer.WriteByte(byte(c))
 		t.collectKeysWithPrefix(n.next[c], buffer.String(), results)
@@ -178,14 +181,14 @@ func (t *Trie) collectKeysThatMatch(n *Node, prefix, pattern string, results *[]
 	if n == nil {
 		return
 	}
-	if len(prefix) == len(pattern) && n.data.value != ""{
+	if len(prefix) == len(pattern) && n.data.value != "" {
 		*results = append(*results, prefix)
 	}
 	if len(prefix) == len(pattern) {
 		return
 	}
 	p := pattern[len(prefix)]
-	if  p == '.' {
+	if p == '.' {
 		for c := 0; c < R; c++ {
 			buffer := bytes.NewBufferString(prefix)
 			buffer.WriteByte(byte(c))
@@ -204,9 +207,8 @@ func (t *Trie) LongestPrefixOf(query string) string {
 	length := t.longestPrefixOf(t.root, query, 0, -1)
 	if length == -1 {
 		return ""
-	} else {
-		return query[0:length]
 	}
+	return query[0:length]
 }
 
 // longestPrefixOf returns the length of the longest string key in the subtrie

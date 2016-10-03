@@ -1,23 +1,24 @@
 package client
 
 import (
-	"log"
-	"google.golang.org/grpc"
 	"errors"
+
+	"github.com/uber-go/zap"
+
+	"google.golang.org/grpc"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type gRPCClient struct {
-	cfg 			*Config
-	wire			interface{}
-	close 			chan bool
+	cfg   *Config
+	wire  interface{}
+	close chan bool
 }
 
 // newGRPCClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFunc) *gRPCClient {
 	c := newConfig(cfgs...)
-	c.Format = "grpc"
 	return &gRPCClient{cfg: c, close: make(chan bool)}
 }
 
@@ -40,26 +41,30 @@ func (g *gRPCClient) Dial() error {
 	return nil
 }
 
-func (g *gRPCClient) Call() (interface{}) {
+func (g *gRPCClient) Call() interface{} {
 	if g.wire == nil {
-		return errors.New("gRPC client has not been registered.")
+		return errors.New("gRPC client has not been registered")
 	}
 	return g.wire
 }
 
 func (g *gRPCClient) Close() error {
 	// TODO
-	g.close <-true
+	g.close <- true
 	return nil
 }
 
 func (g *gRPCClient) dial() error {
-	log.Printf("DIAL  %s %s \t%s", g.cfg.Format, g.cfg.Name, g.cfg.Id)
+	logger.Info("DIAL",
+		zap.String("client", g.cfg.Name),
+		zap.String("id", g.cfg.ID),
+		zap.String("format", g.cfg.Format),
+	)
 	// establishes gRPC client connection
 	// TODO use TLS
 	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("ERROR %s grpc.Dial %v", g.cfg.Name, err)
+		return err
 	}
 	// get gRPC client interface
 	g.wire = g.cfg.RegisterClientFunc(conn)
