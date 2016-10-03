@@ -217,7 +217,10 @@ func middlewareService(s *service) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, s.cfg.Name, s)
+			// ctx = context.WithValue(ctx, s.cfg.Name, s)
+			// Note: service instance always available in context
+			// under the general name > pluto
+			ctx = context.WithValue(ctx, "pluto", s)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
