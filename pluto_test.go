@@ -22,7 +22,7 @@ const URL = "http://localhost:8083"
 func TestService(t *testing.T) {
 
 	// Define Router
-	mux := router.NewRouter()
+	mux := router.NewMux()
 	mux.GET("/", Index)
 	// Define server
 	httpSrv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))

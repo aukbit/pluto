@@ -41,7 +41,7 @@ func TestServer(t *testing.T) {
 	// HTTP server
 
 	// Define Router
-	mux := router.NewRouter()
+	mux := router.NewMux()
 	mux.GET("/home", Home)
 	mux.GET("/home/:id", Detail)
 

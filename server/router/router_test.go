@@ -1,4 +1,4 @@
-package router
+package router_test
 
 import (
 	"encoding/json"
@@ -11,39 +11,9 @@ import (
 	"testing"
 
 	"bitbucket.org/aukbit/pluto/reply"
+	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
-
-func TestPaths(t *testing.T) {
-
-	var path, key, value, prefix string
-	var params []string
-	path = "/"
-	key, value, prefix, params = transformPath(path)
-	assert.Equal(t, "/", key)
-	assert.Equal(t, "/", value)
-	assert.Equal(t, "", prefix)
-	assert.Equal(t, []string{}, params)
-	path = "/home"
-	key, value, prefix, params = transformPath(path)
-	assert.Equal(t, "/home", key)
-	assert.Equal(t, "/home", value)
-	assert.Equal(t, "", prefix)
-	assert.Equal(t, []string{}, params)
-	path = "/home/:id"
-	key, value, prefix, params = transformPath(path)
-	assert.Equal(t, "/home/:", key)
-	assert.Equal(t, "/:", value)
-	assert.Equal(t, "/home", prefix)
-	assert.Equal(t, []string{"id"}, params)
-	path = "/home/:id/room"
-	key, value, prefix, params = transformPath(path)
-	assert.Equal(t, "/home/:/room", key)
-	assert.Equal(t, "/room", value)
-	assert.Equal(t, "/home/:", prefix)
-	assert.Equal(t, []string{"id"}, params)
-
-}
 
 func Index(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Hello World")
@@ -100,7 +70,7 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestServer(t *testing.T) {
-	router := NewRouter()
+	router := router.NewMux()
 	router.Handle("GET", "/", IndexHandler)
 	router.Handle("GET", "/home", GetHandler)
 	router.Handle("POST", "/home", PostHandler)

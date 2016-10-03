@@ -1,15 +1,19 @@
-// https://vluxe.io/golang-router.html
 package router
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
 
+	"github.com/uber-go/zap"
+
 	"bitbucket.org/aukbit/pluto/reply"
 	"golang.org/x/net/context"
+)
+
+var (
+	logger = zap.New(zap.NewJSONEncoder())
 )
 
 // Handler is a function type like "net/http" Handler
@@ -24,21 +28,10 @@ func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // functionality.
 type Middleware func(Handler) Handler
 
-// Match
+// Match wraps an Handler and context
 type Match struct {
 	handler Handler
 	ctx     context.Context
-}
-
-// Mux interface to expose router struct
-type Mux interface {
-	GET(string, Handler)
-	POST(string, Handler)
-	PUT(string, Handler)
-	DELETE(string, Handler)
-	Handle(string, string, Handler)
-	ServeHTTP(http.ResponseWriter, *http.Request)
-	AddMiddleware(...Middleware)
 }
 
 // router
@@ -55,7 +48,8 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }
 
-func NewRouter() *router {
+// newRouter creates a new router instance
+func newRouter() *router {
 	return &router{trie: NewTrie()}
 }
 
@@ -141,8 +135,6 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 }
 
 func findData(r *router, method, path, sufix, key, segment string, values []string) (*Data, []string) {
-	//log.Printf("findData method=%v, path=%v, sufix=%v, key=%v, segment=%v, values=%v", method, path, sufix, key, segment, values)
-
 	// initialize
 	if path != "" && sufix == "" && key == "" {
 		// remove trailing slash
@@ -226,7 +218,7 @@ func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("----- %s %s", req.Method, req.URL)
+	logger.Info("request", zap.String("method", req.Method), zap.String("url", req.URL.String()))
 	m := r.findMatch(req)
 	if m == nil {
 		NotFoundHandler(w, req)

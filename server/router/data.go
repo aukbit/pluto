@@ -8,7 +8,7 @@ type Data struct {
 	methods   map[string]Handler
 }
 
-// NewData
+// NewData returns a new data instance
 func NewData() *Data {
 	return &Data{
 		value:   "",

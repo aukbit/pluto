@@ -19,7 +19,7 @@ func Run() error {
 	flag.Parse()
 
 	// Define handlers
-	mux := router.NewRouter()
+	mux := router.NewMux()
 	mux.GET("/user", frontend.GetHandler)
 	mux.POST("/user", frontend.PostHandler)
 	mux.GET("/user/:id", frontend.GetHandlerDetail)

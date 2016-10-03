@@ -1,3 +1,5 @@
+// Package router trie based on a 256-way trie expressed on the textbook
+// Algorithms, 4th Edition by Robert Sedgewick and Kevin Wayne
 // A string symbol table for extended ASCII strings, implemented
 // using a 256-way trie.
 // http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/TrieST.java.html
@@ -18,7 +20,7 @@ type Trie struct {
 	n int
 }
 
-// R-way trie node
+// Node trie node
 type Node struct {
 	data *Data
 	next [R]*Node
