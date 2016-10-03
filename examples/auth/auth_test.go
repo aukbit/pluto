@@ -13,9 +13,16 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/context"
+
+	"google.golang.org/grpc"
+
+	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/examples/auth/backend/service"
 	"bitbucket.org/aukbit/pluto/examples/auth/frontend/service"
 	pb "bitbucket.org/aukbit/pluto/examples/auth/proto"
+	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"bitbucket.org/aukbit/pluto/server"
 	"github.com/paulormart/assert"
 )
 
@@ -41,9 +48,32 @@ func RunFrontend() {
 	}
 }
 
+func MockUserBackend() {
+	defer wg.Done()
+	// GRPC server
+	// Define gRPC server and register
+	grpcServer := grpc.NewServer()
+
+	// Register grpc Server
+	pbu.RegisterUserServiceServer(grpcServer, &User{})
+
+	// Define Pluto Server
+	grpcSrv := server.NewServer(server.Addr(":65080"), server.GRPCServer(grpcServer))
+
+	// Define Pluto Service
+	s := pluto.NewService(pluto.Servers(grpcSrv))
+	// Run service
+	if err := s.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func TestMain(m *testing.M) {
 	if !testing.Short() {
-		wg.Add(2)
+		wg.Add(3)
+		// mock user backend
+		go MockUserBackend()
+		time.Sleep(time.Millisecond * 100)
 		go RunBackend()
 		time.Sleep(time.Millisecond * 100)
 		go RunFrontend()
@@ -100,6 +130,32 @@ func TestAll(t *testing.T) {
 			assert.Equal(t, test.Status, response.StatusCode)
 			// assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
 		}
+		assert.Equal(t, true, len(token.Jwt) > 0)
 	}
 
+}
+
+// backend user views
+type User struct{}
+
+func (s *User) ReadUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	// user object
+	u := &pbu.User{Id: "123456", Name: "Gopher", Email: "gopher@email.com"}
+	return u, nil
+}
+
+func (s *User) CreateUser(ctx context.Context, nu *pbu.NewUser) (*pbu.User, error) {
+	return &pbu.User{}, nil
+}
+
+func (s *User) UpdateUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	return &pbu.User{}, nil
+}
+
+func (s *User) DeleteUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	return &pbu.User{}, nil
+}
+
+func (s *User) FilterUsers(ctx context.Context, nu *pbu.Filter) (*pbu.Users, error) {
+	return &pbu.Users{}, nil
 }

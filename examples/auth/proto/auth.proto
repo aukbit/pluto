@@ -15,5 +15,5 @@ message Credentials {
 
 // The response message containing the user data
 message Token {
-    string token = 1;
+    string jwt = 1;
 }
