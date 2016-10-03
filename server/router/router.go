@@ -39,11 +39,12 @@ type router struct {
 	trie *Trie
 }
 
-// DefaultRootHandler
+// DefaultRootHandler hello world handler
 func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello World!\n")
 }
 
+// NotFoundHandler default not found resource json handler
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }

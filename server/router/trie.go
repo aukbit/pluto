@@ -13,6 +13,7 @@ import (
 // R extended ASCII
 const R = 256
 
+// Trie struct
 type Trie struct {
 	// root of trie
 	root *Node
@@ -26,13 +27,13 @@ type Node struct {
 	next [R]*Node
 }
 
-// NewNode
+// NewNode creates new instace node
 func NewNode() *Node {
 	//return &Node{data: &Data{}}
 	return &Node{data: NewData()}
 }
 
-// newTrie
+// NewTrie creates new instace trie
 func NewTrie() *Trie {
 	return &Trie{root: NewNode()}
 }
@@ -59,7 +60,7 @@ func get(n *Node, key string, d int) *Node {
 	return get(n.next[key[d]], key, d+1)
 }
 
-// contains verify if a key exists in the Trie
+// Contains verify if a key exists in the Trie
 func (t *Trie) Contains(key string) bool {
 	return t.Get(key).value != ""
 }
@@ -135,7 +136,7 @@ func (t *Trie) Size() int {
 	return t.n
 }
 
-// Size returns the number of key-value pairs in this trie
+// IsEmpty returns the number of key-value pairs in this trie
 func (t *Trie) IsEmpty() bool {
 	return t.n == 0
 }
@@ -206,9 +207,8 @@ func (t *Trie) LongestPrefixOf(query string) string {
 	length := t.longestPrefixOf(t.root, query, 0, -1)
 	if length == -1 {
 		return ""
-	} else {
-		return query[0:length]
 	}
+	return query[0:length]
 }
 
 // longestPrefixOf returns the length of the longest string key in the subtrie
