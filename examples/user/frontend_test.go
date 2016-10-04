@@ -9,19 +9,15 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
 	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
 	"bitbucket.org/aukbit/pluto/examples/user/frontend/service"
+	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"github.com/paulormart/assert"
 )
-
-type User struct {
-	Id    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
 
 type Error struct {
 	string
@@ -60,8 +56,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestAll(t *testing.T) {
+	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
-	user := &User{}
+	user := &pb.User{}
 
 	var tests = []struct {
 		Method       string

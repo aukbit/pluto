@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/uber-go/zap"
-
-	"bitbucket.org/aukbit/pluto/server/router"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -178,30 +176,6 @@ func errClosing(ln net.Listener) error {
 	return fmt.Errorf("accept tcp %v: use of closed network connection", ln.Addr().String())
 }
 
-// serve serves *grpc.Server
-func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
-
-	srv := s.cfg.GRPCServer
-	// add go routine to WaitGroup
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		if err := srv.Serve(ln); err != nil {
-			if err.Error() == errClosing(ln).Error() {
-				return
-			}
-			logger.Error("Serve(ln)",
-				zap.String("server", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
-				zap.String("format", s.cfg.Format),
-				zap.String("port", ln.Addr().String()),
-				zap.String("err", err.Error()))
-			return
-		}
-	}()
-	return nil
-}
-
 // waitUntilStop waits for close channel
 func (s *defaultServer) waitUntilStop(ln net.Listener) {
 	defer s.wg.Done()
@@ -227,17 +201,6 @@ outer:
 				zap.String("port", ln.Addr().String()))
 			time.Sleep(time.Second * 1)
 			continue
-		}
-	}
-}
-
-// middlewareStrictSecurityHeader Middleware to wrap all handlers with
-// Strict-Transport-Security header
-func middlewareStrictSecurityHeader() router.Middleware {
-	return func(h router.Handler) router.Handler {
-		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-			h.ServeHTTP(w, r)
 		}
 	}
 }

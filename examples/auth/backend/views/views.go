@@ -3,35 +3,31 @@ package backend
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"log"
-	"net/http"
 
-	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/auth/jwt"
-	pb "bitbucket.org/aukbit/pluto/examples/auth/proto"
-	"bitbucket.org/aukbit/pluto/reply"
+	pba "bitbucket.org/aukbit/pluto/auth/proto"
+	"bitbucket.org/aukbit/pluto/client"
+	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"golang.org/x/net/context"
 )
 
+// Auth struct
 type Auth struct {
+	Clt client.Client
 }
 
 // Authenticate implements authentication
-func (s *Auth) Authenticate(ctx context.Context, cre *pb.Credentials) (*pb.Token, error) {
-	log.Printf("Login %v", cre.Email)
-	// TODO
-	// get service from context by service name
-	s := ctx.Value("pluto")
-	// get gRPC client from service
-	c := s.(pluto.Service).Client("client_user")
-	// make a call the backend service
-	user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
+func (a *Auth) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
+	// make a call to user backend service for credentials verification
+	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
+	v, err := a.Clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
-		reply.Json(w, r, http.StatusInternalServerError, err.Error())
-		return
+		panic(err)
 	}
-	reply.Json(w, r, http.StatusCreated, user)
-
+	if !v.IsValid {
+		return &pba.Token{}, nil
+	}
+	// generate new token
 	pk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
@@ -40,5 +36,5 @@ func (s *Auth) Authenticate(ctx context.Context, cre *pb.Credentials) (*pb.Token
 	if err != nil {
 		panic(err)
 	}
-	return &pb.Token{Jwt: token}, nil
+	return &pba.Token{Jwt: token}, nil
 }

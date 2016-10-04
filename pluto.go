@@ -12,8 +12,8 @@ type Service interface {
 	Run() error
 	Stop()
 	Config() *Config
-	Client(string) client.Client
-	Server(string) server.Server
+	Client(string) (client.Client, bool)
+	Server(string) (server.Server, bool)
 }
 
 var (

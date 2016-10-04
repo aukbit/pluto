@@ -29,9 +29,9 @@ func TestToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	err = Verify(token, pubk)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }

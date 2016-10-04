@@ -2,7 +2,7 @@ package frontend_test
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,11 +18,14 @@ import (
 	"google.golang.org/grpc"
 
 	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/auth"
+	pba "bitbucket.org/aukbit/pluto/auth/proto"
 	"bitbucket.org/aukbit/pluto/examples/auth/backend/service"
 	"bitbucket.org/aukbit/pluto/examples/auth/frontend/service"
-	pb "bitbucket.org/aukbit/pluto/examples/auth/proto"
 	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
+	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
 
@@ -30,53 +33,24 @@ type Error struct {
 	string
 }
 
-const URL = "http://localhost:8081"
+const (
+	USER_URL = "http://localhost:8080"
+	AUTH_URL = "http://localhost:8081"
+)
 
 var wg sync.WaitGroup
 
-func RunBackend() {
-	defer wg.Done()
-	if err := backend.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func RunFrontend() {
-	defer wg.Done()
-	if err := frontend.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func MockUserBackend() {
-	defer wg.Done()
-	// GRPC server
-	// Define gRPC server and register
-	grpcServer := grpc.NewServer()
-
-	// Register grpc Server
-	pbu.RegisterUserServiceServer(grpcServer, &User{})
-
-	// Define Pluto Server
-	grpcSrv := server.NewServer(server.Addr(":65080"), server.GRPCServer(grpcServer))
-
-	// Define Pluto Service
-	s := pluto.NewService(pluto.Servers(grpcSrv))
-	// Run service
-	if err := s.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func TestMain(m *testing.M) {
 	if !testing.Short() {
-		wg.Add(3)
-		// mock user backend
+		wg.Add(4)
 		go MockUserBackend()
-		time.Sleep(time.Millisecond * 100)
-		go RunBackend()
-		time.Sleep(time.Millisecond * 100)
-		go RunFrontend()
+		time.Sleep(time.Millisecond * 50)
+		go MockUserFrontend()
+		time.Sleep(time.Millisecond * 50)
+		go RunAuthBackend()
+		time.Sleep(time.Millisecond * 50)
+		go RunAuthFrontend()
+		time.Sleep(time.Millisecond * 50)
 	}
 	result := m.Run()
 	if !testing.Short() {
@@ -88,74 +62,150 @@ func TestMain(m *testing.M) {
 func TestAll(t *testing.T) {
 	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
-	var tests = []struct {
-		Method string
-		Path   string
-		Body   io.Reader
-		// BodyContains func(string) string
-		Status int
-	}{
-		{
-			Method: "POST",
-			Path:   URL + "/authenticate",
-			Body:   strings.NewReader(`{"email": "gopher@email.com", "password":"123456"}`),
-			// BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Gopher","email":"gopher@email.com"}` },
-			Status: http.StatusOK,
-		},
+	r, err := http.NewRequest("POST", AUTH_URL+"/authenticate", strings.NewReader(`{}`))
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	token := &pb.Token{}
-	for _, test := range tests {
-
-		r, err := http.NewRequest(test.Method, test.Path, test.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// call handler
-		response, err := http.DefaultClient.Do(r)
-		if err != nil {
-			t.Fatal(err)
-		}
-		actualBody, err := ioutil.ReadAll(response.Body)
-		defer response.Body.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = json.Unmarshal(actualBody, token)
-		if err != nil {
-			assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-			assert.Equal(t, test.Status, response.StatusCode)
-		} else {
-			assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-			assert.Equal(t, test.Status, response.StatusCode)
-			// assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
-		}
-		assert.Equal(t, true, len(token.Jwt) > 0)
+	r.SetBasicAuth("firstgopher@email.com", "123456")
+	// call handler
+	response, err := http.DefaultClient.Do(r)
+	if err != nil {
+		t.Fatal(err)
 	}
+	actualBody, err := ioutil.ReadAll(response.Body)
+	defer response.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := &pba.Token{}
+	err = json.Unmarshal(actualBody, token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, true, len(token.Jwt) > 0)
 
+	// Test access to private resources
+	r, err = http.NewRequest("POST", USER_URL+"/user", strings.NewReader(`{"name":"Gopher", "email": "secondgopher@email.com", "password":"123456"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// set Bearer authorization header
+	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.Jwt))
+	// call handler
+	response, err = http.DefaultClient.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualBody, err = ioutil.ReadAll(response.Body)
+	defer response.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, http.StatusCreated, response.StatusCode)
+	assert.Equal(t, "http.StatusCreated", string(actualBody))
 }
 
-// backend user views
-type User struct{}
+// Helper functions
 
-func (s *User) ReadUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
-	// user object
-	u := &pbu.User{Id: "123456", Name: "Gopher", Email: "gopher@email.com"}
-	return u, nil
+func RunAuthBackend() {
+	defer wg.Done()
+	if err := backend.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func (s *User) CreateUser(ctx context.Context, nu *pbu.NewUser) (*pbu.User, error) {
+func RunAuthFrontend() {
+	defer wg.Done()
+	if err := frontend.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func MockUserBackend() {
+	defer wg.Done()
+	// GRPC server
+	// Define gRPC server and register
+	grpcServer := grpc.NewServer()
+	// Register grpc Server
+	pbu.RegisterUserServiceServer(grpcServer, &MockUser{})
+	// Define Pluto Server
+	grpcSrv := server.NewServer(server.Addr(":65080"), server.GRPCServer(grpcServer))
+	// Define Pluto Service
+	s := pluto.NewService(pluto.Name("MockUserBackend"), pluto.Servers(grpcSrv))
+	// Run service
+	if err := s.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func MockUserFrontend() {
+	defer wg.Done()
+	// Define handlers
+	mux := router.NewMux()
+	mux.POST("/user", PostHandler)
+	mux.AddMiddleware(auth.MiddlewareBearerAuthentication())
+	// define http server
+	srv := server.NewServer(
+		server.Name("api"),
+		server.Addr(":8080"),
+		server.Mux(mux))
+	// Define Pluto service
+	s := pluto.NewService(pluto.Name("MockUserFrontend"), pluto.Servers(srv))
+	// Run service
+	if err := s.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// User frontend views
+func PostHandler(w http.ResponseWriter, r *http.Request) {
+	// new user
+	// newUser := &pb.NewUser{}
+	// if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
+	// 	reply.Json(w, r, http.StatusInternalServerError, err.Error())
+	// 	return
+	// }
+	// // get service from context by service name
+	// ctx := r.Context()
+	// s := ctx.Value("pluto")
+	// // get gRPC client from service
+	// c := s.(pluto.Service).Client("client_user")
+	// // make a call the backend service
+	// user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
+	// if err != nil {
+	// 	reply.Json(w, r, http.StatusInternalServerError, err.Error())
+	// 	return
+	// }
+	// reply.Json(w, r, http.StatusCreated, user)
+	reply.Json(w, r, http.StatusCreated, "ok")
+}
+
+// User backend views
+type MockUser struct{}
+
+func (s *MockUser) ReadUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
 	return &pbu.User{}, nil
 }
 
-func (s *User) UpdateUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+func (s *MockUser) CreateUser(ctx context.Context, nu *pbu.NewUser) (*pbu.User, error) {
 	return &pbu.User{}, nil
 }
 
-func (s *User) DeleteUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+func (s *MockUser) UpdateUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
 	return &pbu.User{}, nil
 }
 
-func (s *User) FilterUsers(ctx context.Context, nu *pbu.Filter) (*pbu.Users, error) {
+func (s *MockUser) DeleteUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	return &pbu.User{}, nil
+}
+
+func (s *MockUser) FilterUsers(ctx context.Context, nu *pbu.Filter) (*pbu.Users, error) {
 	return &pbu.Users{}, nil
+}
+
+func (s *MockUser) VerifyUser(ctx context.Context, nu *pbu.Credentials) (*pbu.Verification, error) {
+	return &pbu.Verification{IsValid: true}, nil
 }

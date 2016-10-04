@@ -6,6 +6,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"net/http"
+	"strings"
 
 	"bitbucket.org/aukbit/pluto/auth/jws"
 )
@@ -81,4 +83,24 @@ func NewToken(identifier string, pk *rsa.PrivateKey) (string, error) {
 // associated with the supplied public key.
 func Verify(token string, key *rsa.PublicKey) error {
 	return jws.Verify(token, key)
+}
+
+// BearerAuth returns the token provided in the request's
+// Authorization header, if the request uses HTTP Bearer Authentication.
+func BearerAuth(r *http.Request) (token string, ok bool) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return
+	}
+	return parseBearerAuth(auth)
+}
+
+// parseBearerAuth parses an HTTP Bearer Authentication string.
+// "Bearer QWxhZGRpbjpvcGVuIHNlc2FtZQ==" returns ("QWxhZGRpbjpvcGVuIHNlc2FtZQ==", true).
+func parseBearerAuth(auth string) (token string, ok bool) {
+	const prefix = "Bearer "
+	if !strings.HasPrefix(auth, prefix) {
+		return
+	}
+	return auth[len(prefix):], true
 }
