@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"crypto/rsa"
 	"errors"
 	"net/http"
 
@@ -12,9 +11,9 @@ import (
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
-// MiddlewareBearerAuthentication Middleware to validate all handlers with
+// MiddlewareBearerAuth Middleware to validate all handlers with
 // Authorization: Bearer jwt
-func MiddlewareBearerAuthentication(key *rsa.PublicKey) router.Middleware {
+func MiddlewareBearerAuth() router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get jwt token from Authorization header
@@ -34,12 +33,12 @@ func MiddlewareBearerAuthentication(key *rsa.PublicKey) router.Middleware {
 				return
 			}
 			// make a call to the Auth backend service
-			ver, err := c.Call().(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t})
+			v, err := c.Call().(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t})
 			if err != nil {
 				reply.Json(w, r, http.StatusUnauthorized, err.Error())
 				return
 			}
-			if !ver.IsValid {
+			if !v.IsValid {
 				err := errors.New("Invalid token")
 				reply.Json(w, r, http.StatusUnauthorized, err.Error())
 				return

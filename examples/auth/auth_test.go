@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 		go RunAuthBackend()
 		time.Sleep(time.Millisecond * 50)
 		go RunAuthFrontend()
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 1000)
 	}
 	result := m.Run()
 	if !testing.Short() {
@@ -87,7 +87,8 @@ func TestAll(t *testing.T) {
 	assert.Equal(t, true, len(token.Jwt) > 0)
 
 	// Test access to private resources
-	r, err = http.NewRequest("POST", USER_URL+"/user", strings.NewReader(`{"name":"Gopher", "email": "secondgopher@email.com", "password":"123456"}`))
+	r, err = http.NewRequest("POST", USER_URL+"/user",
+		strings.NewReader(`{"name":"Gopher", "email": "secondgopher@email.com", "password":"123456"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +106,7 @@ func TestAll(t *testing.T) {
 	}
 	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, http.StatusCreated, response.StatusCode)
-	assert.Equal(t, "http.StatusCreated", string(actualBody))
+	assert.Equal(t, `"ok"`, string(actualBody))
 }
 
 // Helper functions
@@ -146,14 +147,19 @@ func MockUserFrontend() {
 	// Define handlers
 	mux := router.NewMux()
 	mux.POST("/user", PostHandler)
-	mux.AddMiddleware(auth.MiddlewareBearerAuthentication())
+	mux.AddMiddleware(auth.MiddlewareBearerAuth())
 	// define http server
 	srv := server.NewServer(
 		server.Name("api"),
 		server.Addr(":8080"),
 		server.Mux(mux))
+	// define authentication client
+	clt := auth.NewClientAuth("127.0.0.1:65081")
 	// Define Pluto service
-	s := pluto.NewService(pluto.Name("MockUserFrontend"), pluto.Servers(srv))
+	s := pluto.NewService(
+		pluto.Name("MockUserFrontend"),
+		pluto.Servers(srv),
+		pluto.Clients(clt))
 	// Run service
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
@@ -162,24 +168,10 @@ func MockUserFrontend() {
 
 // User frontend views
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	// new user
-	// newUser := &pb.NewUser{}
-	// if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
-	// 	reply.Json(w, r, http.StatusInternalServerError, err.Error())
-	// 	return
-	// }
-	// // get service from context by service name
-	// ctx := r.Context()
-	// s := ctx.Value("pluto")
-	// // get gRPC client from service
-	// c := s.(pluto.Service).Client("client_user")
-	// // make a call the backend service
-	// user, err := c.Call().(pb.UserServiceClient).CreateUser(ctx, newUser)
-	// if err != nil {
-	// 	reply.Json(w, r, http.StatusInternalServerError, err.Error())
-	// 	return
-	// }
-	// reply.Json(w, r, http.StatusCreated, user)
+	// ...
+	// create user with data sent on user backend
+	// check examples/user/frontend/views
+	// ...
 	reply.Json(w, r, http.StatusCreated, "ok")
 }
 
@@ -187,25 +179,34 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 type MockUser struct{}
 
 func (s *MockUser) ReadUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	// ...
 	return &pbu.User{}, nil
 }
 
 func (s *MockUser) CreateUser(ctx context.Context, nu *pbu.NewUser) (*pbu.User, error) {
+	// ...
 	return &pbu.User{}, nil
 }
 
 func (s *MockUser) UpdateUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	// ...
 	return &pbu.User{}, nil
 }
 
 func (s *MockUser) DeleteUser(ctx context.Context, nu *pbu.User) (*pbu.User, error) {
+	// ...
 	return &pbu.User{}, nil
 }
 
 func (s *MockUser) FilterUsers(ctx context.Context, nu *pbu.Filter) (*pbu.Users, error) {
+	// ...
 	return &pbu.Users{}, nil
 }
 
 func (s *MockUser) VerifyUser(ctx context.Context, nu *pbu.Credentials) (*pbu.Verification, error) {
+	// ...
+	// verify user with data persisted
+	// check examples/user/backend/views
+	// ...
 	return &pbu.Verification{IsValid: true}, nil
 }

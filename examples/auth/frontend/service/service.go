@@ -3,12 +3,9 @@ package frontend
 import (
 	"flag"
 
-	"google.golang.org/grpc"
-
 	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/auth"
 	"bitbucket.org/aukbit/pluto/examples/auth/frontend/views"
-	pb "bitbucket.org/aukbit/pluto/examples/auth/proto"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 )
@@ -31,12 +28,7 @@ func Run() error {
 		server.Mux(mux))
 
 	// Define grpc Client
-	clt := client.NewClient(
-		client.Name("auth"),
-		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
-			return pb.NewAuthServiceClient(cc)
-		}),
-		client.Target(*target))
+	clt := auth.NewClientAuth(*target)
 
 	// Define Pluto service
 	s := pluto.NewService(

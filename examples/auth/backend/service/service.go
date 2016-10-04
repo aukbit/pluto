@@ -47,6 +47,7 @@ func Run() error {
 		pluto.Clients(userClient))
 
 	// Register Auth service passing user backend client
+
 	pba.RegisterAuthServiceServer(grpcServer, &backend.Auth{Clt: userClient})
 
 	// Run service
