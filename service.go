@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/uber-go/zap"
 
 	"bitbucket.org/aukbit/pluto/client"
@@ -35,19 +37,12 @@ func newService(cfgs ...ConfigFunc) *service {
 	for _, srv := range c.Servers {
 		// Wrap this service to all handlers
 		// make it available in handler context
-		if srv.Config().Format == "http" {
+		if strings.Contains(srv.Config().Format, "http") {
 			srv.Config().Mux.AddMiddleware(middlewareService(s))
 		}
 	}
 	s.initLog()
 	return s
-}
-
-func (s *service) initLog() {
-	s.logger = s.logger.With(
-		zap.String("object", "service"),
-		zap.String("id", s.cfg.ID),
-		zap.String("name", s.cfg.Name))
 }
 
 // Init TODO should be removed.. redundant makes initialization confusing
@@ -58,7 +53,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	for _, srv := range s.cfg.Servers {
 		// Wrap this service to all handlers
 		// make it available in handler context
-		if srv.Config().Format == "http" {
+		if strings.Contains(srv.Config().Format, "http") {
 			srv.Config().Mux.AddMiddleware(middlewareService(s))
 		}
 	}
@@ -108,6 +103,13 @@ func (s *service) Client(name string) (clt client.Client, ok bool) {
 // Datastore TODO there is no need to be public
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
+}
+
+func (s *service) initLog() {
+	s.logger = s.logger.With(
+		zap.String("object", "service"),
+		zap.String("id", s.cfg.ID),
+		zap.String("name", s.cfg.Name))
 }
 
 func (s *service) start() error {
@@ -203,11 +205,21 @@ func (s *service) stopServers() {
 func middlewareService(s *service) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
+			// set unique event id for every request
+			e := uuid.New().String()
+			// create new log instance with eventID to be added later to context
+			l := s.logger.With(zap.String("event", e))
+			l.Info("request",
+				zap.String("method", r.Method),
+				zap.String("url", r.URL.String()))
+			// context
 			ctx := r.Context()
 			// ctx = context.WithValue(ctx, s.cfg.Name, s)
 			// Note: service instance always available in context
 			// under the general name > pluto
 			ctx = context.WithValue(ctx, "pluto", s)
+			ctx = context.WithValue(ctx, "logger", l)
+			ctx = context.WithValue(ctx, "event", e)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}

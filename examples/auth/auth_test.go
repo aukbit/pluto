@@ -16,6 +16,7 @@ import (
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/auth"
@@ -208,8 +209,8 @@ func (s *MockUser) VerifyUser(ctx context.Context, nu *pbu.Credentials) (*pbu.Ve
 	// verify user with data persisted
 	// check examples/user/backend/views
 	// ...
-	// context log
-	l := ctx.Value("log")
-	log.Printf("VerifyUser %v", l)
+	// context event
+	md, _ := metadata.FromContext(ctx)
+	log.Printf("VerifyUser %v", md["event"])
 	return &pbu.Verification{IsValid: true}, nil
 }

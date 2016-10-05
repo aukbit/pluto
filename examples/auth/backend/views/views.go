@@ -17,6 +17,10 @@ var (
 	pubKeyPath  = "./keys/auth.rsa.pub"
 )
 
+var (
+	errCredentials = errors.New("Invalid credentials")
+)
+
 // Auth struct
 type Auth struct {
 	Clt client.Client
@@ -24,23 +28,17 @@ type Auth struct {
 
 // Authenticate implements authentication
 func (a *Auth) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
+	// context event
+	md, _ := metadata.FromContext(ctx)
+	log.Printf("Authenticate %v", md["event"])
 	// make a call to user backend service for credentials verification
 	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
-
-	// ctx log
-	ctx = metadata.NewContext(ctx, metadata.Pairs("log", "123456"))
-	// ctx = context.WithValue(ctx, "log", "123456")
-	// read from metadata
-	md, _ := metadata.FromContext(ctx)
-	log.Printf("Authenticate %s", md["log"])
-
 	v, err := a.Clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
 		return &pba.Token{}, err
 	}
 	if !v.IsValid {
-		err = errors.New("Invalid credentials")
-		return &pba.Token{}, err
+		return &pba.Token{}, errCredentials
 	}
 	pk, err := jwt.LoadPrivateKey(privKeyPath)
 	if err != nil {

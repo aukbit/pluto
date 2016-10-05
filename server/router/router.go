@@ -6,14 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/uber-go/zap"
-
 	"bitbucket.org/aukbit/pluto/reply"
 	"golang.org/x/net/context"
-)
-
-var (
-	logger = zap.New(zap.NewJSONEncoder())
 )
 
 // Handler is a function type like "net/http" Handler
@@ -219,7 +213,6 @@ func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // ServeHTTP
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	logger.Info("request", zap.String("method", req.Method), zap.String("url", req.URL.String()))
 	m := r.findMatch(req)
 	if m == nil {
 		NotFoundHandler(w, req)
