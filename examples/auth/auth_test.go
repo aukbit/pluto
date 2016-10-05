@@ -208,5 +208,8 @@ func (s *MockUser) VerifyUser(ctx context.Context, nu *pbu.Credentials) (*pbu.Ve
 	// verify user with data persisted
 	// check examples/user/backend/views
 	// ...
+	// context log
+	l := ctx.Value("log")
+	log.Printf("VerifyUser %v", l)
 	return &pbu.Verification{IsValid: true}, nil
 }

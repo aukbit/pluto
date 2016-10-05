@@ -19,14 +19,19 @@ import (
 
 // Service
 type service struct {
-	cfg   *Config
-	close chan bool
-	wg    *sync.WaitGroup
+	cfg    *Config
+	close  chan bool
+	wg     *sync.WaitGroup
+	logger zap.Logger
 }
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	s := &service{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
+	s := &service{
+		cfg:    c,
+		close:  make(chan bool),
+		wg:     &sync.WaitGroup{},
+		logger: zap.New(zap.NewJSONEncoder())}
 	for _, srv := range c.Servers {
 		// Wrap this service to all handlers
 		// make it available in handler context
@@ -34,7 +39,15 @@ func newService(cfgs ...ConfigFunc) *service {
 			srv.Config().Mux.AddMiddleware(middlewareService(s))
 		}
 	}
+	s.initLog()
 	return s
+}
+
+func (s *service) initLog() {
+	s.logger = s.logger.With(
+		zap.String("object", "service"),
+		zap.String("id", s.cfg.ID),
+		zap.String("name", s.cfg.Name))
 }
 
 // Init TODO should be removed.. redundant makes initialization confusing
@@ -49,6 +62,7 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 			srv.Config().Mux.AddMiddleware(middlewareService(s))
 		}
 	}
+	s.initLog()
 	return nil
 }
 
@@ -59,19 +73,13 @@ func (s *service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	logger.Info("exit",
-		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-	)
+	s.logger.Info("exit")
 	return nil
 }
 
 // Stop stops service
 func (s *service) Stop() {
-	logger.Info("stop",
-		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-	)
+	s.logger.Info("stop")
 	s.close <- true
 }
 
@@ -103,23 +111,16 @@ func (s *service) Datastore() datastore.Datastore {
 }
 
 func (s *service) start() error {
-	logger.Info("start",
-		zap.String("service", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
+	s.logger.Info("start",
 		zap.Nest("content",
 			zap.Int("servers", len(s.cfg.Servers)),
-			zap.Int("clients", len(s.cfg.Clients))),
-	)
+			zap.Int("clients", len(s.cfg.Clients))))
 
 	// connect datastore
 	if s.cfg.Datastore != nil {
 		s.cfg.Datastore.Connect()
 		if err := s.cfg.Datastore.RefreshSession(); err != nil {
-			logger.Error("RefreshSession()",
-				zap.String("service", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
-				zap.String("err", err.Error()),
-			)
+			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
 		}
 	}
 
@@ -138,14 +139,10 @@ func (s *service) startServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(ss server.Server) {
+		go func(srv server.Server) {
 			defer s.wg.Done()
-			if err := ss.Run(); err != nil {
-				logger.Error("Run()",
-					zap.String("service", s.cfg.Name),
-					zap.String("id", s.cfg.ID),
-					zap.String("err", err.Error()),
-				)
+			if err := srv.Run(); err != nil {
+				s.logger.Error("Run()", zap.String("err", err.Error()))
 			}
 		}(srv)
 	}
@@ -155,14 +152,10 @@ func (s *service) startClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(cc client.Client) {
+		go func(clt client.Client) {
 			defer s.wg.Done()
-			if err := cc.Dial(); err != nil {
-				logger.Error("Dial()",
-					zap.String("service", s.cfg.Name),
-					zap.String("id", s.cfg.ID),
-					zap.String("err", err.Error()),
-				)
+			if err := clt.Dial(); err != nil {
+				s.logger.Error("Dial()", zap.String("err", err.Error()))
 			}
 		}(clt)
 	}
@@ -184,16 +177,12 @@ outer:
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
-			logger.Info("signal received",
-				zap.String("service", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
+			s.logger.Info("signal received",
 				zap.String("signal", sig.String()))
 			s.stopServers()
 			break outer
 		default:
-			logger.Info("pulse",
-				zap.String("service", s.cfg.Name),
-				zap.String("id", s.cfg.ID))
+			s.logger.Info("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}
@@ -204,9 +193,9 @@ func (s *service) stopServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(ss server.Server) {
+		go func(srv server.Server) {
 			defer s.wg.Done()
-			ss.Stop()
+			srv.Stop()
 		}(srv)
 	}
 }

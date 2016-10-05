@@ -2,12 +2,14 @@ package backend
 
 import (
 	"errors"
+	"log"
 
 	"bitbucket.org/aukbit/pluto/auth/jwt"
 	pba "bitbucket.org/aukbit/pluto/auth/proto"
 	"bitbucket.org/aukbit/pluto/client"
 	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -24,6 +26,14 @@ type Auth struct {
 func (a *Auth) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
 	// make a call to user backend service for credentials verification
 	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
+
+	// ctx log
+	ctx = metadata.NewContext(ctx, metadata.Pairs("log", "123456"))
+	// ctx = context.WithValue(ctx, "log", "123456")
+	// read from metadata
+	md, _ := metadata.FromContext(ctx)
+	log.Printf("Authenticate %s", md["log"])
+
 	v, err := a.Clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
 		return &pba.Token{}, err

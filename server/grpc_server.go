@@ -7,23 +7,18 @@ import (
 )
 
 // serveGRPC serves *grpc.Server
-func (s *defaultServer) serveGRPC(ln net.Listener) (err error) {
+func (ds *defaultServer) serveGRPC(ln net.Listener) (err error) {
 
-	srv := s.cfg.GRPCServer
+	srv := ds.cfg.GRPCServer
 	// add go routine to WaitGroup
-	s.wg.Add(1)
+	ds.wg.Add(1)
 	go func() {
-		defer s.wg.Done()
+		defer ds.wg.Done()
 		if err := srv.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			logger.Error("Serve(ln)",
-				zap.String("server", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
-				zap.String("format", s.cfg.Format),
-				zap.String("port", ln.Addr().String()),
-				zap.String("err", err.Error()))
+			ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
 			return
 		}
 	}()

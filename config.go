@@ -12,6 +12,8 @@ import (
 	"github.com/uber-go/zap"
 )
 
+var logger = zap.New(zap.NewJSONEncoder())
+
 // Config pluto service config
 type Config struct {
 	ID          string

@@ -14,81 +14,86 @@ import (
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg   *Config
-	close chan bool
-	wg    *sync.WaitGroup
+	cfg    *Config
+	close  chan bool
+	wg     *sync.WaitGroup
+	logger zap.Logger
 }
 
 // NewServer will instantiate a new defaultServer with the given config
 func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	return &defaultServer{cfg: c, close: make(chan bool), wg: &sync.WaitGroup{}}
+	ds := &defaultServer{
+		cfg:    c,
+		close:  make(chan bool),
+		wg:     &sync.WaitGroup{},
+		logger: zap.New(zap.NewJSONEncoder())}
+	ds.initLog()
+	return ds
+}
+
+func (ds *defaultServer) initLog() {
+	ds.logger = ds.logger.With(
+		zap.String("object", "server"),
+		zap.String("id", ds.cfg.ID),
+		zap.String("name", ds.cfg.Name),
+		zap.String("format", ds.cfg.Format),
+		zap.String("port", ds.cfg.Addr))
 }
 
 // Run Server
-func (s *defaultServer) Run() error {
-	if err := s.start(); err != nil {
+func (ds *defaultServer) Run() error {
+	if err := ds.start(); err != nil {
 		return err
 	}
 	// wait for go routines to finish
-	s.wg.Wait()
-	logger.Info("exit",
-		zap.String("server", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-		zap.String("format", s.cfg.Format),
-	)
+	ds.wg.Wait()
+	ds.logger.Info("exit")
 	return nil
 }
 
 // Stop stops server by sending a message to close the listener via channel
-func (s *defaultServer) Stop() {
-	logger.Info("stop",
-		zap.String("server", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-		zap.String("format", s.cfg.Format),
-	)
-	s.close <- true
+func (ds *defaultServer) Stop() {
+	ds.logger.Info("stop")
+	ds.close <- true
 }
 
-func (s *defaultServer) Config() *Config {
-	cfg := s.cfg
+func (ds *defaultServer) Config() *Config {
+	cfg := ds.cfg
 	return cfg
 }
 
-func (s *defaultServer) start() (err error) {
-	logger.Info("start",
-		zap.String("server", s.cfg.Name),
-		zap.String("id", s.cfg.ID),
-		zap.String("format", s.cfg.Format))
+func (ds *defaultServer) start() (err error) {
+	ds.logger.Info("start")
 	var ln net.Listener
 
-	switch s.cfg.Format {
+	switch ds.cfg.Format {
 	case "https":
-		ln, err = s.listenTLS()
+		ln, err = ds.listenTLS()
 		if err != nil {
 			return err
 		}
 	default:
-		ln, err = s.listen()
+		ln, err = ds.listen()
 		if err != nil {
 			return err
 		}
 	}
 
-	switch s.cfg.Format {
+	switch ds.cfg.Format {
 	case "grpc":
-		if err := s.serveGRPC(ln); err != nil {
+		if err := ds.serveGRPC(ln); err != nil {
 			return err
 		}
 	default:
-		if err := s.serve(ln); err != nil {
+		if err := ds.serve(ln); err != nil {
 			return err
 		}
 	}
 
 	// add go routine to WaitGroup
-	s.wg.Add(1)
-	go s.waitUntilStop(ln)
+	ds.wg.Add(1)
+	go ds.waitUntilStop(ln)
 	return nil
 }
 
@@ -96,9 +101,9 @@ func (s *defaultServer) start() (err error) {
 // listens on the TCP network address srv.Addr
 // If srv.Addr is blank, ":http" is used.
 // returns nil or new listener
-func (s *defaultServer) listen() (net.Listener, error) {
+func (ds *defaultServer) listen() (net.Listener, error) {
 
-	addr := s.cfg.Addr
+	addr := ds.cfg.Addr
 	if addr == "" {
 		addr = ":http"
 	}
@@ -116,14 +121,14 @@ func (s *defaultServer) listen() (net.Listener, error) {
 // listens on the TCP network address srv.Addr
 // If srv.Addr is blank, ":https" is used.
 // returns nil or new listener
-func (s *defaultServer) listenTLS() (net.Listener, error) {
+func (ds *defaultServer) listenTLS() (net.Listener, error) {
 
-	addr := s.cfg.Addr
+	addr := ds.cfg.Addr
 	if addr == "" {
 		addr = ":https"
 	}
 
-	ln, err := tls.Listen("tcp", addr, s.cfg.TLSConfig)
+	ln, err := tls.Listen("tcp", addr, ds.cfg.TLSConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -134,11 +139,11 @@ func (s *defaultServer) listenTLS() (net.Listener, error) {
 // calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 // serve always returns a non-nil error.
-func (s *defaultServer) serve(ln net.Listener) error {
+func (ds *defaultServer) serve(ln net.Listener) error {
 
 	srv := &http.Server{
 		// handler to invoke, http.DefaultServeMux if nil
-		Handler: s.cfg.Mux,
+		Handler: ds.cfg.Mux,
 
 		// ReadTimeout is used by the http server to set a maximum duration before
 		// timing out read of the request. The default timeout is 10 seconds.
@@ -148,22 +153,17 @@ func (s *defaultServer) serve(ln net.Listener) error {
 		// timing out write of the response. The default timeout is 10 seconds.
 		WriteTimeout: 10 * time.Second,
 
-		TLSConfig: s.cfg.TLSConfig,
+		TLSConfig: ds.cfg.TLSConfig,
 	}
 	// add go routine to WaitGroup
-	s.wg.Add(1)
+	ds.wg.Add(1)
 	go func() {
-		defer s.wg.Done()
+		defer ds.wg.Done()
 		if err := srv.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			logger.Error("Serve(ln)",
-				zap.String("server", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
-				zap.String("format", s.cfg.Format),
-				zap.String("port", ln.Addr().String()),
-				zap.String("err", err.Error()))
+			ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
 			return
 		}
 	}()
@@ -177,28 +177,19 @@ func errClosing(ln net.Listener) error {
 }
 
 // waitUntilStop waits for close channel
-func (s *defaultServer) waitUntilStop(ln net.Listener) {
-	defer s.wg.Done()
+func (ds *defaultServer) waitUntilStop(ln net.Listener) {
+	defer ds.wg.Done()
 outer:
 	for {
 		select {
-		case <-s.close:
+		case <-ds.close:
 			// Waits for call to stop
 			if err := ln.Close(); err != nil {
-				logger.Error("Close()",
-					zap.String("server", s.cfg.Name),
-					zap.String("id", s.cfg.ID),
-					zap.String("format", s.cfg.Format),
-					zap.String("port", ln.Addr().String()),
-					zap.String("err", err.Error()))
+				ds.logger.Error("Close()", zap.String("err", err.Error()))
 			}
 			break outer
 		default:
-			logger.Info("pulse",
-				zap.String("server", s.cfg.Name),
-				zap.String("id", s.cfg.ID),
-				zap.String("format", s.cfg.Format),
-				zap.String("port", ln.Addr().String()))
+			ds.logger.Info("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}
