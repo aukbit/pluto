@@ -82,21 +82,19 @@ func (s *service) Config() *Config {
 }
 
 // Server returns a server instance by name if initialized in service
-func (s *service) Server(name string) (srv server.Server) {
-	var ok bool
+func (s *service) Server(name string) (srv server.Server, ok bool) {
 	if srv, ok = s.cfg.Servers[name]; !ok {
-		return nil
+		return
 	}
-	return srv
+	return srv, true
 }
 
 // Client returns a client instance by name if initialized in service
-func (s *service) Client(name string) (clt client.Client) {
-	var ok bool
+func (s *service) Client(name string) (clt client.Client, ok bool) {
 	if clt, ok = s.cfg.Clients[name]; !ok {
-		return nil
+		return
 	}
-	return clt
+	return clt, true
 }
 
 // Datastore TODO there is no need to be public
@@ -217,7 +215,10 @@ func middlewareService(s *service) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, s.cfg.Name, s)
+			// ctx = context.WithValue(ctx, s.cfg.Name, s)
+			// Note: service instance always available in context
+			// under the general name > pluto
+			ctx = context.WithValue(ctx, "pluto", s)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}

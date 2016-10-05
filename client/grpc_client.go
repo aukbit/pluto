@@ -55,7 +55,7 @@ func (g *gRPCClient) Close() error {
 }
 
 func (g *gRPCClient) dial() error {
-	logger.Info("DIAL",
+	logger.Info("dial",
 		zap.String("client", g.cfg.Name),
 		zap.String("id", g.cfg.ID),
 		zap.String("format", g.cfg.Format),

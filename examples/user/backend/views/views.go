@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// User struct
 type User struct {
 	Cluster datastore.Datastore
 }
@@ -24,18 +25,16 @@ func (s *User) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error)
 	}
 	defer s.Cluster.Close()
 	// generate user id uuid
-	newId := uuid.New().String()
+	newID := uuid.New().String()
 	// hash password
-	h := sha256.New()
-	h.Write([]byte(nu.Password))
-	sha256_hash := hex.EncodeToString(h.Sum(nil))
+	passwordHash := hashPassword(nu.Password)
 	// persist data
 	if err := s.Cluster.Session().Query(`INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)`,
-		newId, nu.Name, nu.Email, sha256_hash).Exec(); err != nil {
+		newID, nu.Name, nu.Email, passwordHash).Exec(); err != nil {
 		log.Printf("ERROR CreateUser Query() %v", err)
 		return &pb.User{}, err
 	}
-	return &pb.User{Name: nu.Name, Email: nu.Email, Id: newId}, nil
+	return &pb.User{Name: nu.Name, Email: nu.Email, Id: newID}, nil
 }
 
 // ReadUser implements UserServiceServer
@@ -56,7 +55,7 @@ func (s *User) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	return u, nil
 }
 
-// ReadUser implements UserServiceServer
+// UpdateUser implements UserServiceServer
 func (s *User) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// refresh session
 	if err := s.Cluster.RefreshSession(); err != nil {
@@ -88,7 +87,7 @@ func (s *User) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	return &pb.User{}, nil
 }
 
-// GetUsers implements UserServiceServer
+// FilterUsers implements UserServiceServer
 func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error) {
 	// refresh session
 	if err := s.Cluster.RefreshSession(); err != nil {
@@ -110,4 +109,29 @@ func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error)
 	}
 
 	return users, nil
+}
+
+// VerifyUser implements UserServiceServer
+func (s *User) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.Verification, error) {
+	// refresh session
+	if err := s.Cluster.RefreshSession(); err != nil {
+		log.Printf("ERROR VerifyUser RefreshSession() %v", err)
+		return &pb.Verification{IsValid: false}, err
+	}
+	defer s.Cluster.Close()
+	// hash credential password
+	challenge := &pb.Credentials{Email: crd.Email, Password: hashPassword(crd.Password)}
+	valid := &pb.Credentials{}
+	// get data
+	if err := s.Cluster.Session().Query(`SELECT email, password FROM users WHERE email = ?`, crd.Email).Scan(&valid.Email, &valid.Password); err != nil {
+		log.Printf("ERROR VerifyUser Query() %v", err)
+		return &pb.Verification{IsValid: false}, err
+	}
+	return &pb.Verification{IsValid: challenge == valid}, nil
+}
+
+func hashPassword(password string) string {
+	h := sha256.New()
+	h.Write([]byte(password))
+	return hex.EncodeToString(h.Sum(nil))
 }

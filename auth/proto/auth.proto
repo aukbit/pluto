@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package auth;
+
+// The user service definition.
+service AuthService {
+    rpc Authenticate (Credentials) returns (Token) {}
+    rpc Verify (Token) returns (Verification) {}
+}
+
+// The request message containing the credentials data.
+message Credentials {
+  string email = 1;
+  string password = 2;
+}
+
+// The request/response message containing the jwt data
+message Token {
+    string jwt = 1;
+}
+
+// The response message containing the jwt data
+message Verification {
+    bool isValid = 1;
+}
