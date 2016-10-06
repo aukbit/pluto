@@ -7,9 +7,9 @@ import (
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
-// middlewareService Middleware to wrap all handlers with a service instance
-// available in context
-func middlewareService(s *service) router.Middleware {
+// serviceContextMiddleware Middleware that adds service instance
+// available in handlers context
+func serviceContextMiddleware(s *service) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get context

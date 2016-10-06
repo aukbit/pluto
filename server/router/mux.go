@@ -10,7 +10,8 @@ type Mux interface {
 	DELETE(string, Handler)
 	Handle(string, string, Handler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
-	AddMiddleware(...Middleware)
+	AddMiddleware(...Middleware) // deprecated
+	WrapperMiddleware(...Middleware)
 }
 
 // NewMux creates a new router

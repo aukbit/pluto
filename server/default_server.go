@@ -3,7 +3,6 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -36,61 +35,14 @@ func newServer(cfgs ...ConfigFunc) *defaultServer {
 	return ds
 }
 
-func (ds *defaultServer) setLogger() {
-	ds.logger = ds.logger.With(
-		zap.Nest("server",
-			zap.String("id", ds.cfg.ID),
-			zap.String("name", ds.cfg.Name),
-			zap.String("format", ds.cfg.Format),
-			zap.String("port", ds.cfg.Addr),
-			zap.String("parent", ds.cfg.ParentID)))
-}
-
-func (ds *defaultServer) setMiddleware() {
-	switch ds.cfg.Format {
-	case "grpc":
-		log.Printf("setMiddleware GRPC")
-	default:
-		ds.cfg.Mux.AddMiddleware(middlewareServer(ds))
-	}
-}
-
-func (ds *defaultServer) setServer() {
-	switch ds.cfg.Format {
-	case "grpc":
-		ds.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(WrapUnaryInterceptor("logger", ds.logger)))
-		// register grpc handlers
-		ds.cfg.GRPCRegister(ds.grpcServer)
-	default:
-		ds.httpServer = &http.Server{
-			// handler to invoke, http.DefaultServeMux if nil
-			Handler: ds.cfg.Mux,
-
-			// ReadTimeout is used by the http server to set a maximum duration before
-			// timing out read of the request. The default timeout is 10 seconds.
-			ReadTimeout: 10 * time.Second,
-
-			// WriteTimeout is used by the http server to set a maximum duration before
-			// timing out write of the response. The default timeout is 10 seconds.
-			WriteTimeout: 10 * time.Second,
-
-			TLSConfig: ds.cfg.TLSConfig,
-		}
-	}
-}
-
 // Run Server
 func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	// set last configs
 	for _, c := range cfgs {
 		c(ds.cfg)
 	}
-	// set middlewares
-	ds.setMiddleware()
 	// set logger
 	ds.setLogger()
-	// set server
-	ds.setServer()
 	// start server
 	if err := ds.start(); err != nil {
 		return err
@@ -112,6 +64,38 @@ func (ds *defaultServer) Config() *Config {
 	return cfg
 }
 
+func (ds *defaultServer) setLogger() {
+	ds.logger = ds.logger.With(
+		zap.Nest("server",
+			zap.String("id", ds.cfg.ID),
+			zap.String("name", ds.cfg.Name),
+			zap.String("format", ds.cfg.Format),
+			zap.String("port", ds.cfg.Addr),
+			zap.String("parent", ds.cfg.ParentID)))
+}
+
+func (ds *defaultServer) setHttpServer() {
+	// append logger
+	ds.cfg.Middlewares = append(ds.cfg.Middlewares, loggerMiddleware(ds))
+	// wrap Middlewares
+	ds.cfg.Mux.WrapperMiddleware(ds.cfg.Middlewares...)
+	// initialize http server
+	ds.httpServer = &http.Server{
+		// handler to invoke, http.DefaultServeMux if nil
+		Handler: ds.cfg.Mux,
+
+		// ReadTimeout is used by the http server to set a maximum duration before
+		// timing out read of the request. The default timeout is 10 seconds.
+		ReadTimeout: 10 * time.Second,
+
+		// WriteTimeout is used by the http server to set a maximum duration before
+		// timing out write of the response. The default timeout is 10 seconds.
+		WriteTimeout: 10 * time.Second,
+
+		TLSConfig: ds.cfg.TLSConfig,
+	}
+}
+
 func (ds *defaultServer) start() (err error) {
 	ds.logger.Info("start")
 	var ln net.Listener
@@ -131,10 +115,12 @@ func (ds *defaultServer) start() (err error) {
 
 	switch ds.cfg.Format {
 	case "grpc":
+		ds.setGRPCServer()
 		if err := ds.serveGRPC(ln); err != nil {
 			return err
 		}
 	default:
+		ds.setHttpServer()
 		if err := ds.serve(ln); err != nil {
 			return err
 		}

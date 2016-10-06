@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
-	"github.com/google/uuid"
 	"github.com/uber-go/zap"
 )
 
@@ -39,7 +39,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.ID) == 0 {
-		cfg.ID = uuid.New().String()
+		cfg.ID = common.RandID("plt_", 6)
 	}
 
 	if len(cfg.Name) == 0 {

@@ -85,6 +85,17 @@ func (r *router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
+func (r *router) WrapperMiddleware(mids ...Middleware) {
+	for _, k := range r.trie.Keys() {
+		data := r.trie.Get(k)
+		for m, h := range data.methods {
+			data.methods[m] = wrap(h, mids...)
+			r.trie.Put(k, data)
+		}
+	}
+}
+
+// DEPREACTED
 func (r *router) AddMiddleware(middlewares ...Middleware) {
 	for _, k := range r.trie.Keys() {
 		data := r.trie.Get(k)

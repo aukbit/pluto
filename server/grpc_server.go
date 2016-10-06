@@ -8,6 +8,15 @@ import (
 	"github.com/uber-go/zap"
 )
 
+func (ds *defaultServer) setGRPCServer() {
+	// append logger
+	ds.cfg.UnaryServerInterceptors = append(ds.cfg.UnaryServerInterceptors, loggerUnaryServerInterceptor(ds))
+	// initialize grpc server
+	ds.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(WrapperUnaryServer(ds.cfg.UnaryServerInterceptors...)))
+	// register grpc handlers
+	ds.cfg.GRPCRegister(ds.grpcServer)
+}
+
 // serveGRPC serves *grpc.Server
 func (ds *defaultServer) serveGRPC(ln net.Listener) (err error) {
 

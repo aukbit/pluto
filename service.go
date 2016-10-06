@@ -1,7 +1,6 @@
 package pluto
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -134,16 +133,19 @@ func (s *service) startServers() {
 		s.wg.Add(1)
 		go func(srv server.Server) {
 			defer s.wg.Done()
-			// Wrap this service to all handlers
-			// make it available in handler context
-			switch srv.Config().Format {
-			case "grpc":
-				log.Printf("TESTE")
-			default:
-				srv.Config().Mux.AddMiddleware(middlewareService(s))
-			}
+			// // Wrap this service to all handlers
+			// // make it available in handler context
+			// switch srv.Config().Format {
+			// case "grpc":
+			// 	log.Printf("TESTE")
+			// default:
+			// srv.Config().Mux.AddMiddleware(serviceContextMiddleware(s))
+			// }
 
-			if err := srv.Run(server.ParentID(s.cfg.ID)); err != nil {
+			if err := srv.Run(
+				server.ParentID(s.cfg.ID),
+				server.Middlewares(serviceContextMiddleware(s)),
+				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s))); err != nil {
 				s.logger.Error("Run()", zap.String("err", err.Error()))
 			}
 		}(srv)

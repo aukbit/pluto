@@ -5,20 +5,41 @@ import (
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
-func WrapUnaryInterceptor(key interface{}, val interface{}) grpc.UnaryServerInterceptor {
+// WrapperUnaryServer creates a single interceptor out of a chain of many interceptors
+// Execution is done in right-to-left order
+func WrapperUnaryServer(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		ctx = context.WithValue(ctx, key, val)
-		l := ctx.Value("logger")
-		md, ok := metadata.FromContext(ctx)
-		if ok {
-			e, ok := md["event"]
-			if ok {
-				l.(zap.Logger).Info("request", zap.String("event", e[0]))
+		h := wrap(handler, info, interceptors...)
+		return h(ctx, req)
+	}
+}
+
+// wrap h with all specified middlewares
+func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryHandler {
+	for _, i := range interceptors {
+		h := func(current grpc.UnaryServerInterceptor, next grpc.UnaryHandler) grpc.UnaryHandler {
+			return func(ctx context.Context, req interface{}) (interface{}, error) {
+				return current(ctx, req, info, next)
 			}
 		}
+		uh = h(i, uh)
+	}
+	return uh
+}
+
+func loggerUnaryServerInterceptor(srv *defaultServer) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// get or create unique event id for every request
+		e, ctx := getOrCreateEventID(ctx)
+		// create new log instance with eventID
+		l := srv.logger.With(
+			zap.String("event", e))
+		l.Info("request",
+			zap.String("method", info.FullMethod))
+		// also nice to have a logger available in context
+		ctx = context.WithValue(ctx, "logger", l)
 		return handler(ctx, req)
 	}
 }

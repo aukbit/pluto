@@ -7,23 +7,25 @@ import (
 	"regexp"
 	"strings"
 
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
 // Config server configuaration options
 type Config struct {
-	ID           string
-	Name         string
-	Description  string
-	Version      string
-	Addr         string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format       string
-	ParentID     string // sets parent ID
-	Mux          router.Mux
-	TLSConfig    *tls.Config // optional TLS config, used by ListenAndServeTLS
-	GRPCRegister GRPCRegisterServiceFunc
+	ID                      string
+	Name                    string
+	Description             string
+	Version                 string
+	Addr                    string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format                  string
+	ParentID                string // sets parent ID
+	Mux                     router.Mux
+	TLSConfig               *tls.Config // optional TLS config, used by ListenAndServeTLS
+	GRPCRegister            GRPCRegisterServiceFunc
+	Middlewares             []router.Middleware           // http middlewares
+	UnaryServerInterceptors []grpc.UnaryServerInterceptor // gRPC interceptors
 }
 
 // GRPCRegisterServiceFunc grpc
@@ -46,7 +48,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.ID) == 0 {
-		cfg.ID = uuid.New().String()
+		cfg.ID = common.RandID("srv_", 6)
 	}
 
 	if len(cfg.Name) == 0 {
@@ -126,5 +128,19 @@ func GRPCRegister(fn GRPCRegisterServiceFunc) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.GRPCRegister = fn
 		cfg.Format = "grpc"
+	}
+}
+
+// Middlewares slice with router.Middleware
+func Middlewares(m ...router.Middleware) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Middlewares = append(cfg.Middlewares, m...)
+	}
+}
+
+// UnaryServerInterceptors slice with grpc.UnaryServerInterceptor
+func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.UnaryServerInterceptors = append(cfg.UnaryServerInterceptors, i...)
 	}
 }

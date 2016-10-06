@@ -6,7 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/uuid"
+	"bitbucket.org/aukbit/pluto/common"
+
 	"google.golang.org/grpc"
 )
 
@@ -39,7 +40,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.ID) == 0 {
-		cfg.ID = uuid.New().String()
+		cfg.ID = common.RandID("clt_", 6)
 	}
 
 	if len(cfg.Name) == 0 {
