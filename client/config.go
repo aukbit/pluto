@@ -13,14 +13,15 @@ import (
 
 // Config client configuaration options
 type Config struct {
-	ID                 string
-	Name               string
-	Description        string
-	Version            string
-	Target             string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format             string
-	ParentID           string // sets parent ID
-	RegisterClientFunc func(*grpc.ClientConn) interface{}
+	ID                      string
+	Name                    string
+	Description             string
+	Version                 string
+	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format                  string
+	ParentID                string // sets parent ID
+	GRPCRegister            func(*grpc.ClientConn) interface{}
+	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
 }
 
 // ConfigFunc registers the Config
@@ -92,9 +93,9 @@ func ParentID(id string) ConfigFunc {
 	}
 }
 
-// RegisterClientFunc register client gRPC function
-func RegisterClientFunc(fn func(*grpc.ClientConn) interface{}) ConfigFunc {
+// GRPCRegister register client gRPC function
+func GRPCRegister(fn func(*grpc.ClientConn) interface{}) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.RegisterClientFunc = fn
+		cfg.GRPCRegister = fn
 	}
 }

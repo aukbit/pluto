@@ -11,16 +11,16 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type gRPCClient struct {
-	cfg    *Config
-	wire   interface{}
-	close  chan bool
-	logger zap.Logger
+	cfg          *Config
+	logger       zap.Logger
+	registration interface{}
+	conn         *grpc.ClientConn
 }
 
 // newGRPCClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFunc) *gRPCClient {
 	c := newConfig(cfgs...)
-	clt := &gRPCClient{cfg: c, close: make(chan bool), logger: zap.New(zap.NewJSONEncoder())}
+	clt := &gRPCClient{cfg: c, logger: zap.New(zap.NewJSONEncoder())}
 	return clt
 }
 
@@ -44,33 +44,37 @@ func (g *gRPCClient) Dial(cfgs ...ConfigFunc) error {
 }
 
 func (g *gRPCClient) Call() interface{} {
-	if g.wire == nil {
+	if g.registration == nil {
 		return errors.New("gRPC client has not been registered")
 	}
-	return g.wire
+	return g.registration
 }
 
-func (g *gRPCClient) Close() error {
-	// TODO
-	g.close <- true
-	return nil
+func (g *gRPCClient) Close() {
+	g.logger.Info("close")
+	g.conn.Close()
 }
 
 func (g *gRPCClient) dial() error {
 	g.logger.Info("dial")
 	// establishes gRPC client connection
 	// TODO use TLS
+	// append logger
+	g.cfg.UnaryClientInterceptors = append(g.cfg.UnaryClientInterceptors, loggerUnaryClientInterceptor(g))
+	// dial to establish connection
 	conn, err := grpc.Dial(
 		g.Config().Target,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(LoggerUnaryInterceptor(g.logger)))
+		grpc.WithUnaryInterceptor(WrapperUnaryClient(g.cfg.UnaryClientInterceptors...)))
 
 	if err != nil {
 		g.logger.Error("dial", zap.String("err", err.Error()))
 		return err
 	}
-	// get gRPC client interface
-	g.wire = g.cfg.RegisterClientFunc(conn)
+	// keep connection for later close
+	g.conn = conn
+	// register methods on connection
+	g.registration = g.cfg.GRPCRegister(conn)
 	return nil
 }
 

@@ -1,15 +1,14 @@
-package server
+package common
 
 import (
-	"bitbucket.org/aukbit/pluto/common"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )
 
-// getOrCreateEventID uses grpc metadata context to set an event id
+// GetOrCreateEventID uses grpc metadata context to set an event id
 // the metadata context is then sent over the wire - gRPC calls
 // and available to other services
-func getOrCreateEventID(ctx context.Context) (string, context.Context) {
+func GetOrCreateEventID(ctx context.Context) (string, context.Context) {
 	// get
 	md, ok := metadata.FromContext(ctx)
 	if ok {
@@ -19,7 +18,7 @@ func getOrCreateEventID(ctx context.Context) (string, context.Context) {
 		}
 	}
 	// create
-	e := common.RandID("evt_", 12)
+	e := RandID("evt_", 12)
 	ctx = metadata.NewContext(ctx, metadata.Pairs("event", e))
 	return e, ctx
 }

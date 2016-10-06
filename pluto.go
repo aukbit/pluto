@@ -7,12 +7,11 @@ import (
 
 // Service is the basic interface that defines what to expect from any server.
 type Service interface {
-	Init(...ConfigFunc) error
 	Run() error
 	Stop()
-	Config() *Config
 	Client(string) (client.Client, bool)
 	Server(string) (server.Server, bool)
+	Config() *Config
 }
 
 var (

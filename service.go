@@ -32,22 +32,6 @@ func newService(cfgs ...ConfigFunc) *service {
 	return s
 }
 
-// Init TODO should be removed.. redundant makes initialization confusing
-func (s *service) Init(cfgs ...ConfigFunc) error {
-	for _, c := range cfgs {
-		c(s.cfg)
-	}
-	// for _, srv := range s.cfg.Servers {
-	// 	// Wrap this service to all handlers
-	// 	// make it available in handler context
-	// 	if strings.Contains(srv.Config().Format, "http") {
-	// 		srv.Config().Mux.AddMiddleware(middlewareService(s))
-	// 	}
-	// }
-	s.setLogger()
-	return nil
-}
-
 // Run starts service
 func (s *service) Run() error {
 	// set logger
@@ -133,15 +117,6 @@ func (s *service) startServers() {
 		s.wg.Add(1)
 		go func(srv server.Server) {
 			defer s.wg.Done()
-			// // Wrap this service to all handlers
-			// // make it available in handler context
-			// switch srv.Config().Format {
-			// case "grpc":
-			// 	log.Printf("TESTE")
-			// default:
-			// srv.Config().Mux.AddMiddleware(serviceContextMiddleware(s))
-			// }
-
 			if err := srv.Run(
 				server.ParentID(s.cfg.ID),
 				server.Middlewares(serviceContextMiddleware(s)),
@@ -177,12 +152,14 @@ outer:
 		select {
 		case <-s.close:
 			// Waits for call to stop
+			s.closeClients()
 			s.stopServers()
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
 			s.logger.Info("signal received",
 				zap.String("signal", sig.String()))
+			s.closeClients()
 			s.stopServers()
 			break outer
 		default:
@@ -190,6 +167,17 @@ outer:
 			time.Sleep(time.Second * 1)
 			continue
 		}
+	}
+}
+
+func (s *service) closeClients() {
+	for _, clt := range s.cfg.Clients {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(clt client.Client) {
+			defer s.wg.Done()
+			clt.Close()
+		}(clt)
 	}
 }
 

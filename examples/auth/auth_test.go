@@ -148,12 +148,12 @@ func MockUserFrontend() {
 	// Define handlers
 	mux := router.NewMux()
 	mux.POST("/user", PostHandler)
-	mux.AddMiddleware(auth.MiddlewareBearerAuth())
 	// define http server
 	srv := server.NewServer(
-		server.Name("api"),
+		server.Name("user_api"),
 		server.Addr(":8080"),
-		server.Mux(mux))
+		server.Mux(mux),
+		server.Middlewares(auth.MiddlewareBearerAuth()))
 	// define authentication client
 	clt := auth.NewClientAuth("127.0.0.1:65081")
 	// Define Pluto service

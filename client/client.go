@@ -4,7 +4,7 @@ package client
 type Client interface {
 	Dial(...ConfigFunc) error
 	Call() interface{}
-	Close() error
+	Close()
 	Config() *Config
 }
 

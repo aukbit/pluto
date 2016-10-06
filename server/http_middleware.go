@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
@@ -14,7 +15,7 @@ func loggerMiddleware(srv *defaultServer) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get or create unique event id for every request
-			e, ctx := getOrCreateEventID(r.Context())
+			e, ctx := common.GetOrCreateEventID(r.Context())
 			// create new log instance with eventID
 			l := srv.logger.With(
 				zap.String("event", e))

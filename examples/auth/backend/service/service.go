@@ -27,7 +27,7 @@ func Run() error {
 	// Define user Client
 	clt := client.NewClient(
 		client.Name("user"),
-		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
+		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pbu.NewUserServiceClient(cc)
 		}),
 		client.Target(*userTarget))
@@ -42,7 +42,7 @@ func Run() error {
 	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name("auth_backend"),
-		pluto.Description("Backend service is responsible verify for persist data"),
+		pluto.Description("Backend service issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization"),
 		pluto.Servers(srv),
 		pluto.Clients(clt))
 

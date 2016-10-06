@@ -102,6 +102,8 @@ func (ds *defaultServer) start() (err error) {
 
 	switch ds.cfg.Format {
 	case "https":
+		// append strict security header
+		ds.cfg.Middlewares = append(ds.cfg.Middlewares, strictSecurityHeaderMiddleware())
 		ln, err = ds.listenTLS()
 		if err != nil {
 			return err
@@ -205,8 +207,13 @@ outer:
 		select {
 		case <-ds.close:
 			// Waits for call to stop
-			if err := ln.Close(); err != nil {
-				ds.logger.Error("Close()", zap.String("err", err.Error()))
+			switch ds.cfg.Format {
+			case "grpc":
+				ds.grpcServer.GracefulStop()
+			default:
+				if err := ln.Close(); err != nil {
+					ds.logger.Error("Close()", zap.String("err", err.Error()))
+				}
 			}
 			break outer
 		default:

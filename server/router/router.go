@@ -95,17 +95,6 @@ func (r *router) WrapperMiddleware(mids ...Middleware) {
 	}
 }
 
-// DEPREACTED
-func (r *router) AddMiddleware(middlewares ...Middleware) {
-	for _, k := range r.trie.Keys() {
-		data := r.trie.Get(k)
-		for m, h := range data.methods {
-			data.methods[m] = wrap(h, middlewares...)
-			r.trie.Put(k, data)
-		}
-	}
-}
-
 // wrap h with all specified middlewares.
 func wrap(h Handler, middlewares ...Middleware) Handler {
 	for _, m := range middlewares {

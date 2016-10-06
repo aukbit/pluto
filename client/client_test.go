@@ -50,7 +50,7 @@ func TestClient(t *testing.T) {
 		client.Name("gopher"),
 		client.Description("gopher super client"),
 		client.Target("localhost:65061"),
-		client.RegisterClientFunc(func(cc *grpc.ClientConn) interface{} {
+		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)

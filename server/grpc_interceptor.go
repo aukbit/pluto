@@ -1,7 +1,7 @@
 package server
 
-// WrapUnaryInterceptor
 import (
+	"bitbucket.org/aukbit/pluto/common"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -16,7 +16,7 @@ func WrapperUnaryServer(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryS
 	}
 }
 
-// wrap h with all specified middlewares
+// wrap h with all specified interceptors
 func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryHandler {
 	for _, i := range interceptors {
 		h := func(current grpc.UnaryServerInterceptor, next grpc.UnaryHandler) grpc.UnaryHandler {
@@ -32,7 +32,7 @@ func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc
 func loggerUnaryServerInterceptor(srv *defaultServer) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// get or create unique event id for every request
-		e, ctx := getOrCreateEventID(ctx)
+		e, ctx := common.GetOrCreateEventID(ctx)
 		// create new log instance with eventID
 		l := srv.logger.With(
 			zap.String("event", e))
