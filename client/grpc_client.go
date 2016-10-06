@@ -29,11 +29,11 @@ func newClient(cfgs ...ConfigFunc) *gRPCClient {
 
 func (g *gRPCClient) initLog() {
 	g.logger = g.logger.With(
-		zap.String("object", "client"),
-		zap.String("id", g.cfg.ID),
-		zap.String("name", g.cfg.Name),
-		zap.String("format", g.cfg.Format),
-		zap.String("target", g.cfg.Target))
+		zap.Nest("client",
+			zap.String("id", g.cfg.ID),
+			zap.String("name", g.cfg.Name),
+			zap.String("format", g.cfg.Format),
+			zap.String("target", g.cfg.Target)))
 }
 
 func (g *gRPCClient) Init(cfgs ...ConfigFunc) error {

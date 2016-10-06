@@ -2,8 +2,7 @@ package server
 
 // Server is the basic interface that defines what to expect from any server.
 type Server interface {
-	//Init(...ConfigFunc)		error	// TODO remove init! tere is no need
-	Run() error
+	Run(...ConfigFunc) error
 	Stop()
 	Config() *Config
 }

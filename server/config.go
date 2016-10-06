@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -21,8 +22,11 @@ type Config struct {
 	Addr         string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format       string
 	Mux          router.Mux
+	ParentID     string      // sets parent ID
 	TLSConfig    *tls.Config // optional TLS config, used by ListenAndServeTLS
+	httpServer   *http.Server
 	GRPCRegister GRPCRegisterServiceFunc
+	grpcServer   *grpc.Server
 }
 
 // GRPCRegisterServiceFunc grpc
@@ -51,7 +55,6 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	if len(cfg.Name) == 0 {
 		cfg.Name = defaultName
 	}
-
 	return cfg
 }
 
@@ -89,6 +92,13 @@ func Addr(a string) ConfigFunc {
 	}
 }
 
+// ParentID sets id of parent service that starts the server
+func ParentID(id string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.ParentID = id
+	}
+}
+
 // Mux server multiplexer
 func Mux(m router.Mux) ConfigFunc {
 	return func(cfg *Config) {
@@ -114,9 +124,8 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 	}
 }
 
-// RegisterClientFunc register client gRPC function
+// GRPCRegister register client gRPC function
 func GRPCRegister(fn GRPCRegisterServiceFunc) ConfigFunc {
-	// func GRPCRegister(i interface{}) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.GRPCRegister = fn
 		cfg.Format = "grpc"

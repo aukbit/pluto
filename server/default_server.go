@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -28,21 +29,39 @@ func newServer(cfgs ...ConfigFunc) *defaultServer {
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
 		logger: zap.New(zap.NewJSONEncoder())}
-	ds.initLog()
 	return ds
 }
 
-func (ds *defaultServer) initLog() {
+func (ds *defaultServer) setLogger() {
 	ds.logger = ds.logger.With(
-		zap.String("object", "server"),
-		zap.String("id", ds.cfg.ID),
-		zap.String("name", ds.cfg.Name),
-		zap.String("format", ds.cfg.Format),
-		zap.String("port", ds.cfg.Addr))
+		zap.Nest("server",
+			zap.String("id", ds.cfg.ID),
+			zap.String("name", ds.cfg.Name),
+			zap.String("format", ds.cfg.Format),
+			zap.String("port", ds.cfg.Addr),
+			zap.String("parent", ds.cfg.ParentID)))
+}
+
+func (ds *defaultServer) setMiddleware() {
+	switch ds.cfg.Format {
+	case "grpc":
+		log.Printf("newServer TESTE GRPC")
+	default:
+		ds.cfg.Mux.AddMiddleware(middlewareServer(ds))
+	}
 }
 
 // Run Server
-func (ds *defaultServer) Run() error {
+func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
+	// set last configs
+	for _, c := range cfgs {
+		c(ds.cfg)
+	}
+	// set middlewares
+	ds.setMiddleware()
+	// set logger
+	ds.setLogger()
+	// start server
 	if err := ds.start(); err != nil {
 		return err
 	}
