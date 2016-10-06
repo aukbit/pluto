@@ -24,15 +24,14 @@ type defaultServer struct {
 	grpcServer *grpc.Server
 }
 
-// NewServer will instantiate a new defaultServer with the given config
+// newServer will instantiate a new defaultServer with the given config
 func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	ds := &defaultServer{
+	return &defaultServer{
 		cfg:    c,
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
 		logger: zap.New(zap.NewJSONEncoder())}
-	return ds
 }
 
 // Run Server

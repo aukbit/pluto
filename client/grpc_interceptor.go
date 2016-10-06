@@ -30,7 +30,7 @@ func wrap(ui grpc.UnaryInvoker, interceptors ...grpc.UnaryClientInterceptor) grp
 }
 
 // loggerUnaryClientInterceptor ...
-func loggerUnaryClientInterceptor(clt *gRPCClient) grpc.UnaryClientInterceptor {
+func loggerUnaryClientInterceptor(clt *defaultClient) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// get or create unique event id for every request
 		e, ctx := common.GetOrCreateEventID(ctx)
