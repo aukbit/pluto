@@ -3,9 +3,9 @@ package backend
 import (
 	"errors"
 
+	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/auth/jwt"
 	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/client"
 	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"golang.org/x/net/context"
 )
@@ -16,19 +16,23 @@ var (
 )
 
 var (
-	errCredentials = errors.New("Invalid credentials")
+	errCredentials            = errors.New("Invalid credentials")
+	errClientUserNotAvailable = errors.New("Client user not available")
 )
 
-// Auth struct
-type Auth struct {
-	Clt client.Client
-}
+// AuthViews struct
+type AuthViews struct{}
 
 // Authenticate implements authentication
-func (a *Auth) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
+func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
+	// get client user from pluto service from context
+	clt, ok := ctx.Value("pluto").(pluto.Service).Client("client_user")
+	if !ok {
+		return &pba.Token{}, errClientUserNotAvailable
+	}
 	// make a call to user backend service for credentials verification
 	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
-	v, err := a.Clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
+	v, err := clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
 		return &pba.Token{}, err
 	}
@@ -47,7 +51,7 @@ func (a *Auth) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Tok
 }
 
 // Verify implements authentication
-func (a *Auth) Verify(ctx context.Context, t *pba.Token) (*pba.Verification, error) {
+func (av *AuthViews) Verify(ctx context.Context, t *pba.Token) (*pba.Verification, error) {
 	pk, err := jwt.LoadPublicKey(pubKeyPath)
 	if err != nil {
 		return &pba.Verification{IsValid: false}, err

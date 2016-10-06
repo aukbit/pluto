@@ -3,100 +3,98 @@ package backend
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 
-	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )
 
-// User struct
-type User struct {
-	Cluster datastore.Datastore
-}
+// UserViews struct
+type UserViews struct{}
 
 // CreateUser implements UserServiceServer
-func (s *User) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
+func (uv *UserViews) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR CreateUser RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return &pb.User{}, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// generate user id uuid
 	newID := uuid.New().String()
 	// hash password
 	passwordHash := hashPassword(nu.Password)
 	// persist data
-	if err := s.Cluster.Session().Query(`INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)`,
+	if err := db.Session().Query(`INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)`,
 		newID, nu.Name, nu.Email, passwordHash).Exec(); err != nil {
-		log.Printf("ERROR CreateUser Query() %v", err)
 		return &pb.User{}, err
 	}
 	return &pb.User{Name: nu.Name, Email: nu.Email, Id: newID}, nil
 }
 
 // ReadUser implements UserServiceServer
-func (s *User) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+func (uv *UserViews) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR ReadUser RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return nu, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// user object
 	u := &pb.User{}
 	// get data
-	if err := s.Cluster.Session().Query(`SELECT id, name, email FROM users WHERE id = ?`, nu.Id).Scan(&u.Id, &u.Name, &u.Email); err != nil {
-		log.Printf("ERROR ReadUser Query() %v", err)
+	if err := db.Session().Query(`SELECT id, name, email FROM users WHERE id = ?`, nu.Id).Scan(&u.Id, &u.Name, &u.Email); err != nil {
 		return nu, err
 	}
 	return u, nil
 }
 
 // UpdateUser implements UserServiceServer
-func (s *User) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+func (uv *UserViews) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR UpdateUser RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return nu, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// update data
-	if err := s.Cluster.Session().Query(`UPDATE users SET name = ?, email = ? WHERE id = ?`, nu.Name, nu.Email, nu.Id).Exec(); err != nil {
-		log.Printf("ERROR UpdateUser Query() %v", err)
+	if err := db.Session().Query(`UPDATE users SET name = ?, email = ? WHERE id = ?`, nu.Name, nu.Email, nu.Id).Exec(); err != nil {
 		return nu, err
 	}
 	return nu, nil
 }
 
 // DeleteUser implements UserServiceServer
-func (s *User) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+func (uv *UserViews) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR DeleteUser RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return nu, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// delete data
-	if err := s.Cluster.Session().Query(`DELETE FROM users WHERE id = ?`, nu.Id).Exec(); err != nil {
-		log.Printf("ERROR DeleteUser Query() %v", err)
+	if err := db.Session().Query(`DELETE FROM users WHERE id = ?`, nu.Id).Exec(); err != nil {
 		return nu, err
 	}
 	return &pb.User{}, nil
 }
 
 // FilterUsers implements UserServiceServer
-func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error) {
+func (uv *UserViews) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR FilterUsers RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return &pb.Users{}, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// filter users
-	iter := s.Cluster.Session().Query(`SELECT id, name, email FROM users WHERE name = ? ALLOW FILTERING;`, f.Name).Iter()
+	iter := db.Session().Query(`SELECT id, name, email FROM users WHERE name = ? ALLOW FILTERING;`, f.Name).Iter()
 
 	users := &pb.Users{}
 	u := &pb.User{}
@@ -104,7 +102,6 @@ func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error)
 		users.Data = append(users.Data, u)
 	}
 	if err := iter.Close(); err != nil {
-		log.Printf("ERROR FilterUsers Close() %v", err)
 		return &pb.Users{}, err
 	}
 
@@ -112,19 +109,19 @@ func (s *User) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error)
 }
 
 // VerifyUser implements UserServiceServer
-func (s *User) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.Verification, error) {
+func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.Verification, error) {
+	// get datastore from pluto service from context
+	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
 	// refresh session
-	if err := s.Cluster.RefreshSession(); err != nil {
-		log.Printf("ERROR VerifyUser RefreshSession() %v", err)
+	if err := db.RefreshSession(); err != nil {
 		return &pb.Verification{IsValid: false}, err
 	}
-	defer s.Cluster.Close()
+	defer db.Close()
 	// hash credential password
 	challenge := &pb.Credentials{Email: crd.Email, Password: hashPassword(crd.Password)}
 	valid := &pb.Credentials{}
 	// get data
-	if err := s.Cluster.Session().Query(`SELECT email, password FROM users WHERE email = ?`, crd.Email).Scan(&valid.Email, &valid.Password); err != nil {
-		log.Printf("ERROR VerifyUser Query() %v", err)
+	if err := db.Session().Query(`SELECT email, password FROM users WHERE email = ?`, crd.Email).Scan(&valid.Email, &valid.Password); err != nil {
 		return &pb.Verification{IsValid: false}, err
 	}
 	return &pb.Verification{IsValid: challenge == valid}, nil
