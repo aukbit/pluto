@@ -2,7 +2,7 @@ package client
 
 // Client is an interface to make calls to services
 type Client interface {
-	Dial() error
+	Dial(...ConfigFunc) error
 	Call() interface{}
 	Close() error
 	Config() *Config

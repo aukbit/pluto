@@ -155,7 +155,7 @@ func (s *service) startClients() {
 		s.wg.Add(1)
 		go func(clt client.Client) {
 			defer s.wg.Done()
-			if err := clt.Dial(); err != nil {
+			if err := clt.Dial(client.ParentID(s.cfg.ID)); err != nil {
 				s.logger.Error("Dial()", zap.String("err", err.Error()))
 			}
 		}(clt)

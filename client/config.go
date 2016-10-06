@@ -18,6 +18,7 @@ type Config struct {
 	Version            string
 	Target             string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format             string
+	ParentID           string // sets parent ID
 	RegisterClientFunc func(*grpc.ClientConn) interface{}
 }
 
@@ -80,6 +81,13 @@ func Description(d string) ConfigFunc {
 func Target(t string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Target = t
+	}
+}
+
+// ParentID sets id of parent service that starts the server
+func ParentID(id string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.ParentID = id
 	}
 }
 

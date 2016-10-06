@@ -5,9 +5,7 @@ import (
 
 	"github.com/uber-go/zap"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
@@ -23,25 +21,7 @@ type gRPCClient struct {
 func newClient(cfgs ...ConfigFunc) *gRPCClient {
 	c := newConfig(cfgs...)
 	clt := &gRPCClient{cfg: c, close: make(chan bool), logger: zap.New(zap.NewJSONEncoder())}
-	clt.initLog()
 	return clt
-}
-
-func (g *gRPCClient) initLog() {
-	g.logger = g.logger.With(
-		zap.Nest("client",
-			zap.String("id", g.cfg.ID),
-			zap.String("name", g.cfg.Name),
-			zap.String("format", g.cfg.Format),
-			zap.String("target", g.cfg.Target)))
-}
-
-func (g *gRPCClient) Init(cfgs ...ConfigFunc) error {
-	for _, c := range cfgs {
-		c(g.cfg)
-	}
-	g.initLog()
-	return nil
 }
 
 func (g *gRPCClient) Config() *Config {
@@ -49,7 +29,14 @@ func (g *gRPCClient) Config() *Config {
 	return cfg
 }
 
-func (g *gRPCClient) Dial() error {
+func (g *gRPCClient) Dial(cfgs ...ConfigFunc) error {
+	// set last configs
+	for _, c := range cfgs {
+		c(g.cfg)
+	}
+	// set logger
+	g.setLogger()
+	// start server
 	if err := g.dial(); err != nil {
 		return err
 	}
@@ -87,16 +74,12 @@ func (g *gRPCClient) dial() error {
 	return nil
 }
 
-// WrapUnaryInterceptor
-func LoggerUnaryInterceptor(l zap.Logger) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		md, ok := metadata.FromContext(ctx)
-		if ok {
-			e, ok := md["event"]
-			if ok {
-				l.Info("call", zap.String("event", e[0]), zap.String("method", method))
-			}
-		}
-		return invoker(ctx, method, req, reply, cc, opts...)
-	}
+func (g *gRPCClient) setLogger() {
+	g.logger = g.logger.With(
+		zap.Nest("client",
+			zap.String("id", g.cfg.ID),
+			zap.String("name", g.cfg.Name),
+			zap.String("format", g.cfg.Format),
+			zap.String("target", g.cfg.Target),
+			zap.String("parent", g.cfg.ParentID)))
 }
