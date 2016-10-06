@@ -4,8 +4,8 @@ import "github.com/gocql/gocql"
 
 type Datastore interface {
 	Connect()
-	Session()		*gocql.Session
-	RefreshSession()	error
+	Session() *gocql.Session
+	RefreshSession() error
 	Close()
 }
 

@@ -1,63 +1,66 @@
 package server
 
 import (
+	"crypto/tls"
 	"fmt"
-	"strings"
-	"github.com/google/uuid"
-	"google.golang.org/grpc"
 	"log"
 	"regexp"
-	"crypto/tls"
+	"strings"
+
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/server/router"
+	"google.golang.org/grpc"
 )
 
+// Config server configuaration options
 type Config struct {
-	Id			string
-	Name 			string
-	Description 		string
-	Version			string
-	Addr       		string        // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format			string
-	Mux			router.Mux
-	TLSConfig		*tls.Config   // optional TLS config, used by ListenAndServeTLS
-	GRPCServer		*grpc.Server
+	ID                      string
+	Name                    string
+	Description             string
+	Version                 string
+	Addr                    string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format                  string
+	ParentID                string // sets parent ID
+	Mux                     router.Mux
+	TLSConfig               *tls.Config // optional TLS config, used by ListenAndServeTLS
+	GRPCRegister            GRPCRegisterServiceFunc
+	Middlewares             []router.Middleware           // http middlewares
+	UnaryServerInterceptors []grpc.UnaryServerInterceptor // gRPC interceptors
 }
 
+// GRPCRegisterServiceFunc grpc
+type GRPCRegisterServiceFunc func(*grpc.Server)
+
+// ConfigFunc registers the Config
 type ConfigFunc func(*Config)
 
-var DefaultConfig = Config{
-	Name: 			"server_default",
-	Addr:			":8080",
-	Format:			"http",
-}
+var (
+	defaultAddr   = ":8080"
+	defaultFormat = "http"
+)
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := DefaultConfig
+	cfg := &Config{Addr: defaultAddr, Format: defaultFormat, Version: defaultVersion}
 
 	for _, c := range cfgs {
-		c(&cfg)
+		c(cfg)
 	}
 
-	if len(cfg.Id) == 0 {
-		cfg.Id = uuid.New().String()
+	if len(cfg.ID) == 0 {
+		cfg.ID = common.RandID("srv_", 6)
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultName
+		cfg.Name = defaultName
 	}
-
-	if len(cfg.Version) == 0 {
-		cfg.Version = DefaultVersion
-	}
-
-	return &cfg
+	return cfg
 }
 
-// Id server id
-func Id(id string) ConfigFunc {
+// ID server id
+func ID(id string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Id = id
+		cfg.ID = id
 	}
 }
 
@@ -70,7 +73,7 @@ func Name(n string) ConfigFunc {
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
 	}
 }
 
@@ -88,6 +91,13 @@ func Addr(a string) ConfigFunc {
 	}
 }
 
+// ParentID sets id of parent service that starts the server
+func ParentID(id string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.ParentID = id
+	}
+}
+
 // Mux server multiplexer
 func Mux(m router.Mux) ConfigFunc {
 	return func(cfg *Config) {
@@ -100,22 +110,37 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 	return func(cfg *Config) {
 		cer, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
-			log.Printf("ERROR tls.LoadX509KeyPair %v",err)
+			log.Printf("ERROR tls.LoadX509KeyPair %v", err)
 			return
 		}
 		cfg.TLSConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
+			MinVersion:               tls.VersionTLS12,
 			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
 			PreferServerCipherSuites: true,
-			Certificates: []tls.Certificate{cer},
+			Certificates:             []tls.Certificate{cer},
 		}
 		cfg.Format = "https"
 	}
 }
 
-func GRPCServer(s *grpc.Server) ConfigFunc {
+// GRPCRegister register client gRPC function
+func GRPCRegister(fn GRPCRegisterServiceFunc) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.GRPCServer = s
+		cfg.GRPCRegister = fn
 		cfg.Format = "grpc"
+	}
+}
+
+// Middlewares slice with router.Middleware
+func Middlewares(m ...router.Middleware) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Middlewares = append(cfg.Middlewares, m...)
+	}
+}
+
+// UnaryServerInterceptors slice with grpc.UnaryServerInterceptor
+func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.UnaryServerInterceptors = append(cfg.UnaryServerInterceptors, i...)
 	}
 }

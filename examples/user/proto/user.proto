@@ -9,6 +9,7 @@ service UserService {
     rpc UpdateUser (User) returns (User) {}
     rpc DeleteUser (User) returns (User) {}
     rpc FilterUsers (Filter) returns (Users) {}
+    rpc VerifyUser (Credentials) returns (Verification) {}
 }
 
 // The request message containing the new user data.
@@ -33,4 +34,15 @@ message Users {
 // The response message containing the a users list
 message Filter {
     string name = 1;
+}
+
+// The request message containing the user basic credentials
+message Credentials {
+    string email = 1;
+    string password = 2;
+}
+
+// The response message containing the a users list
+message Verification {
+    bool isValid = 1;
 }

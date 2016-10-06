@@ -1,116 +1,193 @@
 package pluto
 
 import (
-	"log"
-	"syscall"
-	"os/signal"
 	"os"
-	"net/http"
-	"context"
-	"bitbucket.org/aukbit/pluto/server"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
+	"github.com/uber-go/zap"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"bitbucket.org/aukbit/pluto/server"
 )
-
 
 // Service
 type service struct {
-	cfg 			*Config
-	close 			chan bool
+	cfg    *Config
+	close  chan bool
+	wg     *sync.WaitGroup
+	logger zap.Logger
 }
 
-func newService (cfgs ...ConfigFunc) *service {
+func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	return &service{cfg: c}
-
+	s := &service{
+		cfg:    c,
+		close:  make(chan bool),
+		wg:     &sync.WaitGroup{},
+		logger: zap.New(zap.NewJSONEncoder())}
+	return s
 }
 
-func (s *service) Init(cfgs ...ConfigFunc) error {
-	for _, c := range cfgs {
-		c(s.cfg)
+// Run starts service
+func (s *service) Run() error {
+	// set logger
+	s.setLogger()
+	// start service
+	if err := s.start(); err != nil {
+		return err
 	}
-	for _, srv := range s.Servers(){
-		// Wrap this service to all handlers
-		// make it available in handler context
-		if srv.Config().Format == "http" {
-			srv.Config().Mux.AddMiddleware(middlewareService(s))
-		}
-	}
+	// wait for all go routines to finish
+	s.wg.Wait()
+	s.logger.Info("exit")
 	return nil
 }
 
-func middlewareService(s *service) router.Middleware {
-    return func(h router.Handler) router.Handler {
-        return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, s.cfg.Name, s)
-		h.ServeHTTP(w, r.WithContext(ctx))
+// Stop stops service
+func (s *service) Stop() {
+	s.logger.Info("stop")
+	s.close <- true
+}
+
+// Config service configration options
+func (s *service) Config() *Config {
+	cfg := s.cfg
+	return cfg
+}
+
+// Server returns a server instance by name if initialized in service
+func (s *service) Server(name string) (srv server.Server, ok bool) {
+	if srv, ok = s.cfg.Servers[name]; !ok {
+		return
 	}
-    }
+	return srv, true
 }
 
-func (s *service) Servers() map[string]server.Server {
-	return s.cfg.Servers
+// Client returns a client instance by name if initialized in service
+func (s *service) Client(name string) (clt client.Client, ok bool) {
+	if clt, ok = s.cfg.Clients[name]; !ok {
+		return
+	}
+	return clt, true
 }
 
+// Datastore TODO there is no need to be public
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
 }
 
-func (s *service) Clients() map[string]client.Client {
-	return s.cfg.Clients
-}
-
-func (s *service) Run() error {
-	if err := s.start(); err != nil {
-		return err
-	}
-	// parse address for host, port
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
-	sig := <-ch
-	log.Printf("----- %s signal %v received ", s.cfg.Name, sig)
-	return s.Stop()
+func (s *service) setLogger() {
+	s.logger = s.logger.With(
+		zap.Nest("service",
+			zap.String("id", s.cfg.ID),
+			zap.String("name", s.cfg.Name)))
 }
 
 func (s *service) start() error {
-	log.Printf("START %s \t%s", s.cfg.Name, s.cfg.Id)
+	s.logger.Info("start",
+		zap.Nest("content",
+			zap.Int("servers", len(s.cfg.Servers)),
+			zap.Int("clients", len(s.cfg.Clients))))
 
 	// connect datastore
 	if s.cfg.Datastore != nil {
 		s.cfg.Datastore.Connect()
 		if err := s.cfg.Datastore.RefreshSession(); err != nil {
-			log.Fatalf("ERROR s.cfg.Datastore.RefreshSession() %v", err.Error())
+			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
 		}
 	}
 
+	// TODO: manage errors
 	// run servers
-	for _, srv := range s.Servers(){
-		go func(ss server.Server) {
-			if err := ss.Run(); err != nil {
-				log.Fatalf("ERROR srv.Run() %v", err)
+	s.startServers()
+	// dial clients
+	s.startClients()
+	// add go routine to WaitGroup
+	s.wg.Add(1)
+	go s.waitUntilStopOrSig()
+	return nil
+}
+
+func (s *service) startServers() {
+	for _, srv := range s.cfg.Servers {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(srv server.Server) {
+			defer s.wg.Done()
+			if err := srv.Run(
+				server.ParentID(s.cfg.ID),
+				server.Middlewares(serviceContextMiddleware(s)),
+				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s))); err != nil {
+				s.logger.Error("Run()", zap.String("err", err.Error()))
 			}
 		}(srv)
 	}
-	// dial clients
-	for _, clt := range s.Clients(){
-		go func(cc client.Client) {
-			if err := cc.Dial(); err != nil {
-				log.Fatalf("ERROR cc.Dial() %v", err)
+}
+
+func (s *service) startClients() {
+	for _, clt := range s.cfg.Clients {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(clt client.Client) {
+			defer s.wg.Done()
+			if err := clt.Dial(client.ParentID(s.cfg.ID)); err != nil {
+				s.logger.Error("Dial()", zap.String("err", err.Error()))
 			}
 		}(clt)
 	}
-
-	return nil
 }
 
-func (s *service) Stop() error {
-	s.close <-true
-	return nil
+// waitUntilStopOrSig waits for close channel or syscall Signal
+func (s *service) waitUntilStopOrSig() {
+	defer s.wg.Done()
+	//  Stop also in case of any host signal
+	sigch := make(chan os.Signal, 1)
+	signal.Notify(sigch, syscall.SIGTERM, syscall.SIGINT)
+
+outer:
+	for {
+		select {
+		case <-s.close:
+			// Waits for call to stop
+			s.closeClients()
+			s.stopServers()
+			break outer
+		case sig := <-sigch:
+			// Waits for signal to stop
+			s.logger.Info("signal received",
+				zap.String("signal", sig.String()))
+			s.closeClients()
+			s.stopServers()
+			break outer
+		default:
+			s.logger.Info("pulse")
+			time.Sleep(time.Second * 1)
+			continue
+		}
+	}
 }
 
-func (s *service) Config() *Config {
-	cfg := s.cfg
-	return cfg
+func (s *service) closeClients() {
+	for _, clt := range s.cfg.Clients {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(clt client.Client) {
+			defer s.wg.Done()
+			clt.Close()
+		}(clt)
+	}
+}
+
+func (s *service) stopServers() {
+	for _, srv := range s.cfg.Servers {
+		// add go routine to WaitGroup
+		s.wg.Add(1)
+		go func(srv server.Server) {
+			defer s.wg.Done()
+			srv.Stop()
+		}(srv)
+	}
 }

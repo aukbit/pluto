@@ -1,69 +1,71 @@
 package pluto_test
 
 import (
-	"testing"
-	"net/http"
+	"encoding/json"
 	"io/ioutil"
-	"log"
-	"github.com/paulormart/assert"
+	"net/http"
+	"testing"
+
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"encoding/json"
+	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
-  	reply.Json(w, r, http.StatusOK, "Hello World")
+	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
-func TestService(t *testing.T){
+const URL = "http://localhost:8083"
 
-	// 1. Config service
+func TestService(t *testing.T) {
+
+	// Define Router
+	mux := router.NewMux()
+	mux.GET("/", Index)
+	// Define server
+	httpSrv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
+
+	// Define Service
 	s := pluto.NewService(
 		pluto.Name("gopher"),
 		pluto.Description("gopher super service"),
+		pluto.Servers(httpSrv),
 	)
-	//assert.Equal(t, reflect.TypeOf(service.DefaultServer), reflect.TypeOf(s))
-	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.Id) > 0)
-	assert.Equal(t, "pluto_gopher", cfg.Name)
-	assert.Equal(t, "gopher super service", cfg.Description)
-
-	// 2. Set http server handlers
-	mux := router.NewRouter()
-	mux.GET("/", Index)
-	// 3. Define server Router
-	httpSrv := server.NewServer(server.Mux(mux))
-
-	// 4. Init service
-	s.Init(pluto.Servers(httpSrv))
 
 	// 5. Run service
 	go func() {
 		if err := s.Run(); err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 	}()
+	defer s.Stop()
+
+	// Assert Config
+	cfg := s.Config()
+	assert.Equal(t, true, len(cfg.ID) > 0)
+	assert.Equal(t, "pluto_gopher", cfg.Name)
+	assert.Equal(t, "gopher super service", cfg.Description)
 
 	// Test
-	r, err := http.Get("http://localhost:8080")
+	r, err := http.Get(URL)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer r.Body.Close()
 
-
 	var message string
 	if err := json.Unmarshal(b, &message); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
+
 }

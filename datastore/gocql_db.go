@@ -1,18 +1,19 @@
 package datastore
 
 import (
-	"github.com/gocql/gocql"
 	"log"
+
+	"github.com/gocql/gocql"
 )
 
 var (
-	DefaultCluster="127.0.0.1"
+	defaultCluster = "127.0.0.1"
 )
 
 type datastore struct {
-	cfg 			*Config
-	cluster			*gocql.ClusterConfig
-	session			*gocql.Session
+	cfg     *Config
+	cluster *gocql.ClusterConfig
+	session *gocql.Session
 }
 
 // NewServer will instantiate a new Server with the given config
@@ -32,10 +33,6 @@ func (ds *datastore) RefreshSession() error {
 	s, err := ds.cluster.CreateSession()
 	if err != nil {
 		return err
-		if err == gocql.ErrNoConnectionsStarted {
-			// TODO currently gocql driver as an func createKeyspace
-			return err
-		}
 	}
 	ds.session = s
 	return nil
