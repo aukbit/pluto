@@ -1,8 +1,9 @@
 package router
 
 import (
-	"assert"
 	"testing"
+
+	"github.com/paulormart/assert"
 )
 
 func TestPaths(t *testing.T) {

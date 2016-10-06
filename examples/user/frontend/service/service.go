@@ -45,7 +45,7 @@ func Run() error {
 		pluto.Name("frontend"),
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
-		pluto.Clients(grpcClient))
+		pluto.Clients(clt))
 
 	// Run service
 	if err := s.Run(); err != nil {
