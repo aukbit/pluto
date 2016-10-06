@@ -9,16 +9,20 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/uber-go/zap"
 )
 
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg    *Config
-	close  chan bool
-	wg     *sync.WaitGroup
-	logger zap.Logger
+	cfg        *Config
+	close      chan bool
+	wg         *sync.WaitGroup
+	logger     zap.Logger
+	httpServer *http.Server
+	grpcServer *grpc.Server
 }
 
 // NewServer will instantiate a new defaultServer with the given config
@@ -45,9 +49,33 @@ func (ds *defaultServer) setLogger() {
 func (ds *defaultServer) setMiddleware() {
 	switch ds.cfg.Format {
 	case "grpc":
-		log.Printf("newServer TESTE GRPC")
+		log.Printf("setMiddleware GRPC")
 	default:
 		ds.cfg.Mux.AddMiddleware(middlewareServer(ds))
+	}
+}
+
+func (ds *defaultServer) setServer() {
+	switch ds.cfg.Format {
+	case "grpc":
+		ds.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(WrapUnaryInterceptor("logger", ds.logger)))
+		// register grpc handlers
+		ds.cfg.GRPCRegister(ds.grpcServer)
+	default:
+		ds.httpServer = &http.Server{
+			// handler to invoke, http.DefaultServeMux if nil
+			Handler: ds.cfg.Mux,
+
+			// ReadTimeout is used by the http server to set a maximum duration before
+			// timing out read of the request. The default timeout is 10 seconds.
+			ReadTimeout: 10 * time.Second,
+
+			// WriteTimeout is used by the http server to set a maximum duration before
+			// timing out write of the response. The default timeout is 10 seconds.
+			WriteTimeout: 10 * time.Second,
+
+			TLSConfig: ds.cfg.TLSConfig,
+		}
 	}
 }
 
@@ -61,6 +89,8 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	ds.setMiddleware()
 	// set logger
 	ds.setLogger()
+	// set server
+	ds.setServer()
 	// start server
 	if err := ds.start(); err != nil {
 		return err
@@ -160,23 +190,9 @@ func (ds *defaultServer) listenTLS() (net.Listener, error) {
 // serve always returns a non-nil error.
 func (ds *defaultServer) serve(ln net.Listener) error {
 
-	srv := &http.Server{
-		// handler to invoke, http.DefaultServeMux if nil
-		Handler: ds.cfg.Mux,
-
-		// ReadTimeout is used by the http server to set a maximum duration before
-		// timing out read of the request. The default timeout is 10 seconds.
-		ReadTimeout: 10 * time.Second,
-
-		// WriteTimeout is used by the http server to set a maximum duration before
-		// timing out write of the response. The default timeout is 10 seconds.
-		WriteTimeout: 10 * time.Second,
-
-		TLSConfig: ds.cfg.TLSConfig,
-	}
 	// add go routine to WaitGroup
 	ds.wg.Add(1)
-	go func() {
+	go func(srv *http.Server) {
 		defer ds.wg.Done()
 		if err := srv.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
@@ -185,7 +201,7 @@ func (ds *defaultServer) serve(ln net.Listener) error {
 			ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
 			return
 		}
-	}()
+	}(ds.httpServer)
 	return nil
 }
 

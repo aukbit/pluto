@@ -30,17 +30,6 @@ func newService(cfgs ...ConfigFunc) *service {
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
 		logger: zap.New(zap.NewJSONEncoder())}
-	for _, srv := range c.Servers {
-		// Wrap this service to all handlers
-		// make it available in handler context
-		switch srv.Config().Format {
-		case "grpc":
-			log.Printf("TESTE")
-		default:
-			srv.Config().Mux.AddMiddleware(middlewareService(s))
-		}
-	}
-	s.initLog()
 	return s
 }
 
@@ -56,12 +45,15 @@ func (s *service) Init(cfgs ...ConfigFunc) error {
 	// 		srv.Config().Mux.AddMiddleware(middlewareService(s))
 	// 	}
 	// }
-	s.initLog()
+	s.setLogger()
 	return nil
 }
 
 // Run starts service
 func (s *service) Run() error {
+	// set logger
+	s.setLogger()
+	// start service
 	if err := s.start(); err != nil {
 		return err
 	}
@@ -104,7 +96,7 @@ func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
 }
 
-func (s *service) initLog() {
+func (s *service) setLogger() {
 	s.logger = s.logger.With(
 		zap.Nest("service",
 			zap.String("id", s.cfg.ID),
@@ -142,6 +134,15 @@ func (s *service) startServers() {
 		s.wg.Add(1)
 		go func(srv server.Server) {
 			defer s.wg.Done()
+			// Wrap this service to all handlers
+			// make it available in handler context
+			switch srv.Config().Format {
+			case "grpc":
+				log.Printf("TESTE")
+			default:
+				srv.Config().Mux.AddMiddleware(middlewareService(s))
+			}
+
 			if err := srv.Run(server.ParentID(s.cfg.ID)); err != nil {
 				s.logger.Error("Run()", zap.String("err", err.Error()))
 			}

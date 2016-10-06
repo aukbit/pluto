@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -21,12 +20,10 @@ type Config struct {
 	Version      string
 	Addr         string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format       string
+	ParentID     string // sets parent ID
 	Mux          router.Mux
-	ParentID     string      // sets parent ID
 	TLSConfig    *tls.Config // optional TLS config, used by ListenAndServeTLS
-	httpServer   *http.Server
 	GRPCRegister GRPCRegisterServiceFunc
-	grpcServer   *grpc.Server
 }
 
 // GRPCRegisterServiceFunc grpc
