@@ -32,12 +32,12 @@ func Run() error {
 		}),
 		client.Target(*userTarget))
 
-	// GRPC server
-	// Define gRPC server
-	grpcServer := grpc.NewServer()
-
 	// Define Pluto Server
-	grpcSrv := server.NewServer(server.Addr(*grpcPort), server.GRPCServer(grpcServer))
+	grpcSrv := server.NewServer(
+		server.Addr(*grpcPort),
+		server.GRPCRegister(func(g *grpc.Server) {
+			pba.RegisterAuthServiceServer(g, &backend.Auth{Clt: userClient})
+		}))
 
 	// Define Pluto Service
 	s := pluto.NewService(
@@ -45,10 +45,6 @@ func Run() error {
 		pluto.Description("Backend service is responsible verify for persist data"),
 		pluto.Servers(grpcSrv),
 		pluto.Clients(userClient))
-
-	// Register Auth service passing user backend client
-
-	pba.RegisterAuthServiceServer(grpcServer, &backend.Auth{Clt: userClient})
 
 	// Run service
 	if err := s.Run(); err != nil {

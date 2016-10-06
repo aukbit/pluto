@@ -126,15 +126,16 @@ func RunAuthFrontend() {
 	}
 }
 
+// type A func(s *grpc.Server, srv pbu.UserServiceServer)
+
 func MockUserBackend() {
 	defer wg.Done()
-	// GRPC server
-	// Define gRPC server and register
-	grpcServer := grpc.NewServer()
-	// Register grpc Server
-	pbu.RegisterUserServiceServer(grpcServer, &MockUser{})
 	// Define Pluto Server
-	grpcSrv := server.NewServer(server.Addr(":65080"), server.GRPCServer(grpcServer))
+	grpcSrv := server.NewServer(
+		server.Addr(":65080"),
+		server.GRPCRegister(func(g *grpc.Server) {
+			pbu.RegisterUserServiceServer(g, &MockUser{})
+		}))
 	// Define Pluto Service
 	s := pluto.NewService(pluto.Name("MockUserBackend"), pluto.Servers(grpcSrv))
 	// Run service

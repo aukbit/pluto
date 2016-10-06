@@ -23,15 +23,12 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 
 func TestMain(m *testing.M) {
 	if !testing.Short() {
-		// Create a grpc server
-		// Define gRPC server and register
-		grpcServer := grpc.NewServer()
-		pb.RegisterGreeterServer(grpcServer, &greeter{})
 		// Create pluto server
 		s := server.NewServer(
 			server.Addr(":65061"),
-			server.GRPCServer(grpcServer),
-		)
+			server.GRPCRegister(func(g *grpc.Server) {
+				pb.RegisterGreeterServer(g, &greeter{})
+			}))
 		// Run Server
 		go func() {
 			if err := s.Run(); err != nil {

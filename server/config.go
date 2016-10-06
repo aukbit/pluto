@@ -14,16 +14,19 @@ import (
 
 // Config server configuaration options
 type Config struct {
-	ID          string
-	Name        string
-	Description string
-	Version     string
-	Addr        string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format      string
-	Mux         router.Mux
-	TLSConfig   *tls.Config // optional TLS config, used by ListenAndServeTLS
-	GRPCServer  *grpc.Server
+	ID           string
+	Name         string
+	Description  string
+	Version      string
+	Addr         string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format       string
+	Mux          router.Mux
+	TLSConfig    *tls.Config // optional TLS config, used by ListenAndServeTLS
+	GRPCRegister GRPCRegisterServiceFunc
 }
+
+// GRPCRegisterServiceFunc grpc
+type GRPCRegisterServiceFunc func(*grpc.Server)
 
 // ConfigFunc registers the Config
 type ConfigFunc func(*Config)
@@ -111,10 +114,11 @@ func TLSConfig(certFile, keyFile string) ConfigFunc {
 	}
 }
 
-// GRPCServer grpc server instance from grpc library
-func GRPCServer(s *grpc.Server) ConfigFunc {
+// RegisterClientFunc register client gRPC function
+func GRPCRegister(fn GRPCRegisterServiceFunc) ConfigFunc {
+	// func GRPCRegister(i interface{}) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.GRPCServer = s
+		cfg.GRPCRegister = fn
 		cfg.Format = "grpc"
 	}
 }

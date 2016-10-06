@@ -67,18 +67,14 @@ func TestServer(t *testing.T) {
 	}()
 	defer s.Stop()
 
-	// GRPC server
-	// Define gRPC server and register
-	grpcServer := grpc.NewServer()
-	pb.RegisterGreeterServer(grpcServer, &greeter{})
-
 	// Create pluto server
 	g := server.NewServer(
 		server.Name("gopher"),
 		server.Description("gopher super server"),
 		server.Addr(":65058"),
-		server.GRPCServer(grpcServer),
-	)
+		server.GRPCRegister(func(g *grpc.Server) {
+			pb.RegisterGreeterServer(g, &greeter{})
+		}))
 
 	// Run Server
 	go func() {

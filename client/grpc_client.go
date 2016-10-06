@@ -5,7 +5,9 @@ import (
 
 	"github.com/uber-go/zap"
 
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
@@ -71,7 +73,11 @@ func (g *gRPCClient) dial() error {
 	g.logger.Info("dial")
 	// establishes gRPC client connection
 	// TODO use TLS
-	conn, err := grpc.Dial(g.Config().Target, grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		g.Config().Target,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(LoggerUnaryInterceptor(g.logger)))
+
 	if err != nil {
 		g.logger.Error("dial", zap.String("err", err.Error()))
 		return err
@@ -79,4 +85,18 @@ func (g *gRPCClient) dial() error {
 	// get gRPC client interface
 	g.wire = g.cfg.RegisterClientFunc(conn)
 	return nil
+}
+
+// WrapUnaryInterceptor
+func LoggerUnaryInterceptor(l zap.Logger) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		md, ok := metadata.FromContext(ctx)
+		if ok {
+			e, ok := md["event"]
+			if ok {
+				l.Info("call", zap.String("event", e[0]), zap.String("method", method))
+			}
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
