@@ -10,10 +10,10 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
-	cfg          *Config
-	logger       zap.Logger
-	registration interface{}
-	conn         *grpc.ClientConn
+	cfg    *Config
+	logger zap.Logger
+	call   interface{}
+	conn   *grpc.ClientConn
 }
 
 // newClient will instantiate a new Client with the given config
@@ -42,10 +42,10 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 }
 
 func (dc *defaultClient) Call() interface{} {
-	if dc.registration == nil {
+	if dc.call == nil {
 		return errors.New("Client has not been registered")
 	}
-	return dc.registration
+	return dc.call
 }
 
 func (dc *defaultClient) Close() {
