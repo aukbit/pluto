@@ -25,6 +25,6 @@ func (dc *defaultClient) dialGRPC() error {
 	// keep connection for later close
 	dc.conn = conn
 	// register methods on connection
-	dc.registration = dc.cfg.GRPCRegister(conn)
+	dc.call = dc.cfg.GRPCRegister(conn)
 	return nil
 }
