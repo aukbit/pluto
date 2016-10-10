@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"bitbucket.org/aukbit/pluto/discovery"
+
 	"google.golang.org/grpc"
 
 	"github.com/uber-go/zap"
@@ -16,12 +18,13 @@ import (
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg        *Config
-	close      chan bool
-	wg         *sync.WaitGroup
-	logger     zap.Logger
-	httpServer *http.Server
-	grpcServer *grpc.Server
+	cfg          *Config
+	close        chan bool
+	wg           *sync.WaitGroup
+	logger       zap.Logger
+	httpServer   *http.Server
+	grpcServer   *grpc.Server
+	isDiscovered bool
 }
 
 // newServer will instantiate a new defaultServer with the given config
@@ -42,6 +45,11 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	}
 	// set logger
 	ds.setLogger()
+
+	// register at service discovery
+	if err := ds.register(); err != nil {
+		return err
+	}
 	// start server
 	if err := ds.start(); err != nil {
 		return err
@@ -55,6 +63,8 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 // Stop stops server by sending a message to close the listener via channel
 func (ds *defaultServer) Stop() {
 	ds.logger.Info("stop")
+	ds.wg.Add(1)
+	go ds.unregister()
 	ds.close <- true
 }
 
@@ -219,6 +229,36 @@ outer:
 			ds.logger.Info("pulse")
 			time.Sleep(time.Second * 1)
 			continue
+		}
+	}
+}
+
+// register Server
+func (ds *defaultServer) register() error {
+	_, err := discovery.IsAvailable()
+	if err != nil {
+		ds.logger.Warn("service discovery not available")
+		return nil
+	}
+	s := &discovery.Service{
+		ID:   ds.cfg.ID,
+		Name: ds.cfg.Name,
+		Port: ds.cfg.Port(),
+	}
+	err = discovery.RegisterService(s)
+	if err != nil {
+		return err
+	}
+	ds.isDiscovered = true
+	return nil
+}
+
+func (ds *defaultServer) unregister() {
+	defer ds.wg.Done()
+	if ds.isDiscovered {
+		err := discovery.DeregisterService(ds.cfg.ID)
+		if err != nil {
+			ds.logger.Error(err.Error())
 		}
 	}
 }

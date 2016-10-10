@@ -1,6 +1,10 @@
 package discovery
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/paulormart/assert"
+)
 
 func TestNodes(t *testing.T) {
 
@@ -78,4 +82,12 @@ func TestCatalogService(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestIsAvailable(t *testing.T) {
+	ok, err := IsAvailable()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, true, ok)
 }

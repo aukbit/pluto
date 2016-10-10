@@ -26,6 +26,9 @@ type Service struct {
 func Services() (map[string]*Service, error) {
 
 	resp, err := http.Get(URL + SERVICES)
+	if err != nil {
+		return nil, err
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
