@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -63,4 +64,16 @@ func CatalogService(service string) (ns []*NodeService, err error) {
 		ns = append(ns, n)
 	}
 	return ns, nil
+}
+
+func Target(service string) (string, error) {
+	ns, err := CatalogService(service)
+	if err != nil {
+		return "", err
+	}
+	if len(ns) > 0 {
+		t := fmt.Sprintf("%s:%d", ns[0].Address, ns[0].ServicePort)
+		return t, nil
+	}
+	return "", fmt.Errorf("nodes not available with service: %s", service)
 }

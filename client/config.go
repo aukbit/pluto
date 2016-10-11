@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"bitbucket.org/aukbit/pluto/common"
+	"bitbucket.org/aukbit/pluto/discovery"
 
 	"google.golang.org/grpc"
 )
@@ -65,7 +66,6 @@ func Name(n string) ConfigFunc {
 		// support only alphanumeric and underscore characters
 		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
-
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
@@ -91,6 +91,13 @@ func Target(t string) ConfigFunc {
 func TargetDiscovery(name string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.TargetDiscovery = name
+		// get target from service discovery
+		t, err := discovery.Target(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("TargetDiscovery %v", t)
+		cfg.Target = t
 	}
 }
 
