@@ -27,6 +27,8 @@ WORKDIR $GOPATH
 # My Golang project
 # Download project dependencies
 RUN go get bitbucket.org/aukbit/pluto
+RUN go get bitbucket.org/aukbit/pluto/common
+RUN go get github.com/uber-go/zap
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_backend
