@@ -4,5 +4,7 @@ This is an example of creating a distributed deployment of pluto services using 
 
 ### Create a docker image for service user_backend on default node
 ```
-$ docker build -f ./examples/dist/user_backend/Dockerfile .
+$ cd ./examples/dist/user_backend
+$ docker build -f ./Dockerfile -t user_backend .
+$ docker run -d -name user_backend user_backend
 ```
