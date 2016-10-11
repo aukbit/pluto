@@ -18,6 +18,7 @@ type Config struct {
 	Description             string
 	Version                 string
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	TargetDiscovery         string // service name on service discovery
 	Format                  string
 	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
@@ -83,6 +84,13 @@ func Description(d string) ConfigFunc {
 func Target(t string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Target = t
+	}
+}
+
+// TargetDiscovery server address
+func TargetDiscovery(name string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.TargetDiscovery = name
 	}
 }
 

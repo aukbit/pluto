@@ -125,6 +125,5 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 		assert.Equal(t, test.Status, r.StatusCode)
 		assert.Equal(t, test.BodyContains, message)
-
 	}
 }

@@ -26,19 +26,6 @@ func TestServices(t *testing.T) {
 
 func TestRegisterService(t *testing.T) {
 	s := &Service{
-		ID:   "test",
-		Name: "test",
-		Tags: []string{"auth", "api"},
-		Port: 60500,
-	}
-	err := RegisterService(s)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestDeregisterService(t *testing.T) {
-	s := &Service{
 		ID:   "test1",
 		Name: "test1",
 		Tags: []string{"auth", "api"},
@@ -64,8 +51,8 @@ func TestCatalogServices(t *testing.T) {
 
 func TestCatalogService(t *testing.T) {
 	s := &Service{
-		ID:   "test",
-		Name: "test",
+		ID:   "test2",
+		Name: "test2",
 		Tags: []string{"auth", "api"},
 		Port: 60500,
 	}
@@ -73,12 +60,12 @@ func TestCatalogService(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	ns, err := CatalogService("test")
+	ns, err := CatalogService("test2")
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("services %v", ns)
-	err = DeregisterService("test")
+	err = DeregisterService("test2")
 	if err != nil {
 		t.Error(err)
 	}
@@ -90,4 +77,31 @@ func TestIsAvailable(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, true, ok)
+}
+
+func TestRegisterCheck(t *testing.T) {
+	s := &Service{
+		ID:   "test3",
+		Name: "test3",
+		Tags: []string{"auth", "api"},
+		Port: 60500,
+	}
+	err := RegisterService(s)
+	if err != nil {
+		t.Error(err)
+	}
+	c := &Check{
+		ID:    "test3_check",
+		Name:  "TCP check",
+		Notes: "Ensure the server is listening on the specific port",
+		DeregisterCriticalServiceAfter: "1m",
+		TCP:       ":60500",
+		Interval:  "10s",
+		Timeout:   "1s",
+		ServiceID: "test3",
+	}
+	err = RegisterCheck(c)
+	if err != nil {
+		t.Error(err)
+	}
 }

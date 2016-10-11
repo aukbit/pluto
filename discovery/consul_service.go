@@ -18,8 +18,8 @@ const (
 type Service struct {
 	ID      string   `json:"ID"`
 	Name    string   `json:"Name"`
-	Tags    []string `json:"Tags"`
-	Address string   `json:"Address"`
+	Tags    []string `json:"Tags,omitempty"`
+	Address string   `json:"Address,omitempty"`
 	Port    int      `json:"Port"`
 }
 
@@ -56,13 +56,13 @@ func RegisterService(s *Service) error {
 	if err != nil {
 		return err
 	}
-	// body, err := ioutil.ReadAll(resp.Body)
-	// defer resp.Body.Close()
-	// if err != nil {
-	// 	return err
-	// }
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error %v", resp.StatusCode)
+		return fmt.Errorf("Error %v", string(body))
 	}
 	return nil
 }
@@ -77,43 +77,13 @@ func DeregisterService(serviceID string) error {
 	if err != nil {
 		return err
 	}
-	// body, err := ioutil.ReadAll(resp.Body)
-	// defer resp.Body.Close()
-	// if err != nil {
-	// 	log.Printf("RegisterService %v", err)
-	// 	return err
-	// }
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error %v", resp.StatusCode)
+		return fmt.Errorf("Error %v", string(body))
 	}
 	return nil
 }
-
-// func GetService(name string) (s *Service, err error) {
-//
-// 	qs := "?near=_agent"
-// 	resp, err := http.Get(URL + strings.Replace(SERVICE, "<service>", name, 1) + qs)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	defer resp.Body.Close()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var data []json.RawMessage
-// 	err = json.Unmarshal(body, &data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	for _, bytes := range data {
-// 		s := &Service{}
-// 		if err := json.Unmarshal(bytes, s); err != nil {
-// 			return nil, err
-// 		}
-// 		log.Printf("GetService %v", s)
-// 		// returns the first it finds
-// 		return s, nil
-// 	}
-// 	return &Service{}, nil
-// }

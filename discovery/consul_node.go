@@ -14,7 +14,7 @@ const (
 type Node struct {
 	Node            string            `json:"Node"`
 	Address         string            `json:"Address"`
-	TaggedAddresses map[string]string `json:"TaggedAddresses"`
+	TaggedAddresses map[string]string `json:"TaggedAddresses,omitempty"`
 }
 
 func Nodes() (nodes []*Node, err error) {

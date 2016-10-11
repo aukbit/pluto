@@ -233,7 +233,7 @@ outer:
 	}
 }
 
-// register Server
+// register Server within the service discovery system
 func (ds *defaultServer) register() error {
 	_, err := discovery.IsAvailable()
 	if err != nil {
@@ -244,8 +244,23 @@ func (ds *defaultServer) register() error {
 		ID:   ds.cfg.ID,
 		Name: ds.cfg.Name,
 		Port: ds.cfg.Port(),
+		Tags: []string{ds.cfg.ID},
 	}
 	err = discovery.RegisterService(s)
+	if err != nil {
+		return err
+	}
+	c := &discovery.Check{
+		ID:    ds.cfg.ID + "_check",
+		Name:  "TCP Health",
+		Notes: "Ensure the server is listening on the specific port",
+		DeregisterCriticalServiceAfter: "10m",
+		TCP:       ds.cfg.Addr,
+		Interval:  "10s",
+		Timeout:   "1s",
+		ServiceID: ds.cfg.ID,
+	}
+	err = discovery.RegisterCheck(c)
 	if err != nil {
 		return err
 	}
@@ -253,6 +268,7 @@ func (ds *defaultServer) register() error {
 	return nil
 }
 
+// unregister Server from the service discovery system
 func (ds *defaultServer) unregister() {
 	defer ds.wg.Done()
 	if ds.isDiscovered {
