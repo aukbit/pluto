@@ -25,6 +25,7 @@ func main() {
 func service() error {
 	// Define Pluto Server
 	srv := server.NewServer(
+		server.Name("user_backend"),
 		server.Addr(*grpc_port),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})
