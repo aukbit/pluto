@@ -251,9 +251,9 @@ func (ds *defaultServer) register() error {
 		return err
 	}
 	c := &discovery.Check{
-		ID:    ds.cfg.ID + "_check",
-		Name:  "TCP Health",
-		Notes: "Ensure the server is listening on the specific port",
+		ID:    fmt.Sprintf("%s_check", ds.cfg.ID),
+		Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
+		Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
 		DeregisterCriticalServiceAfter: "10m",
 		TCP:       ds.cfg.Addr,
 		Interval:  "10s",
