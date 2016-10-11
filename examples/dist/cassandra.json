@@ -1,0 +1,22 @@
+{
+  "service": {
+    "name": "cassandra",
+    "tags": ["master", "v3.7"],
+    "port": 9042,
+    "enableTagOverride": false,
+    "checks": [
+      {
+        "notes": "Ensure cassandra is listening on port 9042",
+        "tcp": ":9042",
+        "interval": "10s",
+        "timeout": "1s"
+    },
+    {
+      "notes": "Ensure cassandra is listening on port 7000 (other cassandra nodes to connect)",
+      "tcp": ":7000",
+      "interval": "10s",
+      "timeout": "1s"
+    }
+    ]
+  }
+}
