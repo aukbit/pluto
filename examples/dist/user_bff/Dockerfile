@@ -1,0 +1,44 @@
+FROM buildpack-deps:jessie-scm
+
+# gcc for cgo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+	&& rm -rf /var/lib/apt/lists/*
+
+ENV GOLANG_VERSION 1.7.1
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV GOLANG_DOWNLOAD_SHA256 43ad621c9b014cde8db17393dc108378d37bc853aa351a6c74bf6432c1bbd182
+
+
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
+	&& echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - \
+	&& tar -C /usr/local -xzf golang.tar.gz \
+	&& rm golang.tar.gz
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+WORKDIR $GOPATH
+
+# My Golang project
+# Download project dependencies
+RUN go get bitbucket.org/aukbit/pluto
+RUN go get github.com/uber-go/zap
+RUN go get github.com/google/uuid
+RUN go get github.com/golang/protobuf/jsonpb
+
+# Copy the local package files to the container's workspace.
+ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_bff
+
+# Build the pluto-sample-dist command inside the container.
+RUN go install bitbucket.org/aukbit/pluto/examples/dist/user_bff
+
+# Run the pluto-sample-dist command by default when the container starts.
+ENTRYPOINT /go/bin/user_bff -http_port=:8080
+
+# Document that the service listens on port 8080.
+EXPOSE 8080
