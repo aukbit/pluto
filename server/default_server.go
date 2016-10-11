@@ -226,7 +226,7 @@ outer:
 			}
 			break outer
 		default:
-			ds.logger.Info("pulse")
+			ds.logger.Debug("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}

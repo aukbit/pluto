@@ -163,7 +163,7 @@ outer:
 			s.stopServers()
 			break outer
 		default:
-			s.logger.Info("pulse")
+			s.logger.Debug("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}

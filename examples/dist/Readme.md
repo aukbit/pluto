@@ -6,5 +6,5 @@ This is an example of creating a distributed deployment of pluto services using 
 ```
 $ cd ./examples/dist/user_backend
 $ docker build -f ./Dockerfile -t user_backend .
-$ docker run -d -name user_backend user_backend
+$ docker run --name user_backend -p 65060:65060 -d user_backend
 ```
