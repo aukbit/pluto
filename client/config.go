@@ -96,7 +96,6 @@ func TargetDiscovery(name string) ConfigFunc {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("TargetDiscovery %v", t)
 		cfg.Target = t
 	}
 }

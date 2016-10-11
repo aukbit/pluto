@@ -9,7 +9,7 @@ type Server interface {
 
 var (
 	defaultName    = "server"
-	defaultVersion = "1.0.0"
+	defaultVersion = "v1.0.0"
 )
 
 // NewServer returns a new http server with cfg passed in

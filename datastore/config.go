@@ -3,11 +3,14 @@ package datastore
 import (
 	"log"
 	"regexp"
+
+	"bitbucket.org/aukbit/pluto/discovery"
 )
 
 type Config struct {
-	Keyspace string
-	Addr     string
+	Keyspace        string
+	Addr            string
+	TargetDiscovery string // service name on service discovery
 }
 
 type ConfigFunc func(*Config)
@@ -43,8 +46,22 @@ func Keyspace(ks string) ConfigFunc {
 }
 
 // Addr db address
+// TODO: rename Addr to Target
 func Addr(a string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Addr = a
+	}
+}
+
+// TargetDiscovery server address
+func TargetDiscovery(name string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.TargetDiscovery = name
+		// get target from service discovery
+		t, err := discovery.Target(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		cfg.Addr = t
 	}
 }

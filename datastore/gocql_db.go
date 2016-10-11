@@ -1,9 +1,8 @@
 package datastore
 
 import (
-	"log"
-
 	"github.com/gocql/gocql"
+	"github.com/uber-go/zap"
 )
 
 var (
@@ -14,22 +13,26 @@ type datastore struct {
 	cfg     *Config
 	cluster *gocql.ClusterConfig
 	session *gocql.Session
+	logger  zap.Logger
 }
 
 // NewServer will instantiate a new Server with the given config
 func newDatastore(cfgs ...ConfigFunc) *datastore {
 	c := newConfig(cfgs...)
-	return &datastore{cfg: c}
+	ds := &datastore{cfg: c, logger: zap.New(zap.NewJSONEncoder())}
+	ds.setLogger()
+	return ds
 }
 
 func (ds *datastore) Connect() {
-	log.Printf("----- gcql %s connected on %s", ds.cfg.Keyspace, ds.cfg.Addr)
+	ds.logger.Info("connect")
 	ds.cluster = gocql.NewCluster(ds.cfg.Addr)
 	ds.cluster.ProtoVersion = 3
 	ds.cluster.Keyspace = ds.cfg.Keyspace
 }
 
 func (ds *datastore) RefreshSession() error {
+	ds.logger.Info("session")
 	s, err := ds.cluster.CreateSession()
 	if err != nil {
 		return err
@@ -39,6 +42,7 @@ func (ds *datastore) RefreshSession() error {
 }
 
 func (ds *datastore) Close() {
+	ds.logger.Info("close")
 	ds.session.Close()
 }
 
@@ -52,4 +56,11 @@ func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) erro
 		return err
 	}
 	return nil
+}
+
+func (ds *datastore) setLogger() {
+	ds.logger = ds.logger.With(
+		zap.Nest("cassandra",
+			zap.String("addr", ds.cfg.Addr),
+			zap.String("keyspace", ds.cfg.Keyspace)))
 }

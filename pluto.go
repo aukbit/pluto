@@ -16,7 +16,7 @@ type Service interface {
 
 var (
 	defaultName    = "pluto"
-	defaultVersion = "1.0.0"
+	defaultVersion = "v1.0.0"
 )
 
 // NewService returns a new service with cfg passed in

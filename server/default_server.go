@@ -244,7 +244,7 @@ func (ds *defaultServer) register() error {
 		ID:   ds.cfg.ID,
 		Name: ds.cfg.Name,
 		Port: ds.cfg.Port(),
-		Tags: []string{ds.cfg.ID},
+		Tags: []string{ds.cfg.ID, ds.cfg.Version},
 	}
 	err = discovery.RegisterService(s)
 	if err != nil {
