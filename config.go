@@ -98,3 +98,10 @@ func Datastore(addr string) ConfigFunc {
 		cfg.Datastore = datastore.NewDatastore(datastore.Addr(addr), datastore.Keyspace(cfg.Name))
 	}
 }
+
+// Datastore to persist data
+func DatastoreDiscovery(service string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Datastore = datastore.NewDatastore(datastore.TargetDiscovery(service), datastore.Keyspace(cfg.Name))
+	}
+}

@@ -37,7 +37,7 @@ Make it broadcast the ip address and exporting ports 7000 (to be visible to othe
 ```
 $ docker run --name cassandra -d -e CASSANDRA_BROADCAST_ADDRESS=192.168.99.100 -p 7000:7000 -p 9042:9042 cassandra:3.7
 ```
-### Note: before the service pluto_backend to initiate run the following 
+### Note: before the service pluto_backend to initiate run the following
 
 Connect to cassandra from cqlsh
 ```
@@ -51,7 +51,6 @@ cqlsh>
     USE pluto_backend;
     CREATE TABLE users (id uuid, name text, email text, password text, PRIMARY KEY (id));
     DESCRIBE tables;
-    DESCRIBE;
 ```
 
 ## Run Docker compose
@@ -77,4 +76,3 @@ curl -H "Content-Type: application/json" -X PUT -d '{"name":"Super Gopher", "ema
 curl -H "Content-Type: application/json" -X GET http://192.168.99.100:8080/user/e6bcd635-38f5-4386-ab24-a310d092f65d
 curl -H "Content-Type: application/json" -X DELETE http://192.168.99.100:8080/user/e6bcd635-38f5-4386-ab24-a310d092f65d
 ```
-

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"testing"
+	"time"
 
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
@@ -66,7 +67,6 @@ func TestServer(t *testing.T) {
 		}
 	}()
 	defer s.Stop()
-
 	// Create pluto server
 	g := server.NewServer(
 		server.Name("gopher"),
@@ -85,7 +85,8 @@ func TestServer(t *testing.T) {
 
 	}()
 	defer g.Stop()
-
+	// wait a bit for service discover
+	time.Sleep(time.Second)
 	// Test
 	const URL = "http://localhost:8080"
 	var tests = []struct {
@@ -124,6 +125,5 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 		assert.Equal(t, test.Status, r.StatusCode)
 		assert.Equal(t, test.BodyContains, message)
-
 	}
 }

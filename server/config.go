@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/aukbit/pluto/common"
@@ -143,4 +144,19 @@ func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.UnaryServerInterceptors = append(cfg.UnaryServerInterceptors, i...)
 	}
+}
+
+// Convert string Addr to int Port
+func (c *Config) Port() int {
+	// support only numeric
+	reg, err := regexp.Compile("[^0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	safe := reg.ReplaceAllString(c.Addr, "")
+	i, err := strconv.Atoi(safe)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i
 }

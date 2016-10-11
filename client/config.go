@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"bitbucket.org/aukbit/pluto/common"
+	"bitbucket.org/aukbit/pluto/discovery"
 
 	"google.golang.org/grpc"
 )
@@ -18,6 +19,7 @@ type Config struct {
 	Description             string
 	Version                 string
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	TargetDiscovery         string // service name on service discovery
 	Format                  string
 	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
@@ -64,7 +66,6 @@ func Name(n string) ConfigFunc {
 		// support only alphanumeric and underscore characters
 		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
-
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
@@ -82,6 +83,19 @@ func Description(d string) ConfigFunc {
 // Target server address
 func Target(t string) ConfigFunc {
 	return func(cfg *Config) {
+		cfg.Target = t
+	}
+}
+
+// TargetDiscovery server address
+func TargetDiscovery(name string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.TargetDiscovery = name
+		// get target from service discovery
+		t, err := discovery.Target(name)
+		if err != nil {
+			log.Fatal(err)
+		}
 		cfg.Target = t
 	}
 }

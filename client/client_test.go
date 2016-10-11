@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/server"
@@ -22,23 +23,28 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
+	// Create pluto server
+	s := server.NewServer(
+		server.Name("client_test_gopher"),
+		server.Addr(":65061"),
+		server.GRPCRegister(func(g *grpc.Server) {
+			pb.RegisterGreeterServer(g, &greeter{})
+		}))
+
 	if !testing.Short() {
-		// Create pluto server
-		s := server.NewServer(
-			server.Addr(":65061"),
-			server.GRPCRegister(func(g *grpc.Server) {
-				pb.RegisterGreeterServer(g, &greeter{})
-			}))
 		// Run Server
 		go func() {
 			if err := s.Run(); err != nil {
 				log.Fatal(err)
 			}
 		}()
-		defer s.Stop()
+		time.Sleep(time.Millisecond * 100)
 	}
 	result := m.Run()
 	if !testing.Short() {
+		// Stop Server
+		s.Stop()
+		time.Sleep(time.Millisecond * 100)
 	}
 	os.Exit(result)
 }
@@ -47,17 +53,18 @@ func TestClient(t *testing.T) {
 
 	// Create a grpc client
 	c := client.NewClient(
-		client.Name("gopher"),
+		client.Name("client_test_gopher"),
 		client.Description("gopher super client"),
 		client.Target("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
+	defer c.Close()
 
 	cfg := c.Config()
 	assert.Equal(t, true, len(cfg.ID) > 0)
-	assert.Equal(t, "client_gopher", cfg.Name)
+	assert.Equal(t, "client_client_test_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
 	//
@@ -69,5 +76,5 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	assert.Equal(t, "Hello client_gopher", r.Message)
+	assert.Equal(t, "Hello client_client_test_gopher", r.Message)
 }
