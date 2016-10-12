@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"assert"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

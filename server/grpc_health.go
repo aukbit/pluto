@@ -14,6 +14,7 @@ func (ds *defaultServer) healthGRPC() {
 	if err != nil {
 		ds.logger.Error("healthGRPC", zap.String("err", err.Error()))
 		ds.health.SetServingStatus(ds.cfg.Name, 2)
+		return
 	}
 	defer conn.Close()
 	c := healthpb.NewHealthClient(conn)
@@ -21,6 +22,7 @@ func (ds *defaultServer) healthGRPC() {
 	if err != nil {
 		ds.logger.Error("healthGRPC", zap.String("err", err.Error()))
 		ds.health.SetServingStatus(ds.cfg.Name, 2)
+		return
 	}
 	ds.health.SetServingStatus(ds.cfg.Name, hcr.Status)
 }
