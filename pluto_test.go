@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/reply"
@@ -41,6 +42,8 @@ func TestService(t *testing.T) {
 		}
 	}()
 	defer s.Stop()
+	//
+	time.Sleep(time.Second)
 
 	// Assert Config
 	cfg := s.Config()

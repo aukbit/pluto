@@ -12,6 +12,7 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Service
@@ -24,12 +25,11 @@ type service struct {
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	s := &service{
+	return &service{
 		cfg:    c,
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
 		logger: zap.New(zap.NewJSONEncoder())}
-	return s
 }
 
 // Run starts service
@@ -77,6 +77,17 @@ func (s *service) Client(name string) (clt client.Client, ok bool) {
 // Datastore TODO there is no need to be public
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
+}
+
+func (s *service) Health() *healthpb.HealthCheckResponse {
+	for _, srv := range s.cfg.Servers {
+		hrc := srv.Health()
+		s.cfg.health.SetServingStatus(srv.Config().Name, hrc.Status)
+	}
+	// s.cfg.
+	// return s.cfg.Datastore
+	// TODO
+	return s.cfg.health.Check(ctx, in)
 }
 
 func (s *service) setLogger() {

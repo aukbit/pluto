@@ -3,6 +3,7 @@ package pluto
 import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/server"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Service is the basic interface that defines what to expect from any server.
@@ -12,6 +13,7 @@ type Service interface {
 	Client(string) (client.Client, bool)
 	Server(string) (server.Server, bool)
 	Config() *Config
+	Health() *healthpb.HealthCheckResponse
 }
 
 var (
