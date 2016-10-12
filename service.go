@@ -12,6 +12,7 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
+	"golang.org/x/net/context"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -80,14 +81,20 @@ func (s *service) Datastore() datastore.Datastore {
 }
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
+	var hrc = &healthpb.HealthCheckResponse{Status: 2}
 	for _, srv := range s.cfg.Servers {
-		hrc := srv.Health()
+		// h := srv.Health()
 		s.cfg.health.SetServingStatus(srv.Config().Name, hrc.Status)
 	}
 	// s.cfg.
 	// return s.cfg.Datastore
 	// TODO
-	return s.cfg.health.Check(ctx, in)
+	hrc, err := s.cfg.health.Check(context.Background(), &healthpb.HealthCheckRequest{Service: "server_gopher"})
+	if err != nil {
+		s.logger.Error("Health", zap.String("err", err.Error()))
+		return hrc
+	}
+	return hrc
 }
 
 func (s *service) setLogger() {

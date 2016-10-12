@@ -8,8 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server/router"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"google.golang.org/grpc"
@@ -27,6 +28,7 @@ type defaultServer struct {
 	httpServer   *http.Server
 	grpcServer   *grpc.Server
 	isDiscovered bool
+	health       *health.Server
 }
 
 // newServer will instantiate a new defaultServer with the given config
@@ -36,7 +38,8 @@ func newServer(cfgs ...ConfigFunc) *defaultServer {
 		cfg:    c,
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
-		logger: zap.New(zap.NewJSONEncoder())}
+		logger: zap.New(zap.NewJSONEncoder()),
+		health: health.NewServer()}
 }
 
 // Run Server
@@ -55,6 +58,8 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	if err := ds.start(); err != nil {
 		return err
 	}
+	// set health
+	ds.health.SetServingStatus(ds.cfg.Name, 1)
 	// wait for go routines to finish
 	ds.wg.Wait()
 	ds.logger.Info("exit")
@@ -64,8 +69,12 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 // Stop stops server by sending a message to close the listener via channel
 func (ds *defaultServer) Stop() {
 	ds.logger.Info("stop")
+	// set health as not serving
+	ds.health.SetServingStatus(ds.cfg.Name, 2)
+	// unregister from service discovery
 	ds.wg.Add(1)
 	go ds.unregister()
+	// close listener
 	ds.close <- true
 }
 
@@ -77,10 +86,16 @@ func (ds *defaultServer) Config() *Config {
 func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {
 	switch ds.cfg.Format {
 	case "grpc":
-		return ds.healthGRPC()
+		ds.healthGRPC()
 	default:
-		return ds.healthHTTP()
+		ds.healthHTTP()
 	}
+	hcr, err := ds.health.Check(context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.Name})
+	if err != nil {
+		ds.logger.Error("Health", zap.String("err", err.Error()))
+		return &healthpb.HealthCheckResponse{Status: 2}
+	}
+	return hcr
 }
 
 func (ds *defaultServer) setLogger() {
@@ -244,51 +259,6 @@ outer:
 			ds.logger.Debug("pulse")
 			time.Sleep(time.Second * 1)
 			continue
-		}
-	}
-}
-
-// register Server within the service discovery system
-func (ds *defaultServer) register() error {
-	_, err := discovery.IsAvailable()
-	if err != nil {
-		ds.logger.Warn("service discovery not available")
-		return nil
-	}
-	s := &discovery.Service{
-		ID:   ds.cfg.ID,
-		Name: ds.cfg.Name,
-		Port: ds.cfg.Port(),
-		Tags: []string{ds.cfg.ID, ds.cfg.Version},
-	}
-	err = discovery.RegisterService(s)
-	if err != nil {
-		return err
-	}
-	c := &discovery.Check{
-		Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
-		Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
-		DeregisterCriticalServiceAfter: "10m",
-		TCP:       ds.cfg.Addr,
-		Interval:  "10s",
-		Timeout:   "1s",
-		ServiceID: ds.cfg.ID,
-	}
-	err = discovery.RegisterCheck(c)
-	if err != nil {
-		return err
-	}
-	ds.isDiscovered = true
-	return nil
-}
-
-// unregister Server from the service discovery system
-func (ds *defaultServer) unregister() {
-	defer ds.wg.Done()
-	if ds.isDiscovered {
-		err := discovery.DeregisterService(ds.cfg.ID)
-		if err != nil {
-			ds.logger.Error(err.Error())
 		}
 	}
 }

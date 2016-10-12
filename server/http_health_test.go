@@ -1,10 +1,11 @@
 package server
 
 import (
-	"assert"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/paulormart/assert"
 )
 
 func TestHealthHTTP(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
 
 	"github.com/uber-go/zap"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -16,7 +15,7 @@ func (ds *defaultServer) setGRPCServer() {
 	// initialize grpc server
 	ds.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(WrapperUnaryServer(ds.cfg.UnaryServerInterceptors...)))
 	// register grpc internal health handlers
-	healthpb.RegisterHealthServer(ds.grpcServer, health.NewServer())
+	healthpb.RegisterHealthServer(ds.grpcServer, ds.health)
 	// register grpc handlers
 	ds.cfg.GRPCRegister(ds.grpcServer)
 }

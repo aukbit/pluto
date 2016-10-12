@@ -51,6 +51,10 @@ func TestService(t *testing.T) {
 	assert.Equal(t, "pluto_gopher", cfg.Name)
 	assert.Equal(t, "gopher super service", cfg.Description)
 
+	// health check
+	h := s.Health()
+	assert.Equal(t, "SERVING", h.Status.String())
+
 	// Test
 	r, err := http.Get(URL)
 	if err != nil {

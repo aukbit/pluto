@@ -17,21 +17,21 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
-func (ds *defaultServer) healthHTTP() *healthpb.HealthCheckResponse {
-	var hcr = &healthpb.HealthCheckResponse{Status: 2}
+func (ds *defaultServer) healthHTTP() {
 	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health`, ds.cfg.Port()))
 	if err != nil {
 		ds.logger.Error("healthHttp", zap.String("err", err.Error()))
-		return hcr
+		ds.health.SetServingStatus(ds.cfg.Name, 2)
 	}
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		ds.logger.Error("healthHttp", zap.String("err", err.Error()))
 	}
 	defer r.Body.Close()
+	hcr := &healthpb.HealthCheckResponse{}
 	if err := json.Unmarshal(b, hcr); err != nil {
 		ds.logger.Error("healthHttp", zap.String("err", err.Error()))
-		return hcr
+		ds.health.SetServingStatus(ds.cfg.Name, 2)
 	}
-	return hcr
+	ds.health.SetServingStatus(ds.cfg.Name, hcr.Status)
 }

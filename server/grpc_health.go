@@ -9,20 +9,18 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func (ds *defaultServer) healthGRPC() *healthpb.HealthCheckResponse {
-	var hcr = &healthpb.HealthCheckResponse{Status: 2}
+func (ds *defaultServer) healthGRPC() {
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", ds.cfg.Port()), grpc.WithInsecure())
 	if err != nil {
 		ds.logger.Error("healthGRPC", zap.String("err", err.Error()))
-		return hcr
+		ds.health.SetServingStatus(ds.cfg.Name, 2)
 	}
 	defer conn.Close()
-
 	c := healthpb.NewHealthClient(conn)
-	hcr, err = c.Check(context.Background(), &healthpb.HealthCheckRequest{})
+	hcr, err := c.Check(context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.Name})
 	if err != nil {
 		ds.logger.Error("healthGRPC", zap.String("err", err.Error()))
-		return hcr
+		ds.health.SetServingStatus(ds.cfg.Name, 2)
 	}
-	return hcr
+	ds.health.SetServingStatus(ds.cfg.Name, hcr.Status)
 }
