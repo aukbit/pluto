@@ -26,7 +26,7 @@ func (dc *defaultClient) dialGRPC() error {
 	// keep connection for later close
 	dc.conn = conn
 	// register health methods on connection
-	dc.health = healthpb.NewHealthClient(dc.conn)
+	dc.health = healthpb.NewHealthClient(conn)
 	// register methods on connection
 	dc.call = dc.cfg.GRPCRegister(conn)
 	return nil

@@ -1,10 +1,15 @@
 package server
 
+import (
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
 // Server is the basic interface that defines what to expect from any server.
 type Server interface {
 	Run(...ConfigFunc) error
 	Stop()
 	Config() *Config
+	Health() *healthpb.HealthCheckResponse
 }
 
 var (

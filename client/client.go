@@ -8,9 +8,9 @@ import (
 type Client interface {
 	Dial(...ConfigFunc) error
 	Call() interface{}
-	Health() healthpb.HealthClient
 	Close()
 	Config() *Config
+	Health() *healthpb.HealthCheckResponse
 }
 
 var (

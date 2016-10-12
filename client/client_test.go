@@ -1,6 +1,7 @@
 package client_test
 
 import (
+	"assert"
 	"fmt"
 	"log"
 	"os"
@@ -10,10 +11,8 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
-	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type greeter struct{}
@@ -68,7 +67,7 @@ func TestClient(t *testing.T) {
 	assert.Equal(t, "client_client_test_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
-	//
+
 	// Connect
 	if err := c.Dial(); err != nil {
 		log.Fatal(err)
@@ -79,10 +78,20 @@ func TestClient(t *testing.T) {
 		log.Fatal(err)
 	}
 	assert.Equal(t, "Hello client_client_test_gopher", r.Message)
-	// Make Health Check call
-	h, err := c.Health().Check(context.Background(), &healthpb.HealthCheckRequest{})
+}
+
+func TestHealth(t *testing.T) {
+	c := client.NewClient(
+		client.Target("localhost:65061"),
+		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
+			return pb.NewGreeterClient(cc)
+		}),
+	)
+	defer c.Close()
+	err := c.Dial()
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
+	h := c.Health()
 	assert.Equal(t, "SERVING", h.Status.String())
 }

@@ -31,13 +31,14 @@ func Detail(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value("id").(string)))
 }
 
-type greeter struct {
-	cfg *server.Config
-}
+// type greeter struct {
+// 	cfg *server.Config
+// }
+type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello "+in.Name, s.cfg.Name)}, nil
+	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
 }
 
 func TestMain(m *testing.M) {
@@ -57,7 +58,7 @@ func TestMain(m *testing.M) {
 	g := server.NewServer(
 		server.Name("grpc"),
 		server.Description("grpc super server"),
-		server.Addr(":65059"),
+		server.Addr(":65050"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))
@@ -154,7 +155,7 @@ func TestHttpServer(t *testing.T) {
 
 func TestGrpcHealthCheck(t *testing.T) {
 	time.Sleep(time.Second)
-	conn, err := grpc.Dial("localhost:65059", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:65050", grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}

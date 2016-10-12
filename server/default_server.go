@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"bitbucket.org/aukbit/pluto/discovery"
+	"bitbucket.org/aukbit/pluto/server/router"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"google.golang.org/grpc"
 
@@ -72,6 +74,15 @@ func (ds *defaultServer) Config() *Config {
 	return cfg
 }
 
+func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {
+	switch ds.cfg.Format {
+	case "grpc":
+		return ds.healthGRPC()
+	default:
+		return ds.healthHTTP()
+	}
+}
+
 func (ds *defaultServer) setLogger() {
 	ds.logger = ds.logger.With(
 		zap.Nest("server",
@@ -82,7 +93,10 @@ func (ds *defaultServer) setLogger() {
 			zap.String("parent", ds.cfg.ParentID)))
 }
 
-func (ds *defaultServer) setHttpServer() {
+func (ds *defaultServer) setHTTPServer() {
+	if ds.cfg.Mux == nil {
+		ds.cfg.Mux = router.NewMux()
+	}
 	// set health check handler
 	ds.cfg.Mux.GET("/_health", healthHandler)
 	// append logger
@@ -132,7 +146,7 @@ func (ds *defaultServer) start() (err error) {
 			return err
 		}
 	default:
-		ds.setHttpServer()
+		ds.setHTTPServer()
 		if err := ds.serve(ln); err != nil {
 			return err
 		}

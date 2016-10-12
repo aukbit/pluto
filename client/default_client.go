@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/uber-go/zap"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -14,8 +15,8 @@ type defaultClient struct {
 	cfg    *Config
 	logger zap.Logger
 	call   interface{}
-	health healthpb.HealthClient
 	conn   *grpc.ClientConn
+	health healthpb.HealthClient
 }
 
 // newClient will instantiate a new Client with the given config
@@ -50,13 +51,20 @@ func (dc *defaultClient) Call() interface{} {
 	return dc.call
 }
 
-func (dc *defaultClient) Health() healthpb.HealthClient {
-	return dc.health
-}
-
 func (dc *defaultClient) Close() {
 	dc.logger.Info("close")
 	dc.conn.Close()
+}
+
+func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
+	var hcr = &healthpb.HealthCheckResponse{Status: 2}
+	// Make Health Check call
+	hcr, err := dc.health.Check(context.Background(), &healthpb.HealthCheckRequest{})
+	if err != nil {
+		dc.logger.Error("Health", zap.String("err", err.Error()))
+		return hcr
+	}
+	return hcr
 }
 
 func (dc *defaultClient) setLogger() {
