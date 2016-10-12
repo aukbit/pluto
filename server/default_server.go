@@ -45,7 +45,6 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	}
 	// set logger
 	ds.setLogger()
-
 	// register at service discovery
 	if err := ds.register(); err != nil {
 		return err
@@ -84,6 +83,8 @@ func (ds *defaultServer) setLogger() {
 }
 
 func (ds *defaultServer) setHttpServer() {
+	// set health check handler
+	ds.cfg.Mux.GET("/_health", healthHandler)
 	// append logger
 	ds.cfg.Middlewares = append(ds.cfg.Middlewares, loggerMiddleware(ds))
 	// wrap Middlewares
@@ -251,7 +252,6 @@ func (ds *defaultServer) register() error {
 		return err
 	}
 	c := &discovery.Check{
-		ID:    fmt.Sprintf("%s_check", ds.cfg.ID),
 		Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
 		Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
 		DeregisterCriticalServiceAfter: "10m",

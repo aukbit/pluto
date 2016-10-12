@@ -12,7 +12,7 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, "", c.Description)
 	assert.Equal(t, "client", c.Name)
 	assert.Equal(t, "grpc", c.Format)
-	assert.Equal(t, "1.0.0", c.Version)
+	assert.Equal(t, "v1.0.0", c.Version)
 	assert.Equal(t, "localhost:65060", c.Target)
 }
 

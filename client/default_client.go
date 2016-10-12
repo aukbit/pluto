@@ -5,6 +5,7 @@ import (
 
 	"github.com/uber-go/zap"
 	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
@@ -13,6 +14,7 @@ type defaultClient struct {
 	cfg    *Config
 	logger zap.Logger
 	call   interface{}
+	health healthpb.HealthClient
 	conn   *grpc.ClientConn
 }
 
@@ -46,6 +48,10 @@ func (dc *defaultClient) Call() interface{} {
 		return errors.New("Client has not been registered")
 	}
 	return dc.call
+}
+
+func (dc *defaultClient) Health() healthpb.HealthClient {
+	return dc.health
 }
 
 func (dc *defaultClient) Close() {

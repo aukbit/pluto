@@ -1,9 +1,14 @@
 package client
 
+import (
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
 // Client is an interface to make calls to services
 type Client interface {
 	Dial(...ConfigFunc) error
 	Call() interface{}
+	Health() healthpb.HealthClient
 	Close()
 	Config() *Config
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type greeter struct{}
@@ -72,9 +73,16 @@ func TestClient(t *testing.T) {
 	if err := c.Dial(); err != nil {
 		log.Fatal(err)
 	}
+	// Make a Call
 	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
 		log.Fatal(err)
 	}
 	assert.Equal(t, "Hello client_client_test_gopher", r.Message)
+	// Make Health Check call
+	h, err := c.Health().Check(context.Background(), &healthpb.HealthCheckRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "SERVING", h.Status.String())
 }

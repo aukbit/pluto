@@ -7,8 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"testing"
 	"time"
+
+	"google.golang.org/grpc"
 
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
@@ -16,7 +19,7 @@ import (
 	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +40,7 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 	return &pb.HelloReply{Message: fmt.Sprintf("%v: Hello "+in.Name, s.cfg.Name)}, nil
 }
 
-func TestServer(t *testing.T) {
-
-	// HTTP server
-
+func TestMain(m *testing.M) {
 	// Define Router
 	mux := router.NewMux()
 	mux.GET("/home", Home)
@@ -53,40 +53,64 @@ func TestServer(t *testing.T) {
 		server.Addr(":8080"),
 		server.Mux(mux),
 	)
-
-	cfg := s.Config()
-	assert.Equal(t, true, len(cfg.ID) > 0)
-	assert.Equal(t, "server_gopher", cfg.Name)
-	assert.Equal(t, "gopher super server", cfg.Description)
-	assert.Equal(t, ":8080", cfg.Addr)
-
-	// Run server
-	go func() {
-		if err := s.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	defer s.Stop()
-	// Create pluto server
+	// Create grpc pluto server
 	g := server.NewServer(
-		server.Name("gopher"),
-		server.Description("gopher super server"),
-		server.Addr(":65058"),
+		server.Name("grpc"),
+		server.Description("grpc super server"),
+		server.Addr(":65059"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))
 
-	// Run Server
-	go func() {
-		//2. Run server
-		if err := g.Run(); err != nil {
-			log.Fatal(err)
-		}
+	if !testing.Short() {
+		// Run Server
+		go func() {
+			if err := s.Run(); err != nil {
+				log.Fatal(err)
+			}
+		}()
+		time.Sleep(time.Millisecond * 100)
+		go func() {
+			//2. Run server
+			if err := g.Run(); err != nil {
+				log.Fatal(err)
+			}
 
-	}()
-	defer g.Stop()
-	// wait a bit for service discover
-	time.Sleep(time.Second)
+		}()
+		time.Sleep(time.Millisecond * 100)
+	}
+	result := m.Run()
+	if !testing.Short() {
+		// Stop Server
+		s.Stop()
+		time.Sleep(time.Millisecond * 100)
+		g.Stop()
+		time.Sleep(time.Millisecond * 100)
+	}
+	os.Exit(result)
+}
+
+func TestHttpHealthCheck(t *testing.T) {
+	const URL = "http://localhost:8080/_health"
+	r, err := http.Get(URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer r.Body.Close()
+	hcr := &healthpb.HealthCheckResponse{}
+	if err := json.Unmarshal(b, hcr); err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "SERVING", hcr.Status.String())
+}
+
+func TestHttpServer(t *testing.T) {
 	// Test
 	const URL = "http://localhost:8080"
 	var tests = []struct {
@@ -126,4 +150,20 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, test.Status, r.StatusCode)
 		assert.Equal(t, test.BodyContains, message)
 	}
+}
+
+func TestGrpcHealthCheck(t *testing.T) {
+	time.Sleep(time.Second)
+	conn, err := grpc.Dial("localhost:65059", grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	c := healthpb.NewHealthClient(conn)
+
+	h, err := c.Check(context.Background(), &healthpb.HealthCheckRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "SERVING", h.Status.String())
 }
