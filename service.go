@@ -1,6 +1,7 @@
 package pluto
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"sync"
@@ -87,15 +88,11 @@ func (s *service) Datastore() datastore.Datastore {
 }
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
-	var hcr = &healthpb.HealthCheckResponse{Status: 1}
-	if h := s.healthOnServers(); h.Status.String() != "SERVING" {
-		hcr.Status = h.Status
+	hcr, err := s.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.Name})
+	if err != nil {
+		s.logger.Error("Health", zap.String("err", err.Error()))
 	}
-	if h := s.healthOnClients(); h.Status.String() != "SERVING" {
-		hcr.Status = h.Status
-	}
-	// set service health
-	s.health.SetServingStatus(s.cfg.Name, hcr.Status)
 	return hcr
 }
 

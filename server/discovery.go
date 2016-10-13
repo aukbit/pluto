@@ -10,10 +10,10 @@ func (ds *defaultServer) register() error {
 		return nil
 	}
 	s := &discovery.Service{
-		ID:   ds.cfg.Name,
+		ID:   ds.cfg.ID,
 		Name: ds.cfg.Name,
 		Port: ds.cfg.Port(),
-		Tags: []string{ds.cfg.Version},
+		Tags: []string{ds.cfg.Version, ds.cfg.ID},
 	}
 	err = discovery.RegisterService(s)
 	if err != nil {

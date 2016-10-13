@@ -112,6 +112,16 @@ func TestHealth(t *testing.T) {
 			BodyContains: `UNKNOWN`,
 			Status:       http.StatusNotFound,
 		},
+		{
+			Path:         "/pluto/pluto_gopher",
+			BodyContains: `SERVING`,
+			Status:       http.StatusOK,
+		},
+		{
+			Path:         "/pluto/something_wrong",
+			BodyContains: `UNKNOWN`,
+			Status:       http.StatusNotFound,
+		},
 	}
 	for _, test := range tests {
 

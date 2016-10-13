@@ -1,7 +1,6 @@
 package pluto
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/uber-go/zap"
@@ -18,7 +17,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	m := ctx.Value("module").(string)
 	n := ctx.Value("name").(string)
 	s := ctx.Value("pluto").(Service)
-	log.Printf("TESTE %v/%v", m, n)
 	switch m {
 	case "server":
 		srv, ok := s.Server(n)
@@ -35,6 +33,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = clt.Health()
 	case "pluto":
+		if n != s.Config().Name {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
 		hcr = s.Health()
 	}
 	if hcr.Status.String() != "SERVING" {
@@ -77,28 +79,4 @@ func (s *service) stopHealthHTTPServer() {
 		defer s.wg.Done()
 		srv.Stop()
 	}(s.healthHTTP)
-}
-
-func (s *service) healthOnServers() *healthpb.HealthCheckResponse {
-	var hrc = &healthpb.HealthCheckResponse{Status: 1}
-	for _, srv := range s.cfg.Servers {
-		h := srv.Health()
-		s.health.SetServingStatus(srv.Config().Name, h.Status)
-		if h.Status.String() != "SERVING" {
-			hrc.Status = h.Status
-		}
-	}
-	return hrc
-}
-
-func (s *service) healthOnClients() *healthpb.HealthCheckResponse {
-	var hrc = &healthpb.HealthCheckResponse{Status: 1}
-	for _, clt := range s.cfg.Clients {
-		h := clt.Health()
-		s.health.SetServingStatus(clt.Config().Name, h.Status)
-		if h.Status.String() != "SERVING" {
-			hrc.Status = h.Status
-		}
-	}
-	return hrc
 }
