@@ -11,7 +11,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
+var grpcPort = flag.String("grpc_port", ":65060", "grpc listening port")
+var db = flag.String("db", "cassandra", "datastore service instance")
+var name = flag.String("name", "user_backend", "service name instance")
 
 func main() {
 	flag.Parse()
@@ -25,17 +27,17 @@ func main() {
 func service() error {
 	// Define Pluto Server
 	srv := server.NewServer(
-		server.Name("user_backend"),
-		server.Addr(*grpc_port),
+		server.Name(*name),
+		server.Addr(*grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})
 		}))
 
 	// Define Pluto Service
 	s := pluto.NewService(
-		pluto.Name("user_backend"),
+		pluto.Name(*name),
 		pluto.Description("User backend service is responsible for persist data"),
-		pluto.DatastoreDiscovery("cassandra"),
+		pluto.DatastoreDiscovery(*db),
 		pluto.Servers(srv))
 
 	// Run service
