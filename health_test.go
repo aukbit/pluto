@@ -88,14 +88,9 @@ func TestHealth(t *testing.T) {
 		Status       int
 	}{
 		{
-			Path:         "/client/client_grpc",
+			Path:         "/server/server_health",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
-		},
-		{
-			Path:         "/client/something_wrong",
-			BodyContains: `UNKNOWN`,
-			Status:       http.StatusNotFound,
 		},
 		{
 			Path:         "/server/server_http",
@@ -109,6 +104,16 @@ func TestHealth(t *testing.T) {
 		},
 		{
 			Path:         "/server/something_wrong",
+			BodyContains: `UNKNOWN`,
+			Status:       http.StatusNotFound,
+		},
+		{
+			Path:         "/client/client_grpc",
+			BodyContains: `SERVING`,
+			Status:       http.StatusOK,
+		},
+		{
+			Path:         "/client/something_wrong",
 			BodyContains: `UNKNOWN`,
 			Status:       http.StatusNotFound,
 		},

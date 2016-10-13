@@ -3,8 +3,6 @@ package pluto
 import (
 	"net/http"
 
-	"github.com/uber-go/zap"
-
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
@@ -57,26 +55,8 @@ func newHealthServer() server.Server {
 		server.Mux(mux))
 }
 
-func (s *service) startHealthHTTPServer() {
+func (s *service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
-	// add go routine to WaitGroup
-	s.wg.Add(1)
-	go func(srv server.Server) {
-		defer s.wg.Done()
-		if err := srv.Run(
-			server.ParentID(s.cfg.ID),
-			server.Middlewares(serviceContextMiddleware(s))); err != nil {
-			s.logger.Error("Run()", zap.String("err", err.Error()))
-		}
-	}(s.healthHTTP)
-}
-
-func (s *service) stopHealthHTTPServer() {
-	s.health.SetServingStatus(s.cfg.ID, 2)
-	// add go routine to WaitGroup
-	s.wg.Add(1)
-	go func(srv server.Server) {
-		defer s.wg.Done()
-		srv.Stop()
-	}(s.healthHTTP)
+	srv := newHealthServer()
+	s.cfg.Servers[srv.Config().Name] = srv
 }
