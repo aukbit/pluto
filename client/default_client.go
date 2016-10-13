@@ -13,12 +13,13 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
-	cfg        *Config
-	logger     zap.Logger
-	call       interface{}
-	conn       *grpc.ClientConn
-	healthCall healthpb.HealthClient
-	health     *health.Server
+	cfg          *Config
+	logger       zap.Logger
+	call         interface{}
+	conn         *grpc.ClientConn
+	isDiscovered bool
+	healthCall   healthpb.HealthClient
+	health       *health.Server
 }
 
 // newClient will instantiate a new Client with the given config
@@ -42,6 +43,10 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 	}
 	// set logger
 	dc.setLogger()
+	// register at service discovery
+	if err := dc.register(); err != nil {
+		return err
+	}
 	// start server
 	if err := dc.dialGRPC(); err != nil {
 		return err
@@ -63,6 +68,8 @@ func (dc *defaultClient) Close() {
 	dc.logger.Info("close")
 	// set health as not serving
 	dc.health.SetServingStatus(dc.cfg.ID, 2)
+	// unregister
+	dc.unregister()
 	// close connection
 	dc.conn.Close()
 }

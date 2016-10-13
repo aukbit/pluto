@@ -1,6 +1,10 @@
 package server
 
-import "bitbucket.org/aukbit/pluto/discovery"
+import (
+	"fmt"
+
+	"bitbucket.org/aukbit/pluto/discovery"
+)
 
 // register Server within the service discovery system
 func (ds *defaultServer) register() error {
@@ -10,7 +14,6 @@ func (ds *defaultServer) register() error {
 		return nil
 	}
 	s := &discovery.Service{
-		ID:   ds.cfg.ID,
 		Name: ds.cfg.Name,
 		Port: ds.cfg.Port(),
 		Tags: []string{ds.cfg.Version, ds.cfg.ID},
@@ -19,25 +22,16 @@ func (ds *defaultServer) register() error {
 	if err != nil {
 		return err
 	}
-	// c := &discovery.Check{
-	// 	Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
-	// 	Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
-	// 	DeregisterCriticalServiceAfter: "10m",
-	// 	HTTP:      fmt.Sprintf("http://localhost:%d/_health/server", ds.cfg.Port()),
-	// 	Interval:  "10s",
-	// 	Timeout:   "1s",
-	// 	ServiceID: ds.cfg.Name,
-	// }
-	// c := &discovery.Check{
-	// 	Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
-	// 	Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
-	// 	DeregisterCriticalServiceAfter: "10m",
-	// 	TCP:       ds.cfg.Addr,
-	// 	Interval:  "10s",
-	// 	Timeout:   "1s",
-	// 	ServiceID: ds.cfg.ID,
-	// }
-	// err = discovery.RegisterCheck(c)
+	c := &discovery.Check{
+		Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
+		Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
+		DeregisterCriticalServiceAfter: "10m",
+		HTTP:      fmt.Sprintf("http://localhost:9090/_health/server/%s", ds.cfg.Name),
+		Interval:  "10s",
+		Timeout:   "1s",
+		ServiceID: ds.cfg.Name,
+	}
+	err = discovery.RegisterCheck(c)
 	if err != nil {
 		return err
 	}
@@ -47,7 +41,6 @@ func (ds *defaultServer) register() error {
 
 // unregister Server from the service discovery system
 func (ds *defaultServer) unregister() {
-	defer ds.wg.Done()
 	if ds.isDiscovered {
 		err := discovery.DeregisterService(ds.cfg.Name)
 		if err != nil {

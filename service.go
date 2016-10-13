@@ -19,12 +19,13 @@ import (
 
 // Service
 type service struct {
-	cfg        *Config
-	close      chan bool
-	wg         *sync.WaitGroup
-	logger     zap.Logger
-	health     *health.Server
-	healthHTTP server.Server
+	cfg          *Config
+	close        chan bool
+	wg           *sync.WaitGroup
+	logger       zap.Logger
+	isDiscovered bool
+	health       *health.Server
+	healthHTTP   server.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {
@@ -42,6 +43,10 @@ func newService(cfgs ...ConfigFunc) *service {
 func (s *service) Run() error {
 	// set logger
 	s.setLogger()
+	// register at service discovery
+	if err := s.register(); err != nil {
+		return err
+	}
 	// start service
 	if err := s.start(); err != nil {
 		return err
@@ -169,6 +174,7 @@ outer:
 		select {
 		case <-s.close:
 			// Waits for call to stop
+			s.unregister()
 			s.closeClients()
 			s.stopServers()
 			s.stopHealthHTTPServer()
@@ -177,6 +183,7 @@ outer:
 			// Waits for signal to stop
 			s.logger.Info("signal received",
 				zap.String("signal", sig.String()))
+			s.unregister()
 			s.closeClients()
 			s.stopServers()
 			s.stopHealthHTTPServer()

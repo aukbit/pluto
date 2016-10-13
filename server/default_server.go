@@ -73,9 +73,6 @@ func (ds *defaultServer) Stop() {
 	ds.health.SetServingStatus(ds.cfg.ID, 2)
 	// close listener
 	ds.close <- true
-	// unregister from service discovery
-	ds.wg.Add(1)
-	go ds.unregister()
 }
 
 func (ds *defaultServer) Config() *Config {
@@ -247,6 +244,7 @@ outer:
 		select {
 		case <-ds.close:
 			// Waits for call to stop
+			ds.unregister()
 			switch ds.cfg.Format {
 			case "grpc":
 				ds.grpcServer.GracefulStop()
