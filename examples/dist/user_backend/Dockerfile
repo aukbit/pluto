@@ -28,6 +28,8 @@ WORKDIR $GOPATH
 RUN go get bitbucket.org/aukbit/pluto
 RUN go get github.com/uber-go/zap
 RUN go get github.com/google/uuid
+RUN go get github.com/golang/protobuf/jsonpb
+RUN go get google.golang.org/grpc
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_backend
@@ -36,7 +38,7 @@ ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_backend
 RUN go install bitbucket.org/aukbit/pluto/examples/dist/user_backend
 
 # Run the pluto-sample-dist command by default when the container starts.
-ENTRYPOINT /go/bin/user_backend -grpc_port=:65060
+ENTRYPOINT /go/bin/user_backend -grpc_port=:65060 -db=cassandra -name=user_backend
 
 # Document that the service listens on port 65060.
 EXPOSE 65060

@@ -14,7 +14,9 @@ import (
 	"bitbucket.org/aukbit/pluto/server/router"
 )
 
-var http_port = flag.String("http_port", ":8080", "backend for frontend http port")
+var httpPort = flag.String("http_port", ":8080", "backend for frontend http port")
+var name = flag.String("name", "user_bff", "service name instance")
+var targetName = flag.String("target_name", "server_user_backend", "target server name instance")
 
 func main() {
 	flag.Parse()
@@ -35,8 +37,8 @@ func service() error {
 
 	// define http server
 	srv := server.NewServer(
-		server.Name("user_bff"),
-		server.Addr(*http_port),
+		server.Name(*name),
+		server.Addr(*httpPort),
 		server.Mux(mux))
 
 	// Define grpc Client
@@ -44,11 +46,11 @@ func service() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.TargetDiscovery("server_user_backend"),
+		client.TargetDiscovery(""),
 	)
 	// Define Pluto service
 	s := pluto.NewService(
-		pluto.Name("user_bff"),
+		pluto.Name(*name),
 		pluto.Description("User backend for frontend service is responsible to parse all json data from http requests"),
 		pluto.Servers(srv),
 		pluto.Clients(clt))

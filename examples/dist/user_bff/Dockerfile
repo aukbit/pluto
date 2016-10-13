@@ -30,6 +30,7 @@ RUN go get bitbucket.org/aukbit/pluto
 RUN go get github.com/uber-go/zap
 RUN go get github.com/google/uuid
 RUN go get github.com/golang/protobuf/jsonpb
+RUN go get google.golang.org/grpc
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_bff
@@ -38,7 +39,7 @@ ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_bff
 RUN go install bitbucket.org/aukbit/pluto/examples/dist/user_bff
 
 # Run the pluto-sample-dist command by default when the container starts.
-ENTRYPOINT /go/bin/user_bff -http_port=:8080
+ENTRYPOINT /go/bin/user_bff -http_port=:8080 -target_name=server_user_backend -name=user_bff
 
 # Document that the service listens on port 8080.
 EXPOSE 8080

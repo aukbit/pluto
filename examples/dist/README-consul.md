@@ -22,7 +22,7 @@ e.g. for node 3
 ```
 $ docker-machine env node3
 export DOCKER_TLS_VERIFY="1"
-export DOCKER_HOST="tcp://192.168.99.104:2376"
+export DOCKER_HOST="tcp://192.168.99.103:2376"
 export DOCKER_CERT_PATH="/Users/paulo/.docker/machine/machines/node3"
 export DOCKER_MACHINE_NAME="node3"
 # Run this command to configure your shell:
@@ -70,10 +70,10 @@ $ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on
 
 ### Running Consul Agent in Client Mode in node2
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -ui -bind=192.168.99.103 -retry-join=192.168.99.102
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -ui -bind=192.168.99.102 -retry-join=192.168.99.101
 ```
 
 ### Running Consul Agent in Client Mode in node3
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -bind=192.168.99.104 -retry-join=192.168.99.102
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -bind=192.168.99.103 -retry-join=192.168.99.101
 ```
