@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/common"
 	pb "bitbucket.org/aukbit/pluto/examples/dist/user_backend/proto"
 	"bitbucket.org/aukbit/pluto/examples/dist/user_backend/views"
 	"bitbucket.org/aukbit/pluto/server"
@@ -17,11 +17,12 @@ var name = flag.String("name", "user_backend", "service name instance")
 
 func main() {
 	flag.Parse()
-
+	common.IPaddress()
+	common.IP2()
 	// run service
-	if err := service(); err != nil {
-		log.Fatal(err)
-	}
+	// if err := service(); err != nil {
+	// 	log.Fatal(err)
+	// }
 }
 
 func service() error {

@@ -35,7 +35,7 @@ $ eval $(docker-machine env node3)
 
 ### Running Consul Agent in Server Mode in default node
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' consul agent -ui -server -bind=192.168.99.100 -retry-join=192.168.99.101 -bootstrap-expect=2
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' consul agent -ui -server -bind=192.168.99.100 -client=0.0.0.0 -retry-join=192.168.99.101 -bootstrap-expect=2
 ```
 #### For web ui to be available on the host machine create a configuration file with the HTTP address listening on the public IP
 ```
@@ -65,15 +65,15 @@ tcp        0      0 :::2376                 :::*                    LISTEN      
 
 ### Running Consul Agent in Server Mode in node1
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' consul agent -server -bind=192.168.99.101 -retry-join=192.168.99.100 -bootstrap-expect=2
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' consul agent -server -bind=192.168.99.101 -client=0.0.0.0 -retry-join=192.168.99.100 -bootstrap-expect=2
 ```
 
 ### Running Consul Agent in Client Mode in node2
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -ui -bind=192.168.99.102 -retry-join=192.168.99.101
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -ui -bind=192.168.99.102 -client=0.0.0.0 -retry-join=192.168.99.101
 ```
 
 ### Running Consul Agent in Client Mode in node3
 ```
-$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -bind=192.168.99.103 -retry-join=192.168.99.101
+$ docker run -d --net=host --name=consul -e 'CONSUL_LOCAL_CONFIG={"leave_on_terminate": true}' consul agent -bind=192.168.99.104 -client=0.0.0.0 -retry-join=192.168.99.101
 ```

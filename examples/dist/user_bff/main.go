@@ -46,7 +46,7 @@ func service() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.TargetDiscovery(""),
+		client.TargetDiscovery(*targetName),
 	)
 	// Define Pluto service
 	s := pluto.NewService(
