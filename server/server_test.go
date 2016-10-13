@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 	// Create pluto server
 	s := server.NewServer(
-		server.Name("gopher"),
+		server.Name("http"),
 		server.Description("gopher super server"),
 		server.Addr(":8080"),
 		server.Mux(mux),
@@ -88,8 +88,8 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func TestHttpHealthCheck(t *testing.T) {
-	const URL = "http://localhost:8080/_health/server"
+func TestHealthCheck(t *testing.T) {
+	const URL = "http://localhost:8080/_health/server_grpc"
 	r, err := http.Get(URL)
 	if err != nil {
 		log.Fatal(err)

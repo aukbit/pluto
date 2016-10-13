@@ -21,7 +21,7 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestHealthGRPC(t *testing.T) {
-	s := NewServer(Addr(":65059"),
+	s := NewServer(Name("sunshine"), Addr(":65059"),
 		GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))

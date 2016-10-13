@@ -9,7 +9,7 @@ import (
 )
 
 func TestHealthHTTP(t *testing.T) {
-	s := NewServer(Addr(":8082"))
+	s := NewServer(Name("awesome"), Addr(":8082"))
 	go func(s Server) {
 		if err := s.Run(); err != nil {
 			log.Fatal(err)

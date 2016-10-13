@@ -113,7 +113,7 @@ func (ds *defaultServer) setHTTPServer() {
 		ds.cfg.Mux = router.NewMux()
 	}
 	// set health check handler
-	ds.cfg.Mux.GET("/_health/server", router.Wrap(healthHandler, HealthMiddleware(ds.health)))
+	ds.cfg.Mux.GET("/_health/:name", router.Wrap(healthHandler, HealthMiddleware(ds.health)))
 	// append logger
 	ds.cfg.Middlewares = append(ds.cfg.Middlewares, loggerMiddleware(ds))
 	// wrap Middlewares
