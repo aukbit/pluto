@@ -1,0 +1,32 @@
+package server
+
+import (
+	"net/http"
+
+	"bitbucket.org/aukbit/pluto/reply"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"golang.org/x/net/context"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+)
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ds := ctx.Value("server").(*defaultServer)
+	hcr, err := ds.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
+	if err != nil {
+		reply.Json(w, r, http.StatusTooManyRequests, hcr)
+		return
+	}
+	reply.Json(w, r, http.StatusOK, hcr)
+}
+
+func serverMiddleware(srv *defaultServer) router.Middleware {
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, "server", srv)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
+}

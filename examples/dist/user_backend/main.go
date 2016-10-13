@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
 var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
 
 func main() {
@@ -26,6 +25,7 @@ func main() {
 func service() error {
 	// Define Pluto Server
 	srv := server.NewServer(
+		server.Name("user_backend"),
 		server.Addr(*grpc_port),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})

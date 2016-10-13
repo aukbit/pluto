@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"bitbucket.org/aukbit/pluto"
 	"bitbucket.org/aukbit/pluto/reply"
@@ -16,8 +17,6 @@ import (
 func Index(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
-
-const URL = "http://localhost:8083"
 
 func TestService(t *testing.T) {
 
@@ -41,6 +40,8 @@ func TestService(t *testing.T) {
 		}
 	}()
 	defer s.Stop()
+	//
+	time.Sleep(time.Second)
 
 	// Assert Config
 	cfg := s.Config()
@@ -49,6 +50,7 @@ func TestService(t *testing.T) {
 	assert.Equal(t, "gopher super service", cfg.Description)
 
 	// Test
+	const URL = "http://localhost:8083"
 	r, err := http.Get(URL)
 	if err != nil {
 		t.Fatal(err)

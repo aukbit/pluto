@@ -4,6 +4,7 @@ import (
 	"github.com/uber-go/zap"
 
 	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func (dc *defaultClient) dialGRPC() error {
@@ -24,6 +25,8 @@ func (dc *defaultClient) dialGRPC() error {
 	}
 	// keep connection for later close
 	dc.conn = conn
+	// register health methods on connection
+	dc.healthCall = healthpb.NewHealthClient(conn)
 	// register methods on connection
 	dc.call = dc.cfg.GRPCRegister(conn)
 	return nil

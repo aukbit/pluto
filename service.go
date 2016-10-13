@@ -1,6 +1,7 @@
 package pluto
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,34 +13,46 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Service
 type service struct {
-	cfg    *Config
-	close  chan bool
-	wg     *sync.WaitGroup
-	logger zap.Logger
+	cfg          *Config
+	close        chan bool
+	wg           *sync.WaitGroup
+	logger       zap.Logger
+	isDiscovered bool
+	health       *health.Server
+	healthHTTP   server.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	s := &service{
-		cfg:    c,
-		close:  make(chan bool),
-		wg:     &sync.WaitGroup{},
-		logger: zap.New(zap.NewJSONEncoder())}
-	return s
+	return &service{
+		cfg:        c,
+		close:      make(chan bool),
+		wg:         &sync.WaitGroup{},
+		logger:     zap.New(zap.NewJSONEncoder()),
+		health:     health.NewServer(),
+		healthHTTP: newHealthServer()}
 }
 
 // Run starts service
 func (s *service) Run() error {
 	// set logger
 	s.setLogger()
+	// register at service discovery
+	if err := s.register(); err != nil {
+		return err
+	}
 	// start service
 	if err := s.start(); err != nil {
 		return err
 	}
+	// start health server
+	s.startHealthHTTPServer()
 	// wait for all go routines to finish
 	s.wg.Wait()
 	s.logger.Info("exit")
@@ -77,6 +90,15 @@ func (s *service) Client(name string) (clt client.Client, ok bool) {
 // Datastore TODO there is no need to be public
 func (s *service) Datastore() datastore.Datastore {
 	return s.cfg.Datastore
+}
+
+func (s *service) Health() *healthpb.HealthCheckResponse {
+	hcr, err := s.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
+	if err != nil {
+		s.logger.Error("Health", zap.String("err", err.Error()))
+	}
+	return hcr
 }
 
 func (s *service) setLogger() {
@@ -152,18 +174,22 @@ outer:
 		select {
 		case <-s.close:
 			// Waits for call to stop
+			s.unregister()
 			s.closeClients()
 			s.stopServers()
+			s.stopHealthHTTPServer()
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
 			s.logger.Info("signal received",
 				zap.String("signal", sig.String()))
+			s.unregister()
 			s.closeClients()
 			s.stopServers()
+			s.stopHealthHTTPServer()
 			break outer
 		default:
-			s.logger.Info("pulse")
+			s.logger.Debug("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}

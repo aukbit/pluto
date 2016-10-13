@@ -67,14 +67,31 @@ func TestClient(t *testing.T) {
 	assert.Equal(t, "client_client_test_gopher", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
-	//
+
 	// Connect
 	if err := c.Dial(); err != nil {
 		log.Fatal(err)
 	}
+	// Make a Call
 	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
 		log.Fatal(err)
 	}
 	assert.Equal(t, "Hello client_client_test_gopher", r.Message)
+}
+
+func TestHealth(t *testing.T) {
+	c := client.NewClient(
+		client.Target("localhost:65061"),
+		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
+			return pb.NewGreeterClient(cc)
+		}),
+	)
+	defer c.Close()
+	err := c.Dial()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := c.Health()
+	assert.Equal(t, "SERVING", h.Status.String())
 }
