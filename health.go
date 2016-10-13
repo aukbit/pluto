@@ -1,6 +1,7 @@
 package pluto
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/uber-go/zap"
@@ -12,9 +13,30 @@ import (
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
+	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
+	m := ctx.Value("module").(string)
+	n := ctx.Value("name").(string)
 	s := ctx.Value("pluto").(Service)
-	hcr := s.Health()
+	log.Printf("TESTE %v/%v", m, n)
+	switch m {
+	case "server":
+		srv, ok := s.Server(n)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = srv.Health()
+	case "client":
+		clt, ok := s.Client(n)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = clt.Health()
+	case "pluto":
+		hcr = s.Health()
+	}
 	if hcr.Status.String() != "SERVING" {
 		reply.Json(w, r, http.StatusTooManyRequests, hcr)
 		return
@@ -25,7 +47,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 func newHealthServer() server.Server {
 	// Define Router
 	mux := router.NewMux()
-	mux.GET("/_health", healthHandler)
+	mux.GET("/_health/:module/:name", healthHandler)
 	// Define server
 	return server.NewServer(
 		server.Name("health"),

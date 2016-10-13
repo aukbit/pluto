@@ -12,14 +12,13 @@ import (
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
-func _TestService(t *testing.T) {
+func TestService(t *testing.T) {
 
 	// Define Router
 	mux := router.NewMux()
@@ -70,57 +69,5 @@ func _TestService(t *testing.T) {
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
-
-}
-
-func TestHealthService(t *testing.T) {
-
-	// Define Router
-	mux := router.NewMux()
-	mux.GET("/", Index)
-	// Define server
-	srv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
-
-	// Define Service
-	s := pluto.NewService(
-		pluto.Name("gopher"),
-		pluto.Description("gopher super service"),
-		pluto.Servers(srv),
-	)
-
-	// 5. Run service
-	go func() {
-		if err := s.Run(); err != nil {
-			t.Fatal(err)
-		}
-	}()
-	defer s.Stop()
-	//
-	time.Sleep(time.Second)
-
-	// health check
-	// h := s.Health()
-	// assert.Equal(t, "SERVING", h.Status.String())
-
-	// Test
-	const URL = "http://localhost:9090/_health"
-	r, err := http.Get(URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Body.Close()
-
-	hcr := &healthpb.HealthCheckResponse{}
-	if err := json.Unmarshal(b, hcr); err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-	assert.Equal(t, http.StatusOK, r.StatusCode)
-	assert.Equal(t, "SERVING", hcr.Status.String())
 
 }

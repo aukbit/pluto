@@ -11,7 +11,7 @@ import (
 )
 
 func (ds *defaultServer) healthHTTP() {
-	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health/%s`, ds.cfg.Port(), ds.cfg.Name))
+	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health`, ds.cfg.Port()))
 	if err != nil {
 		ds.logger.Error("healthHttp", zap.String("err", err.Error()))
 		ds.health.SetServingStatus(ds.cfg.Name, 2)

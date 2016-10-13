@@ -88,8 +88,8 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func TestHealthCheck(t *testing.T) {
-	const URL = "http://localhost:8080/_health/server_grpc"
+func TestHttpHealthCheck(t *testing.T) {
+	const URL = "http://localhost:8080/_health"
 	r, err := http.Get(URL)
 	if err != nil {
 		log.Fatal(err)

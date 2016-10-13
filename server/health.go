@@ -6,16 +6,14 @@ import (
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	n := ctx.Value("name").(string)
-	h := ctx.Value("health").(*health.Server)
-	hcr, err := h.Check(
-		context.Background(), &healthpb.HealthCheckRequest{Service: n})
+	ds := ctx.Value("server").(*defaultServer)
+	hcr, err := ds.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.Name})
 	if err != nil {
 		reply.Json(w, r, http.StatusTooManyRequests, hcr)
 		return
@@ -23,11 +21,11 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
-func HealthMiddleware(hs *health.Server) router.Middleware {
+func serverMiddleware(srv *defaultServer) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "health", hs)
+			ctx = context.WithValue(ctx, "server", srv)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
