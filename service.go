@@ -45,8 +45,7 @@ func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
-	// set health
-	s.health.SetServingStatus(s.cfg.Name, 1)
+	// start health server
 	s.startHealthHTTPServer()
 	// wait for all go routines to finish
 	s.wg.Wait()
@@ -57,9 +56,6 @@ func (s *service) Run() error {
 // Stop stops service
 func (s *service) Stop() {
 	s.logger.Info("stop")
-	// set health as not serving
-	s.health.SetServingStatus(s.cfg.Name, 2)
-	//
 	s.close <- true
 }
 
@@ -91,16 +87,16 @@ func (s *service) Datastore() datastore.Datastore {
 }
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
-	var hrc = &healthpb.HealthCheckResponse{Status: 1}
+	var hcr = &healthpb.HealthCheckResponse{Status: 1}
 	if h := s.healthOnServers(); h.Status.String() != "SERVING" {
-		hrc.Status = h.Status
+		hcr.Status = h.Status
 	}
 	if h := s.healthOnClients(); h.Status.String() != "SERVING" {
-		hrc.Status = h.Status
+		hcr.Status = h.Status
 	}
 	// set service health
-	s.health.SetServingStatus(s.cfg.Name, hrc.Status)
-	return hrc
+	s.health.SetServingStatus(s.cfg.Name, hcr.Status)
+	return hcr
 }
 
 func (s *service) setLogger() {

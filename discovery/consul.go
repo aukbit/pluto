@@ -14,7 +14,6 @@ const (
 )
 
 func IsAvailable() (bool, error) {
-
 	resp, err := http.Get(URL + SELF)
 	if err != nil {
 		return false, err

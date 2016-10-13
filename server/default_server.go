@@ -71,11 +71,11 @@ func (ds *defaultServer) Stop() {
 	ds.logger.Info("stop")
 	// set health as not serving
 	ds.health.SetServingStatus(ds.cfg.Name, 2)
+	// close listener
+	ds.close <- true
 	// unregister from service discovery
 	ds.wg.Add(1)
 	go ds.unregister()
-	// close listener
-	ds.close <- true
 }
 
 func (ds *defaultServer) Config() *Config {
@@ -113,7 +113,7 @@ func (ds *defaultServer) setHTTPServer() {
 		ds.cfg.Mux = router.NewMux()
 	}
 	// set health check handler
-	ds.cfg.Mux.GET("/_health", router.Wrap(healthHandler, healthMiddleware(ds.health)))
+	ds.cfg.Mux.GET("/_health/server", router.Wrap(healthHandler, HealthMiddleware(ds.health)))
 	// append logger
 	ds.cfg.Middlewares = append(ds.cfg.Middlewares, loggerMiddleware(ds))
 	// wrap Middlewares

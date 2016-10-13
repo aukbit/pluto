@@ -12,6 +12,7 @@ import (
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -113,15 +114,13 @@ func TestHealthService(t *testing.T) {
 	}
 	defer r.Body.Close()
 
-	t.Fatalf("TST %v", string(b))
-
-	var message string
-	if err := json.Unmarshal(b, &message); err != nil {
+	hcr := &healthpb.HealthCheckResponse{}
+	if err := json.Unmarshal(b, hcr); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
-	assert.Equal(t, "Hello World", message)
+	assert.Equal(t, "SERVING", hcr.Status.String())
 
 }

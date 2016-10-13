@@ -31,9 +31,6 @@ func Detail(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value("id").(string)))
 }
 
-// type greeter struct {
-// 	cfg *server.Config
-// }
 type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
@@ -92,7 +89,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHttpHealthCheck(t *testing.T) {
-	const URL = "http://localhost:8080/_health"
+	const URL = "http://localhost:8080/_health/server"
 	r, err := http.Get(URL)
 	if err != nil {
 		log.Fatal(err)

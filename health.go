@@ -1,7 +1,6 @@
 package pluto
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/uber-go/zap"
@@ -13,11 +12,14 @@ import (
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// h := ctx.Value("pluto").(Service).Health()
-	// log.Printf("healthHandler %v", h)
-	log.Printf("TESTE")
-	reply.Json(w, r, http.StatusOK, "Hello World")
+	ctx := r.Context()
+	s := ctx.Value("pluto").(Service)
+	hcr := s.Health()
+	if hcr.Status.String() != "SERVING" {
+		reply.Json(w, r, http.StatusTooManyRequests, hcr)
+		return
+	}
+	reply.Json(w, r, http.StatusOK, hcr)
 }
 
 func newHealthServer() server.Server {
@@ -32,20 +34,21 @@ func newHealthServer() server.Server {
 }
 
 func (s *service) startHealthHTTPServer() {
+	s.health.SetServingStatus(s.cfg.Name, 1)
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go func(srv server.Server) {
 		defer s.wg.Done()
 		if err := srv.Run(
 			server.ParentID(s.cfg.ID),
-			server.Middlewares(serviceContextMiddleware(s)),
-			server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s))); err != nil {
+			server.Middlewares(serviceContextMiddleware(s))); err != nil {
 			s.logger.Error("Run()", zap.String("err", err.Error()))
 		}
 	}(s.healthHTTP)
 }
 
 func (s *service) stopHealthHTTPServer() {
+	s.health.SetServingStatus(s.cfg.Name, 2)
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go func(srv server.Server) {

@@ -27,8 +27,18 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
+func HealthMiddleware(hs *health.Server) router.Middleware {
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, "health", hs)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
+}
+
 func (ds *defaultServer) healthHTTP() {
-	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health`, ds.cfg.Port()))
+	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health/server`, ds.cfg.Port()))
 	if err != nil {
 		ds.logger.Error("healthHttp", zap.String("err", err.Error()))
 		ds.health.SetServingStatus(ds.cfg.Name, 2)
@@ -48,14 +58,4 @@ func (ds *defaultServer) healthHTTP() {
 		return
 	}
 	ds.health.SetServingStatus(ds.cfg.Name, hcr.Status)
-}
-
-func healthMiddleware(hs *health.Server) router.Middleware {
-	return func(h router.Handler) router.Handler {
-		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, "health", hs)
-			h.ServeHTTP(w, r.WithContext(ctx))
-		}
-	}
 }
