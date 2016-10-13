@@ -13,7 +13,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ds := ctx.Value("server").(*defaultServer)
 	hcr, err := ds.health.Check(
-		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.Name})
+		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
 		reply.Json(w, r, http.StatusTooManyRequests, hcr)
 		return

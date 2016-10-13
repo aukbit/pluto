@@ -47,7 +47,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 		return err
 	}
 	// set health
-	dc.health.SetServingStatus(dc.cfg.Name, 1)
+	dc.health.SetServingStatus(dc.cfg.ID, 1)
 	//
 	return nil
 }
@@ -62,7 +62,7 @@ func (dc *defaultClient) Call() interface{} {
 func (dc *defaultClient) Close() {
 	dc.logger.Info("close")
 	// set health as not serving
-	dc.health.SetServingStatus(dc.cfg.Name, 2)
+	dc.health.SetServingStatus(dc.cfg.ID, 2)
 	// close connection
 	dc.conn.Close()
 }
@@ -73,10 +73,10 @@ func (dc *defaultClient) healthServer() {
 		context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
 		dc.logger.Error("Health", zap.String("err", err.Error()))
-		dc.health.SetServingStatus(dc.cfg.Name, 2)
+		dc.health.SetServingStatus(dc.cfg.ID, 2)
 		return
 	}
-	dc.health.SetServingStatus(dc.cfg.Name, hcr.Status)
+	dc.health.SetServingStatus(dc.cfg.ID, hcr.Status)
 }
 
 // Health health check on client take in consideration
@@ -86,10 +86,9 @@ func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
 	dc.healthServer()
 	// make health call on client
 	hcr, err := dc.health.Check(
-		context.Background(), &healthpb.HealthCheckRequest{Service: dc.cfg.Name})
+		context.Background(), &healthpb.HealthCheckRequest{Service: dc.cfg.ID})
 	if err != nil {
 		dc.logger.Error("Health", zap.String("err", err.Error()))
-		dc.health.SetServingStatus(dc.cfg.Name, 2)
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr

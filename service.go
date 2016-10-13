@@ -89,7 +89,7 @@ func (s *service) Datastore() datastore.Datastore {
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
-		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.Name})
+		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
 		s.logger.Error("Health", zap.String("err", err.Error()))
 	}

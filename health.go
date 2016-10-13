@@ -58,7 +58,7 @@ func newHealthServer() server.Server {
 }
 
 func (s *service) startHealthHTTPServer() {
-	s.health.SetServingStatus(s.cfg.Name, 1)
+	s.health.SetServingStatus(s.cfg.ID, 1)
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go func(srv server.Server) {
@@ -72,7 +72,7 @@ func (s *service) startHealthHTTPServer() {
 }
 
 func (s *service) stopHealthHTTPServer() {
-	s.health.SetServingStatus(s.cfg.Name, 2)
+	s.health.SetServingStatus(s.cfg.ID, 2)
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go func(srv server.Server) {

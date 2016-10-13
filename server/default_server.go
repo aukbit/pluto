@@ -59,7 +59,7 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 		return err
 	}
 	// set health
-	ds.health.SetServingStatus(ds.cfg.Name, 1)
+	ds.health.SetServingStatus(ds.cfg.ID, 1)
 	// wait for go routines to finish
 	ds.wg.Wait()
 	ds.logger.Info("exit")
@@ -70,7 +70,7 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 func (ds *defaultServer) Stop() {
 	ds.logger.Info("stop")
 	// set health as not serving
-	ds.health.SetServingStatus(ds.cfg.Name, 2)
+	ds.health.SetServingStatus(ds.cfg.ID, 2)
 	// close listener
 	ds.close <- true
 	// unregister from service discovery
@@ -90,7 +90,8 @@ func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {
 	default:
 		ds.healthHTTP()
 	}
-	hcr, err := ds.health.Check(context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.Name})
+	hcr, err := ds.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
 		ds.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{Status: 2}
