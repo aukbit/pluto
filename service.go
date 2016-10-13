@@ -11,6 +11,7 @@ import (
 	"github.com/uber-go/zap"
 
 	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
 	"google.golang.org/grpc/health"
@@ -25,24 +26,24 @@ type service struct {
 	logger       zap.Logger
 	isDiscovered bool
 	health       *health.Server
-	healthHTTP   server.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
 	return &service{
-		cfg:        c,
-		close:      make(chan bool),
-		wg:         &sync.WaitGroup{},
-		logger:     zap.New(zap.NewJSONEncoder()),
-		health:     health.NewServer(),
-		healthHTTP: newHealthServer()}
+		cfg:    c,
+		close:  make(chan bool),
+		wg:     &sync.WaitGroup{},
+		logger: zap.New(zap.NewJSONEncoder()),
+		health: health.NewServer()}
 }
 
 // Run starts service
 func (s *service) Run() error {
 	// set logger
 	s.setLogger()
+	// set health server
+	s.setHealthServer()
 	// register at service discovery
 	if err := s.register(); err != nil {
 		return err
@@ -51,8 +52,6 @@ func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
-	// start health server
-	s.startHealthHTTPServer()
 	// wait for all go routines to finish
 	s.wg.Wait()
 	s.logger.Info("exit")
@@ -110,6 +109,7 @@ func (s *service) setLogger() {
 
 func (s *service) start() error {
 	s.logger.Info("start",
+		zap.String("ip4", common.IPaddress()),
 		zap.Nest("content",
 			zap.Int("servers", len(s.cfg.Servers)),
 			zap.Int("clients", len(s.cfg.Clients))))
@@ -174,19 +174,19 @@ outer:
 		select {
 		case <-s.close:
 			// Waits for call to stop
+			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()
 			s.stopServers()
-			s.stopHealthHTTPServer()
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
 			s.logger.Info("signal received",
 				zap.String("signal", sig.String()))
+			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()
 			s.stopServers()
-			s.stopHealthHTTPServer()
 			break outer
 		default:
 			s.logger.Debug("pulse")
