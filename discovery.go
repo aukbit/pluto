@@ -3,6 +3,7 @@ package pluto
 import (
 	"fmt"
 
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
 )
 
@@ -25,7 +26,7 @@ func (s *service) register() error {
 		Name:  fmt.Sprintf("Service '%s' check", s.cfg.Name),
 		Notes: fmt.Sprintf("Ensure the Pluto service %s is running", s.cfg.ID),
 		DeregisterCriticalServiceAfter: "10m",
-		HTTP:      fmt.Sprintf("http://localhost:9090/_health/pluto/%s", s.cfg.Name),
+		HTTP:      fmt.Sprintf("http://%s:9090/_health/pluto/%s", common.IPaddress(), s.cfg.Name),
 		Interval:  "10s",
 		Timeout:   "1s",
 		ServiceID: s.cfg.Name,
