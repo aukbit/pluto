@@ -21,14 +21,13 @@ import (
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg          *Config
-	close        chan bool
-	wg           *sync.WaitGroup
-	logger       zap.Logger
-	httpServer   *http.Server
-	grpcServer   *grpc.Server
-	isDiscovered bool
-	health       *health.Server
+	cfg        *Config
+	close      chan bool
+	wg         *sync.WaitGroup
+	logger     zap.Logger
+	httpServer *http.Server
+	grpcServer *grpc.Server
+	health     *health.Server
 }
 
 // newServer will instantiate a new defaultServer with the given config

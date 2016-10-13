@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"bitbucket.org/aukbit/pluto/common"
+	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server/router"
 	"google.golang.org/grpc"
 )
@@ -27,6 +28,7 @@ type Config struct {
 	GRPCRegister            GRPCRegisterServiceFunc
 	Middlewares             []router.Middleware           // http middlewares
 	UnaryServerInterceptors []grpc.UnaryServerInterceptor // gRPC interceptors
+	Discovery               discovery.Discovery
 }
 
 // GRPCRegisterServiceFunc grpc
@@ -143,6 +145,13 @@ func Middlewares(m ...router.Middleware) ConfigFunc {
 func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.UnaryServerInterceptors = append(cfg.UnaryServerInterceptors, i...)
+	}
+}
+
+// Discovery service discoery
+func Discovery(d discovery.Discovery) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Discovery = d
 	}
 }
 

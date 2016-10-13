@@ -8,6 +8,7 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server"
 	"github.com/uber-go/zap"
 )
@@ -23,6 +24,7 @@ type Config struct {
 	Servers     map[string]server.Server
 	Clients     map[string]client.Client
 	Datastore   datastore.Datastore
+	Discovery   discovery.Discovery
 }
 
 // ConfigFunc registers the Config
@@ -103,5 +105,12 @@ func Datastore(addr string) ConfigFunc {
 func DatastoreDiscovery(service string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Datastore = datastore.NewDatastore(datastore.TargetDiscovery(service), datastore.Keyspace(cfg.Name))
+	}
+}
+
+// Discovery service discoery
+func Discovery(d discovery.Discovery) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Discovery = d
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
@@ -24,13 +25,13 @@ func TestService(t *testing.T) {
 	mux := router.NewMux()
 	mux.GET("/", Index)
 	// Define server
-	httpSrv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
+	srv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
 
 	// Define Service
 	s := pluto.NewService(
 		pluto.Name("gopher"),
 		pluto.Description("gopher super service"),
-		pluto.Servers(httpSrv),
+		pluto.Servers(srv),
 	)
 
 	// 5. Run service
@@ -69,5 +70,35 @@ func TestService(t *testing.T) {
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
+
+}
+
+func TestServiceDiscovery(t *testing.T) {
+	// Define Router
+	mux := router.NewMux()
+	mux.GET("/", Index)
+	// Define server
+	srv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
+
+	// Define service Discovery
+	d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
+
+	// Define Service
+	s := pluto.NewService(
+		pluto.Name("gopher"),
+		pluto.Description("gopher super service"),
+		pluto.Servers(srv),
+		pluto.Discovery(d),
+	)
+
+	// 5. Run service
+	go func() {
+		if err := s.Run(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	defer s.Stop()
+	//
+	time.Sleep(time.Second)
 
 }
