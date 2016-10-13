@@ -1,7 +1,6 @@
 package pluto
 
 import (
-	"assert"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/paulormart/assert"
+
+	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
@@ -42,12 +44,20 @@ func TestMain(m *testing.M) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))
 
+	clt := client.NewClient(
+		client.Name("grpc"),
+		client.Target("localhost:65050"),
+		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
+			return pb.NewGreeterClient(cc)
+		}),
+	)
+
 	// Define Service
 	s := NewService(
 		Name("gopher"),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
-	)
+		Clients(clt))
 
 	if !testing.Short() {
 		// Run Server
@@ -56,7 +66,7 @@ func TestMain(m *testing.M) {
 				log.Fatal(err)
 			}
 		}()
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second)
 	}
 	result := m.Run()
 	if !testing.Short() {
@@ -77,6 +87,16 @@ func TestHealth(t *testing.T) {
 		BodyContains string
 		Status       int
 	}{
+		{
+			Path:         "/client/client_grpc",
+			BodyContains: `SERVING`,
+			Status:       http.StatusOK,
+		},
+		{
+			Path:         "/client/something_wrong",
+			BodyContains: `UNKNOWN`,
+			Status:       http.StatusNotFound,
+		},
 		{
 			Path:         "/server/server_http",
 			BodyContains: `SERVING`,
