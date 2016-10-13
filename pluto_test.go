@@ -18,9 +18,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 
-const URL = "http://localhost:8083"
-
-func TestService(t *testing.T) {
+func _TestService(t *testing.T) {
 
 	// Define Router
 	mux := router.NewMux()
@@ -51,11 +49,8 @@ func TestService(t *testing.T) {
 	assert.Equal(t, "pluto_gopher", cfg.Name)
 	assert.Equal(t, "gopher super service", cfg.Description)
 
-	// health check
-	h := s.Health()
-	assert.Equal(t, "SERVING", h.Status.String())
-
 	// Test
+	const URL = "http://localhost:8083"
 	r, err := http.Get(URL)
 	if err != nil {
 		t.Fatal(err)
@@ -65,6 +60,60 @@ func TestService(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Body.Close()
+
+	var message string
+	if err := json.Unmarshal(b, &message); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "Hello World", message)
+
+}
+
+func TestHealthService(t *testing.T) {
+
+	// Define Router
+	mux := router.NewMux()
+	mux.GET("/", Index)
+	// Define server
+	srv := server.NewServer(server.Name("gopher"), server.Addr(":8083"), server.Mux(mux))
+
+	// Define Service
+	s := pluto.NewService(
+		pluto.Name("gopher"),
+		pluto.Description("gopher super service"),
+		pluto.Servers(srv),
+	)
+
+	// 5. Run service
+	go func() {
+		if err := s.Run(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	defer s.Stop()
+	//
+	time.Sleep(time.Second)
+
+	// health check
+	// h := s.Health()
+	// assert.Equal(t, "SERVING", h.Status.String())
+
+	// Test
+	const URL = "http://localhost:9090/_health"
+	r, err := http.Get(URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	t.Fatalf("TST %v", string(b))
 
 	var message string
 	if err := json.Unmarshal(b, &message); err != nil {

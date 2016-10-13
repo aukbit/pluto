@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,11 +10,20 @@ import (
 	"github.com/uber-go/zap"
 
 	"bitbucket.org/aukbit/pluto/reply"
+	"bitbucket.org/aukbit/pluto/server/router"
+	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	hcr := &healthpb.HealthCheckResponse{Status: 1}
+	ctx := r.Context()
+	h := ctx.Value("health").(*health.Server)
+	hcr, err := h.Check(
+		context.Background(), &healthpb.HealthCheckRequest{})
+	if err != nil {
+		// TODO
+		return
+	}
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
@@ -38,4 +48,14 @@ func (ds *defaultServer) healthHTTP() {
 		return
 	}
 	ds.health.SetServingStatus(ds.cfg.Name, hcr.Status)
+}
+
+func healthMiddleware(hs *health.Server) router.Middleware {
+	return func(h router.Handler) router.Handler {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, "health", hs)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
 }

@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"google.golang.org/grpc/health"
-
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/datastore"
@@ -25,7 +23,6 @@ type Config struct {
 	Servers     map[string]server.Server
 	Clients     map[string]client.Client
 	Datastore   datastore.Datastore
-	health      *health.Server
 }
 
 // ConfigFunc registers the Config
@@ -35,8 +32,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 
 	cfg := &Config{Version: defaultVersion,
 		Servers: make(map[string]server.Server),
-		Clients: make(map[string]client.Client),
-		health:  health.NewServer()}
+		Clients: make(map[string]client.Client)}
 
 	for _, c := range cfgs {
 		c(cfg)
@@ -86,7 +82,6 @@ func Description(d string) ConfigFunc {
 func Servers(s server.Server) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Servers[s.Config().Name] = s
-		cfg.health.SetServingStatus(s.Config().Name, 2)
 	}
 }
 
@@ -94,7 +89,6 @@ func Servers(s server.Server) ConfigFunc {
 func Clients(c client.Client) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Clients[c.Config().Name] = c
-		cfg.health.SetServingStatus(c.Config().Name, 2)
 	}
 }
 

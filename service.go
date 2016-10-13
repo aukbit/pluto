@@ -12,25 +12,29 @@ import (
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/server"
-	"golang.org/x/net/context"
+	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Service
 type service struct {
-	cfg    *Config
-	close  chan bool
-	wg     *sync.WaitGroup
-	logger zap.Logger
+	cfg        *Config
+	close      chan bool
+	wg         *sync.WaitGroup
+	logger     zap.Logger
+	health     *health.Server
+	healthHTTP server.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
 	return &service{
-		cfg:    c,
-		close:  make(chan bool),
-		wg:     &sync.WaitGroup{},
-		logger: zap.New(zap.NewJSONEncoder())}
+		cfg:        c,
+		close:      make(chan bool),
+		wg:         &sync.WaitGroup{},
+		logger:     zap.New(zap.NewJSONEncoder()),
+		health:     health.NewServer(),
+		healthHTTP: newHealthServer()}
 }
 
 // Run starts service
@@ -41,6 +45,9 @@ func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
+	// set health
+	s.health.SetServingStatus(s.cfg.Name, 1)
+	s.startHealthHTTPServer()
 	// wait for all go routines to finish
 	s.wg.Wait()
 	s.logger.Info("exit")
@@ -50,6 +57,9 @@ func (s *service) Run() error {
 // Stop stops service
 func (s *service) Stop() {
 	s.logger.Info("stop")
+	// set health as not serving
+	s.health.SetServingStatus(s.cfg.Name, 2)
+	//
 	s.close <- true
 }
 
@@ -81,19 +91,15 @@ func (s *service) Datastore() datastore.Datastore {
 }
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
-	var hrc = &healthpb.HealthCheckResponse{Status: 2}
-	for _, srv := range s.cfg.Servers {
-		// h := srv.Health()
-		s.cfg.health.SetServingStatus(srv.Config().Name, hrc.Status)
+	var hrc = &healthpb.HealthCheckResponse{Status: 1}
+	if h := s.healthOnServers(); h.Status.String() != "SERVING" {
+		hrc.Status = h.Status
 	}
-	// s.cfg.
-	// return s.cfg.Datastore
-	// TODO
-	hrc, err := s.cfg.health.Check(context.Background(), &healthpb.HealthCheckRequest{Service: "server_gopher"})
-	if err != nil {
-		s.logger.Error("Health", zap.String("err", err.Error()))
-		return hrc
+	if h := s.healthOnClients(); h.Status.String() != "SERVING" {
+		hrc.Status = h.Status
 	}
+	// set service health
+	s.health.SetServingStatus(s.cfg.Name, hrc.Status)
 	return hrc
 }
 
@@ -172,6 +178,7 @@ outer:
 			// Waits for call to stop
 			s.closeClients()
 			s.stopServers()
+			s.stopHealthHTTPServer()
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
@@ -179,6 +186,7 @@ outer:
 				zap.String("signal", sig.String()))
 			s.closeClients()
 			s.stopServers()
+			s.stopHealthHTTPServer()
 			break outer
 		default:
 			s.logger.Debug("pulse")
