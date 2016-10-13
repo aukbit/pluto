@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
 )
 
@@ -26,7 +27,7 @@ func (ds *defaultServer) register() error {
 		Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
 		Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
 		DeregisterCriticalServiceAfter: "10m",
-		HTTP:      fmt.Sprintf("http://localhost:9090/_health/server/%s", ds.cfg.Name),
+		HTTP:      fmt.Sprintf("http://%s:9090/_health/server/%s", common.IPaddress(), ds.cfg.Name),
 		Interval:  "10s",
 		Timeout:   "1s",
 		ServiceID: ds.cfg.Name,

@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 
+	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
 )
 
@@ -25,7 +26,7 @@ func (dc *defaultClient) register() error {
 		Name:  fmt.Sprintf("Service '%s' check", dc.cfg.Name),
 		Notes: fmt.Sprintf("Ensure the client is able to connect to %s - %s", dc.cfg.Target, dc.cfg.TargetDiscovery),
 		DeregisterCriticalServiceAfter: "10m",
-		HTTP:      fmt.Sprintf("http://localhost:9090/_health/client/%s", dc.cfg.Name),
+		HTTP:      fmt.Sprintf("http://%s:9090/_health/client/%s", common.IPaddress(), dc.cfg.Name),
 		Interval:  "10s",
 		Timeout:   "1s",
 		ServiceID: dc.cfg.Name,
