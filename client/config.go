@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
+	"bitbucket.org/aukbit/pluto/server"
 
 	"google.golang.org/grpc"
 )
@@ -19,7 +20,7 @@ type Config struct {
 	Description             string
 	Version                 string
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	TargetDiscovery         string // service name on service discovery
+	TargetName              string // service name on service discovery
 	Format                  string
 	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
@@ -48,7 +49,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = defaultName
+		cfg.Name = DefaultName
 	}
 
 	return cfg
@@ -70,7 +71,7 @@ func Name(n string) ConfigFunc {
 			log.Fatal(err)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
 	}
 }
 
@@ -88,16 +89,16 @@ func Target(t string) ConfigFunc {
 	}
 }
 
-// TargetDiscovery server address
-func TargetDiscovery(name string) ConfigFunc {
+// TargetName server address
+func TargetName(name string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.TargetDiscovery = name
-		// get target from service discovery
-		t, err := discovery.Target(name)
+		// support only alphanumeric and underscore characters
+		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
 		if err != nil {
 			log.Fatal(err)
 		}
-		cfg.Target = t
+		safe := reg.ReplaceAllString(name, "_")
+		cfg.TargetName = fmt.Sprintf("%s_%s", server.DefaultName, strings.ToLower(safe))
 	}
 }
 

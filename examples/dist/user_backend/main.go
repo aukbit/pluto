@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/datastore"
 	pb "bitbucket.org/aukbit/pluto/examples/dist/user_backend/proto"
 	"bitbucket.org/aukbit/pluto/examples/dist/user_backend/views"
 	"bitbucket.org/aukbit/pluto/server"
@@ -13,6 +14,7 @@ import (
 
 var grpcPort = flag.String("grpc_port", ":65060", "grpc listening port")
 var db = flag.String("db", "cassandra", "datastore service instance")
+var keyspace = flag.String("keyspace", "pluto_user_backend", "datastore keyspace")
 var name = flag.String("name", "user_backend", "service name instance")
 
 func main() {
@@ -24,6 +26,7 @@ func main() {
 }
 
 func service() error {
+
 	// Define Pluto Server
 	srv := server.NewServer(
 		server.Name(*name),
@@ -32,11 +35,16 @@ func service() error {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})
 		}))
 
+	// Define db connection
+	db := datastore.NewDatastore(
+		datastore.TargetName(*db),
+		datastore.Keyspace(*keyspace))
+
 	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name(*name),
 		pluto.Description("User backend service is responsible for persist data"),
-		pluto.DatastoreDiscovery(*db),
+		pluto.Datastore(db),
 		pluto.Servers(srv))
 
 	// Run service

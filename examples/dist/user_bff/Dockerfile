@@ -38,7 +38,7 @@ ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_bff
 RUN go install bitbucket.org/aukbit/pluto/examples/dist/user_bff
 
 # Run the pluto-sample-dist command by default when the container starts.
-ENTRYPOINT /go/bin/user_bff -http_port=:8080 -target_name=server_user_backend -name=user_bff
+ENTRYPOINT /go/bin/user_bff -http_port=:8080 -target_name=user_backend -name=user_bff
 
 # Document that the service listens on port 8080.
 EXPOSE 8080

@@ -30,11 +30,23 @@ func (cd *consulDefault) IsAvailable() (bool, error) {
 	return isAvailable(cd.cfg.URL())
 }
 
-func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
-	_, err := isAvailable(cd.cfg.URL())
-	if err != nil {
+// Service
+func (cd *consulDefault) Service(name string) (string, error) {
+	if _, err := isAvailable(cd.cfg.URL()); err != nil {
 		cd.logger.Error("service discovery not available")
-		return nil
+		return "", err
+	}
+	addr, err := Target(cd.cfg.URL(), name)
+	if err != nil {
+		return "", err
+	}
+	return addr, nil
+}
+
+func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
+	if _, err := isAvailable(cd.cfg.URL()); err != nil {
+		cd.logger.Error("service discovery not available")
+		return err
 	}
 	cd.isDiscovered = true
 	// set last configs
@@ -43,14 +55,14 @@ func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
 	}
 	// register services
 	for _, s := range cd.cfg.Services {
-		err = registerService(cd.cfg.URL(), s)
+		err := registerService(cd.cfg.URL(), s)
 		if err != nil {
 			return err
 		}
 	}
 	// register checks
 	for _, c := range cd.cfg.Checks {
-		err = registerCheck(cd.cfg.URL(), c)
+		err := registerCheck(cd.cfg.URL(), c)
 		if err != nil {
 			return err
 		}

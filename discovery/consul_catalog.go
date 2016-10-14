@@ -40,7 +40,9 @@ func CatalogServices(url string) (map[string][]string, error) {
 }
 
 func CatalogService(url, service string) (ns []*NodeService, err error) {
-
+	if service == "" {
+		return nil, fmt.Errorf("to search for a service in service discovery, a service name must be specified")
+	}
 	resp, err := http.Get(url + strings.Replace(CATALOG_SERVICE, "<service>", service, 1))
 	if err != nil {
 		return nil, err
@@ -72,7 +74,13 @@ func Target(url, service string) (string, error) {
 		return "", err
 	}
 	if len(ns) > 0 {
-		t := fmt.Sprintf("%s:%d", ns[0].Address, ns[0].ServicePort)
+		var addr string
+		if ns[0].ServiceAddress != "" {
+			addr = ns[0].ServiceAddress
+		} else {
+			addr = ns[0].Address
+		}
+		t := fmt.Sprintf("%s:%d", addr, ns[0].ServicePort)
 		return t, nil
 	}
 	return "", fmt.Errorf("nodes not available with service: %s", service)

@@ -16,8 +16,9 @@ type Service interface {
 	Health() *healthpb.HealthCheckResponse
 }
 
-var (
-	defaultName    = "pluto"
+const (
+	// DefaultName prefix on pluto service name
+	DefaultName    = "pluto"
 	defaultVersion = "v1.0.0"
 )
 

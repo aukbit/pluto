@@ -13,8 +13,9 @@ type Client interface {
 	Health() *healthpb.HealthCheckResponse
 }
 
-var (
-	defaultName    = "client"
+const (
+	// DefaultName prefix client name
+	DefaultName    = "client"
 	defaultVersion = "v1.0.0"
 )
 

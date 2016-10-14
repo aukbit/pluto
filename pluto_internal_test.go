@@ -14,6 +14,8 @@ import (
 	"github.com/paulormart/assert"
 
 	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/datastore"
+	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
@@ -29,6 +31,7 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
+
 	// Create pluto server
 	srvHTTP := server.NewServer(
 		server.Name("http"),
@@ -39,25 +42,32 @@ func TestMain(m *testing.M) {
 	srvGRPC := server.NewServer(
 		server.Name("grpc"),
 		server.Description("grpc super server"),
-		server.Addr(":65050"),
+		server.Addr(":65060"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))
-
-	clt := client.NewClient(
+	// Create grpc pluto client
+	cltGRPC := client.NewClient(
 		client.Name("grpc"),
-		client.Target("localhost:65050"),
+		// client.Target("localhost:65060"),
+		client.TargetName("grpc"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
-
-	// Define Service
+	// Create db client
+	db := datastore.NewDatastore(datastore.TargetName("cassandra"))
+	// Define service Discovery
+	d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
+	// Define Pluto Service
 	s := NewService(
 		Name("gopher"),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
-		Clients(clt))
+		Clients(cltGRPC),
+		Datastore(db),
+		Discovery(d),
+	)
 
 	if !testing.Short() {
 		// Run Server
@@ -80,6 +90,8 @@ func TestMain(m *testing.M) {
 const URL = "http://localhost:9090/_health"
 
 func TestHealth(t *testing.T) {
+
+	time.Sleep(time.Second)
 
 	var tests = []struct {
 		Path         string
@@ -127,6 +139,16 @@ func TestHealth(t *testing.T) {
 			BodyContains: `UNKNOWN`,
 			Status:       http.StatusNotFound,
 		},
+		{
+			Path:         "/db/client_db",
+			BodyContains: `SERVING`,
+			Status:       http.StatusOK,
+		},
+		{
+			Path:         "/db/something_wrong",
+			BodyContains: `UNKNOWN`,
+			Status:       http.StatusNotFound,
+		},
 	}
 	for _, test := range tests {
 
@@ -146,5 +168,6 @@ func TestHealth(t *testing.T) {
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 		assert.Equal(t, test.Status, r.StatusCode)
 		assert.Equal(t, test.BodyContains, hcr.Status.String())
+		time.Sleep(time.Millisecond * 100)
 	}
 }
