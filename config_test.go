@@ -18,5 +18,5 @@ func TestConfigs(t *testing.T) {
 	c := newConfig(ID("123456"), Name("Special"))
 	assert.Equal(t, "123456", c.ID)
 	// Note: lower case and prefix 'server_' in name
-	assert.Equal(t, "pluto_special", c.Name)
+	assert.Equal(t, "special_pluto", c.Name)
 }

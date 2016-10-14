@@ -100,17 +100,17 @@ func TestHealth(t *testing.T) {
 		Status       int
 	}{
 		{
-			Path:         "/server/server_health",
+			Path:         "/server/health_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
 		{
-			Path:         "/server/server_http",
+			Path:         "/server/http_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
 		{
-			Path:         "/server/server_grpc",
+			Path:         "/server/grpc_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
@@ -120,9 +120,12 @@ func TestHealth(t *testing.T) {
 			Status:       http.StatusNotFound,
 		},
 		{
-			Path:         "/client/client_grpc",
-			BodyContains: `SERVING`,
-			Status:       http.StatusOK,
+			Path:         "/client/grpc_client",
+			BodyContains: `NOT_SERVING`,
+			Status:       http.StatusTooManyRequests,
+			// if discovery is active when testing this handler is not serving
+			// BodyContains: `SERVING`,
+			// Status:       http.StatusOK,
 		},
 		{
 			Path:         "/client/something_wrong",
@@ -130,7 +133,7 @@ func TestHealth(t *testing.T) {
 			Status:       http.StatusNotFound,
 		},
 		{
-			Path:         "/pluto/pluto_gopher",
+			Path:         "/pluto/gopher_pluto",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},

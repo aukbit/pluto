@@ -1,11 +1,6 @@
 package client
 
 import (
-	"fmt"
-	"log"
-	"regexp"
-	"strings"
-
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server"
@@ -65,13 +60,7 @@ func ID(id string) ConfigFunc {
 // Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
-		// support only alphanumeric and underscore characters
-		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
-		if err != nil {
-			log.Fatal(err)
-		}
-		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = common.SafeName(n, DefaultName)
 	}
 }
 
@@ -92,13 +81,7 @@ func Target(t string) ConfigFunc {
 // TargetName server address
 func TargetName(name string) ConfigFunc {
 	return func(cfg *Config) {
-		// support only alphanumeric and underscore characters
-		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
-		if err != nil {
-			log.Fatal(err)
-		}
-		safe := reg.ReplaceAllString(name, "_")
-		cfg.TargetName = fmt.Sprintf("%s_%s", server.DefaultName, strings.ToLower(safe))
+		cfg.TargetName = common.SafeName(name, server.DefaultName)
 	}
 }
 

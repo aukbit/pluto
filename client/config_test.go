@@ -20,6 +20,6 @@ func TestConfigs(t *testing.T) {
 	c := newConfig(ID("123456"), Name("Special"), Target("localhost:65062"))
 	assert.Equal(t, "123456", c.ID)
 	// Note: lower case and prefix 'server_' in name
-	assert.Equal(t, "client_special", c.Name)
+	assert.Equal(t, "special_client", c.Name)
 	assert.Equal(t, "localhost:65062", c.Target)
 }

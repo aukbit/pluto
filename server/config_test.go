@@ -25,7 +25,7 @@ func TestConfigs(t *testing.T) {
 		Addr(":8081"))
 	assert.Equal(t, "123456", c.ID)
 	// Note: lower case and prefix 'server_' in name
-	assert.Equal(t, "server_special", c.Name)
+	assert.Equal(t, "special_server", c.Name)
 	assert.Equal(t, "Special server description", c.Description)
 	assert.Equal(t, ":8081", c.Addr)
 }

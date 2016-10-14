@@ -15,7 +15,7 @@ type Client interface {
 
 const (
 	// DefaultName prefix client name
-	DefaultName    = "plt_client"
+	DefaultName    = "client"
 	defaultVersion = "v1.0.0"
 )
 

@@ -14,7 +14,7 @@ type Server interface {
 
 const (
 	// DefaultName server prefix name
-	DefaultName    = "plt_server"
+	DefaultName    = "server"
 	defaultVersion = "v1.0.0"
 )
 

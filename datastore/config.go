@@ -1,10 +1,8 @@
 package datastore
 
 import (
-	"fmt"
 	"log"
 	"regexp"
-	"strings"
 
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/discovery"
@@ -58,13 +56,7 @@ func ID(id string) ConfigFunc {
 // Name client name
 func Name(n string) ConfigFunc {
 	return func(cfg *Config) {
-		// support only alphanumeric and underscore characters
-		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
-		if err != nil {
-			log.Fatal(err)
-		}
-		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = common.SafeName(n, DefaultName)
 	}
 }
 
