@@ -23,9 +23,9 @@ type NodeService struct {
 	ServicePort    int      `json:"ServicePort"`
 }
 
-func CatalogServices() (map[string][]string, error) {
+func CatalogServices(url string) (map[string][]string, error) {
 
-	resp, err := http.Get(URL + CATALOG_SERVICES)
+	resp, err := http.Get(url + CATALOG_SERVICES)
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -39,9 +39,9 @@ func CatalogServices() (map[string][]string, error) {
 	return data, nil
 }
 
-func CatalogService(service string) (ns []*NodeService, err error) {
+func CatalogService(url, service string) (ns []*NodeService, err error) {
 
-	resp, err := http.Get(URL + strings.Replace(CATALOG_SERVICE, "<service>", service, 1))
+	resp, err := http.Get(url + strings.Replace(CATALOG_SERVICE, "<service>", service, 1))
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func CatalogService(service string) (ns []*NodeService, err error) {
 	return ns, nil
 }
 
-func Target(service string) (string, error) {
-	ns, err := CatalogService(service)
+func Target(url, service string) (string, error) {
+	ns, err := CatalogService(url, service)
 	if err != nil {
 		return "", err
 	}

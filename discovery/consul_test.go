@@ -6,9 +6,11 @@ import (
 	"github.com/paulormart/assert"
 )
 
+const URL = "http://192.168.99.100:8500"
+
 func TestNodes(t *testing.T) {
 
-	nodes, err := Nodes()
+	nodes, err := Nodes(URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -17,7 +19,7 @@ func TestNodes(t *testing.T) {
 
 func TestServices(t *testing.T) {
 
-	services, err := Services()
+	services, err := services(URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -31,18 +33,18 @@ func TestRegisterService(t *testing.T) {
 		Tags: []string{"auth", "api"},
 		Port: 60500,
 	}
-	err := RegisterService(s)
+	err := registerService(URL, s)
 	if err != nil {
 		t.Error(err)
 	}
-	err = DeregisterService("test1")
+	err = deregisterService(URL, "test1")
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestCatalogServices(t *testing.T) {
-	services, err := CatalogServices()
+	services, err := CatalogServices(URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,23 +58,23 @@ func TestCatalogService(t *testing.T) {
 		Tags: []string{"auth", "api"},
 		Port: 60500,
 	}
-	err := RegisterService(s)
+	err := registerService(URL, s)
 	if err != nil {
 		t.Error(err)
 	}
-	ns, err := CatalogService("test2")
+	ns, err := CatalogService(URL, "test2")
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("services %v", ns)
-	err = DeregisterService("test2")
+	err = deregisterService(URL, "test2")
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestIsAvailable(t *testing.T) {
-	ok, err := IsAvailable()
+	ok, err := isAvailable(URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,7 +88,7 @@ func TestRegisterCheck(t *testing.T) {
 		Tags: []string{"auth", "api"},
 		Port: 60500,
 	}
-	err := RegisterService(s)
+	err := registerService(URL, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -100,7 +102,7 @@ func TestRegisterCheck(t *testing.T) {
 		Timeout:   "1s",
 		ServiceID: "test3",
 	}
-	err = RegisterCheck(c)
+	err = registerCheck(URL, c)
 	if err != nil {
 		t.Error(err)
 	}

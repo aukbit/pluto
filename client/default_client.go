@@ -13,13 +13,12 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
-	cfg          *Config
-	logger       zap.Logger
-	call         interface{}
-	conn         *grpc.ClientConn
-	isDiscovered bool
-	healthCall   healthpb.HealthClient
-	health       *health.Server
+	cfg        *Config
+	logger     zap.Logger
+	call       interface{}
+	conn       *grpc.ClientConn
+	healthCall healthpb.HealthClient
+	health     *health.Server
 }
 
 // newClient will instantiate a new Client with the given config

@@ -20,12 +20,11 @@ import (
 
 // Service
 type service struct {
-	cfg          *Config
-	close        chan bool
-	wg           *sync.WaitGroup
-	logger       zap.Logger
-	isDiscovered bool
-	health       *health.Server
+	cfg    *Config
+	close  chan bool
+	wg     *sync.WaitGroup
+	logger zap.Logger
+	health *health.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {

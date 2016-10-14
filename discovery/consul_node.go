@@ -17,10 +17,10 @@ type Node struct {
 	TaggedAddresses map[string]string `json:"TaggedAddresses,omitempty"`
 }
 
-func Nodes() (nodes []*Node, err error) {
+func Nodes(url string) (nodes []*Node, err error) {
 
 	qs := "?near=_agent"
-	resp, err := http.Get(URL + NODES + qs)
+	resp, err := http.Get(url + NODES + qs)
 	if err != nil {
 		return nil, err
 	}

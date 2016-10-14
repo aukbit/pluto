@@ -23,9 +23,9 @@ type Service struct {
 	Port    int      `json:"Port"`
 }
 
-func Services() (map[string]*Service, error) {
+func services(url string) (map[string]*Service, error) {
 
-	resp, err := http.Get(URL + SERVICES)
+	resp, err := http.Get(url + SERVICES)
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +42,13 @@ func Services() (map[string]*Service, error) {
 	return data, nil
 }
 
-func RegisterService(s *Service) error {
+func registerService(url string, s *Service) error {
 
 	b, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("PUT", URL+REGISTER_SERVICE, bytes.NewBuffer(b))
+	req, err := http.NewRequest("PUT", url+REGISTER_SERVICE, bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -67,9 +67,9 @@ func RegisterService(s *Service) error {
 	return nil
 }
 
-func DeregisterService(serviceID string) error {
+func deregisterService(url string, serviceID string) error {
 
-	req, err := http.NewRequest("PUT", URL+strings.Replace(DEREGISTER_SERVICE, "<serviceID>", serviceID, 1), bytes.NewBuffer([]byte(`{}`)))
+	req, err := http.NewRequest("PUT", url+strings.Replace(DEREGISTER_SERVICE, "<serviceID>", serviceID, 1), bytes.NewBuffer([]byte(`{}`)))
 	if err != nil {
 		return err
 	}

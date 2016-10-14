@@ -30,13 +30,13 @@ type Check struct {
 	ServiceID                      string `json:"ServiceID,omitempty"`
 }
 
-func RegisterCheck(c *Check) error {
+func registerCheck(url string, c *Check) error {
 
 	b, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("PUT", URL+REGISTER_CHECK, bytes.NewBuffer(b))
+	req, err := http.NewRequest("PUT", url+REGISTER_CHECK, bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -55,9 +55,9 @@ func RegisterCheck(c *Check) error {
 	return nil
 }
 
-func DeregisterCheck(checkID string) error {
+func deregisterCheck(url string, checkID string) error {
 
-	req, err := http.NewRequest("PUT", URL+strings.Replace(DEREGISTER_CHECK, "<checkID>", checkID, 1), bytes.NewBuffer([]byte(`{}`)))
+	req, err := http.NewRequest("PUT", url+strings.Replace(DEREGISTER_CHECK, "<checkID>", checkID, 1), bytes.NewBuffer([]byte(`{}`)))
 	if err != nil {
 		return err
 	}

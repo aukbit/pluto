@@ -24,6 +24,7 @@ type Config struct {
 	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
+	Discovery               discovery.Discovery
 }
 
 // ConfigFunc registers the Config
@@ -111,5 +112,12 @@ func ParentID(id string) ConfigFunc {
 func GRPCRegister(fn func(*grpc.ClientConn) interface{}) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.GRPCRegister = fn
+	}
+}
+
+// Discovery service discoery
+func Discovery(d discovery.Discovery) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Discovery = d
 	}
 }
