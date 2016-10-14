@@ -6,11 +6,11 @@ This is an example of creating a distributed deployment of pluto services using 
 ```
 $ docker run golang go get -v bitbucket.org/aukbit/pluto/examples/dist/...
 $ docker commit $(docker ps -lq) pluto
-$ docker run --name user_backend -p 65060:65060 -p 9090:9090 -d pluto user_backend -grpc_port=:65060 -db=cassandra -keyspace=pluto_user_backend -name=user_backend -consul_addr=192.168.99.101:8500
+$ docker run --name user_backend --network=bridge -p 65060:65060 -p 9090:9090 -d pluto user_backend -grpc_port=:65060 -db=cassandra -keyspace=pluto_user_backend -name=user_backend -consul_addr=192.168.99.101:8500
 ```
 ### Create a docker image for service user_bff on node2
 ```
 $ docker run golang go get -v bitbucket.org/aukbit/pluto/examples/dist/...
 $ docker commit $(docker ps -lq) pluto
-$ docker run --name user_backend -p 8080:8080 -p 9090:9090 -d pluto user_bff -http_port=:8080 -target_name=user_backend -name=user_bff -consul_addr=192.168.99.102:8500
+$ docker run --name user_bff --network=bridge -p 8080:8080 -p 9090:9090 -d pluto user_bff -http_port=:8080 -target_name=user_backend -name=user_bff -consul_addr=192.168.99.102:8500
 ```
