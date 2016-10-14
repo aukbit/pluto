@@ -39,6 +39,7 @@ func service() error {
 
 	// Define db connection
 	db := datastore.NewDatastore(
+		datastore.Name(*name),
 		datastore.TargetName(*db),
 		datastore.Keyspace(*keyspace))
 
