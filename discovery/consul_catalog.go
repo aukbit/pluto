@@ -74,13 +74,13 @@ func Target(url, service string) (string, error) {
 		return "", err
 	}
 	if len(ns) > 0 {
-		var addr string
-		if ns[0].ServiceAddress != "" {
-			addr = ns[0].ServiceAddress
-		} else {
-			addr = ns[0].Address
-		}
-		t := fmt.Sprintf("%s:%d", addr, ns[0].ServicePort)
+		// var addr string
+		// if ns[0].ServiceAddress != "" {
+		// 	addr = ns[0].ServiceAddress
+		// } else {
+		// 	addr = ns[0].Address
+		// }
+		t := fmt.Sprintf("%s:%d", ns[0].Address, ns[0].ServicePort)
 		return t, nil
 	}
 	return "", fmt.Errorf("nodes not available with service: %s", service)
