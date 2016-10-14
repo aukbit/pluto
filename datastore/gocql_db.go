@@ -24,9 +24,17 @@ func newDatastore(cfgs ...ConfigFunc) *datastore {
 	return ds
 }
 
-func (ds *datastore) Connect() {
+func (ds *datastore) Connect(cfgs ...ConfigFunc) {
 	ds.logger.Info("connect")
-	ds.cluster = gocql.NewCluster(ds.cfg.Addr)
+	// set last configs
+	for _, c := range cfgs {
+		c(ds.cfg)
+	}
+	// set target from service discovery
+	if err := ds.target(); err != nil {
+		return err
+	}
+	ds.cluster = gocql.NewCluster(ds.cfg.Target)
 	ds.cluster.ProtoVersion = 3
 	ds.cluster.Keyspace = ds.cfg.Keyspace
 }
@@ -61,6 +69,6 @@ func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) erro
 func (ds *datastore) setLogger() {
 	ds.logger = ds.logger.With(
 		zap.Nest("cassandra",
-			zap.String("addr", ds.cfg.Addr),
+			zap.String("target", ds.cfg.Target),
 			zap.String("keyspace", ds.cfg.Keyspace)))
 }

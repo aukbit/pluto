@@ -9,7 +9,7 @@ import (
 
 // register Server within the service discovery system
 func (ds *defaultServer) register() error {
-	if ds.cfg.Discovery != nil {
+	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
 		// define service
 		dse := &discovery.Service{
 			Name: ds.cfg.Name,

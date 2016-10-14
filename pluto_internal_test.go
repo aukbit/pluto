@@ -14,6 +14,7 @@ import (
 	"github.com/paulormart/assert"
 
 	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
@@ -39,25 +40,29 @@ func TestMain(m *testing.M) {
 	srvGRPC := server.NewServer(
 		server.Name("grpc"),
 		server.Description("grpc super server"),
-		server.Addr(":65050"),
+		server.Addr(":65060"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}))
-
+	// Create grpc pluto client
 	clt := client.NewClient(
 		client.Name("grpc"),
-		client.Target("localhost:65050"),
+		// client.Target("localhost:65060"),
+		client.TargetName("grpc"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
-
-	// Define Service
+	// Define service Discovery
+	d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
+	// Define Pluto Service
 	s := NewService(
 		Name("gopher"),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
-		Clients(clt))
+		Clients(clt),
+		Discovery(d),
+	)
 
 	if !testing.Short() {
 		// Run Server

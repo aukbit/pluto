@@ -113,15 +113,9 @@ func (s *service) start() error {
 			zap.Int("servers", len(s.cfg.Servers)),
 			zap.Int("clients", len(s.cfg.Clients))))
 
-	// connect datastore
-	if s.cfg.Datastore != nil {
-		s.cfg.Datastore.Connect()
-		if err := s.cfg.Datastore.RefreshSession(); err != nil {
-			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
-		}
-	}
-
 	// TODO: manage errors
+	// connect to db
+	s.connectDB()
 	// run servers
 	s.startServers()
 	// dial clients
@@ -130,6 +124,16 @@ func (s *service) start() error {
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
 	return nil
+}
+
+func (s *service) connectDB() {
+	// connect datastore
+	if _, ok := s.cfg.Datastore.(datastore.Datastore); ok {
+		s.cfg.Datastore.Connect()
+		if err := s.cfg.Datastore.RefreshSession(); err != nil {
+			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
+		}
+	}
 }
 
 func (s *service) startServers() {

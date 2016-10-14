@@ -1,32 +1,71 @@
 package datastore
 
 import (
+	"fmt"
 	"log"
 	"regexp"
+	"strings"
+
+	"bitbucket.org/aukbit/pluto/common"
+	"bitbucket.org/aukbit/pluto/discovery"
 )
 
 type Config struct {
-	Keyspace        string
-	Addr            string
-	TargetDiscovery string // service name on service discovery
+	ID         string
+	Name       string
+	Version    string
+	Keyspace   string
+	Target     string
+	TargetName string // service name on service discovery
+	Discovery  discovery.Discovery
 }
 
 type ConfigFunc func(*Config)
 
 var (
 	defaultKeyspace = "default"
-	defaultAddr     = "127.0.0.1"
+	defaultTarget   = "127.0.0.1"
 )
 
 func newConfig(cfgs ...ConfigFunc) *Config {
 
-	cfg := &Config{Keyspace: defaultKeyspace, Addr: defaultAddr}
+	cfg := &Config{Version: defaultVersion,
+		Keyspace: defaultKeyspace,
+		Target:   defaultTarget}
 
 	for _, c := range cfgs {
 		c(cfg)
 	}
 
+	if len(cfg.ID) == 0 {
+		cfg.ID = common.RandID("db_", 6)
+	}
+
+	if len(cfg.Name) == 0 {
+		cfg.Name = DefaultName
+	}
+
 	return cfg
+}
+
+// ID client id
+func ID(id string) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.ID = id
+	}
+}
+
+// Name client name
+func Name(n string) ConfigFunc {
+	return func(cfg *Config) {
+		// support only alphanumeric and underscore characters
+		reg, err := regexp.Compile("[^A-Za-z0-9_]+")
+		if err != nil {
+			log.Fatal(err)
+		}
+		safe := reg.ReplaceAllString(n, "_")
+		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+	}
 }
 
 // Keyspace db keyspace
@@ -43,23 +82,23 @@ func Keyspace(ks string) ConfigFunc {
 	}
 }
 
-// Addr db address
-// TODO: rename Addr to Target
-func Addr(a string) ConfigFunc {
+// Target db address
+func Target(a string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.Addr = a
+		cfg.Target = a
 	}
 }
 
-// TargetDiscovery server address
-func TargetDiscovery(name string) ConfigFunc {
+// TargetName server address
+func TargetName(name string) ConfigFunc {
 	return func(cfg *Config) {
-		cfg.TargetDiscovery = name
-		// get target from service discovery
-		// t, err := discovery.Target(name)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// cfg.Addr = t
+		cfg.TargetName = name
+	}
+}
+
+// Discovery service discoery
+func Discovery(d discovery.Discovery) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Discovery = d
 	}
 }

@@ -46,6 +46,10 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 	if err := dc.register(); err != nil {
 		return err
 	}
+	// set target from service discovery
+	if err := dc.target(); err != nil {
+		return err
+	}
 	// start server
 	if err := dc.dialGRPC(); err != nil {
 		return err

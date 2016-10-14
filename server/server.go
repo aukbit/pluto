@@ -12,8 +12,9 @@ type Server interface {
 	Health() *healthpb.HealthCheckResponse
 }
 
-var (
-	defaultName    = "server"
+const (
+	// DefaultName server prefix name
+	DefaultName    = "server"
 	defaultVersion = "v1.0.0"
 )
 

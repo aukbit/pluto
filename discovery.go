@@ -9,7 +9,7 @@ import (
 
 // register Pluto Service within the service discovery system
 func (s *service) register() error {
-	if s.cfg.Discovery != nil {
+	if _, ok := s.cfg.Discovery.(discovery.Discovery); ok {
 		// define service
 		dse := &discovery.Service{
 			Name: s.cfg.Name,

@@ -45,7 +45,7 @@ func newConfig(cfgs ...ConfigFunc) *Config {
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = defaultName
+		cfg.Name = DefaultName
 	}
 
 	return cfg
@@ -69,7 +69,7 @@ func Name(n string) ConfigFunc {
 			)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", defaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
 	}
 }
 
