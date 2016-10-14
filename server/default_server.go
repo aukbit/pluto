@@ -47,12 +47,12 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(ds.cfg)
 	}
-	// set logger
-	ds.setLogger()
 	// register at service discovery
 	if err := ds.register(); err != nil {
 		return err
 	}
+	// set logger
+	ds.setLogger()
 	// start server
 	if err := ds.start(); err != nil {
 		return err
@@ -75,8 +75,7 @@ func (ds *defaultServer) Stop() {
 }
 
 func (ds *defaultServer) Config() *Config {
-	cfg := ds.cfg
-	return cfg
+	return ds.cfg
 }
 
 func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {

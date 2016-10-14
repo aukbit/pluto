@@ -65,8 +65,7 @@ func (s *service) Stop() {
 
 // Config service configration options
 func (s *service) Config() *Config {
-	cfg := s.cfg
-	return cfg
+	return s.cfg
 }
 
 // Server returns a server instance by name if initialized in service
@@ -83,11 +82,6 @@ func (s *service) Client(name string) (clt client.Client, ok bool) {
 		return
 	}
 	return clt, true
-}
-
-// Datastore TODO there is no need to be public
-func (s *service) Datastore() datastore.Datastore {
-	return s.cfg.Datastore
 }
 
 func (s *service) Health() *healthpb.HealthCheckResponse {
@@ -113,7 +107,6 @@ func (s *service) start() error {
 			zap.Int("servers", len(s.cfg.Servers)),
 			zap.Int("clients", len(s.cfg.Clients))))
 
-	// TODO: manage errors
 	// connect to db
 	s.connectDB()
 	// run servers
@@ -129,7 +122,7 @@ func (s *service) start() error {
 func (s *service) connectDB() {
 	// connect datastore
 	if _, ok := s.cfg.Datastore.(datastore.Datastore); ok {
-		s.cfg.Datastore.Connect()
+		s.cfg.Datastore.Connect(datastore.Discovery(s.Config().Discovery))
 		if err := s.cfg.Datastore.RefreshSession(); err != nil {
 			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
 		}
@@ -142,13 +135,14 @@ func (s *service) startServers() {
 		s.wg.Add(1)
 		go func(srv server.Server) {
 			defer s.wg.Done()
-			if err := srv.Run(
+			err := srv.Run(
 				server.ParentID(s.cfg.ID),
 				server.Middlewares(serviceContextMiddleware(s)),
 				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
-				server.Discovery(s.Config().Discovery),
-			); err != nil {
+				server.Discovery(s.Config().Discovery))
+			if err != nil {
 				s.logger.Error("Run()", zap.String("err", err.Error()))
+				delete(s.cfg.Servers, srv.Config().Name)
 			}
 		}(srv)
 	}
@@ -160,11 +154,12 @@ func (s *service) startClients() {
 		s.wg.Add(1)
 		go func(clt client.Client) {
 			defer s.wg.Done()
-			if err := clt.Dial(
+			err := clt.Dial(
 				client.ParentID(s.cfg.ID),
-				client.Discovery(s.Config().Discovery),
-			); err != nil {
+				client.Discovery(s.Config().Discovery))
+			if err != nil {
 				s.logger.Error("Dial()", zap.String("err", err.Error()))
+				delete(s.cfg.Clients, clt.Config().Name)
 			}
 		}(clt)
 	}

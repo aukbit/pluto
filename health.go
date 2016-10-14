@@ -3,6 +3,7 @@ package pluto
 import (
 	"net/http"
 
+	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
@@ -30,6 +31,17 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		hcr = clt.Health()
+	case "db":
+		db, ok := s.Config().Datastore.(datastore.Datastore)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		if n != db.Config().Name {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = db.Health()
 	case "pluto":
 		if n != s.Config().Name {
 			reply.Json(w, r, http.StatusNotFound, hcr)

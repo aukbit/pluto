@@ -31,8 +31,7 @@ func newClient(cfgs ...ConfigFunc) *defaultClient {
 }
 
 func (dc *defaultClient) Config() *Config {
-	cfg := dc.cfg
-	return cfg
+	return dc.cfg
 }
 
 func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
@@ -40,8 +39,6 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 	for _, c := range cfgs {
 		c(dc.cfg)
 	}
-	// set logger
-	dc.setLogger()
 	// register at service discovery
 	if err := dc.register(); err != nil {
 		return err
@@ -50,6 +47,8 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 	if err := dc.target(); err != nil {
 		return err
 	}
+	// set logger
+	dc.setLogger()
 	// start server
 	if err := dc.dialGRPC(); err != nil {
 		return err
