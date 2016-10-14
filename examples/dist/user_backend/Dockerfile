@@ -38,7 +38,7 @@ ADD . /go/src/bitbucket.org/aukbit/pluto/examples/dist/user_backend
 RUN go install bitbucket.org/aukbit/pluto/examples/dist/user_backend
 
 # Run the pluto-sample-dist command by default when the container starts.
-ENTRYPOINT /go/bin/user_backend -grpc_port=:65060 -db=cassandra -name=user_backend
+ENTRYPOINT /go/bin/user_backend -grpc_port=:65060 -db=cassandra -keyspace=pluto_user_backend -name=user_backend
 
 # Document that the service listens on port 65060.
 EXPOSE 65060

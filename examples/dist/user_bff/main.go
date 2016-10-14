@@ -16,7 +16,7 @@ import (
 
 var httpPort = flag.String("http_port", ":8080", "backend for frontend http port")
 var name = flag.String("name", "user_bff", "service name instance")
-var targetName = flag.String("target_name", "server_user_backend", "target server name instance")
+var targetName = flag.String("target_name", "user_backend", "target server name instance")
 
 func main() {
 	flag.Parse()
@@ -27,6 +27,7 @@ func main() {
 }
 
 func service() error {
+
 	// Define handlers
 	mux := router.NewMux()
 	mux.GET("/user", views.GetHandler)
@@ -35,7 +36,7 @@ func service() error {
 	mux.PUT("/user/:id", views.PutHandler)
 	mux.DELETE("/user/:id", views.DeleteHandler)
 
-	// define http server
+	// Define http server
 	srv := server.NewServer(
 		server.Name(*name),
 		server.Addr(*httpPort),
@@ -46,8 +47,8 @@ func service() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.TargetDiscovery(*targetName),
-	)
+		client.TargetName(*targetName))
+
 	// Define Pluto service
 	s := pluto.NewService(
 		pluto.Name(*name),
