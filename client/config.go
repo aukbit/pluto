@@ -93,11 +93,11 @@ func TargetDiscovery(name string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.TargetDiscovery = name
 		// get target from service discovery
-		t, err := discovery.Target(name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cfg.Target = t
+		// t, err := discovery.Target(name)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// cfg.Target = t
 	}
 }
 

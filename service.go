@@ -141,7 +141,9 @@ func (s *service) startServers() {
 			if err := srv.Run(
 				server.ParentID(s.cfg.ID),
 				server.Middlewares(serviceContextMiddleware(s)),
-				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s))); err != nil {
+				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
+				server.Discovery(s.Config().Discovery),
+			); err != nil {
 				s.logger.Error("Run()", zap.String("err", err.Error()))
 			}
 		}(srv)
@@ -154,7 +156,10 @@ func (s *service) startClients() {
 		s.wg.Add(1)
 		go func(clt client.Client) {
 			defer s.wg.Done()
-			if err := clt.Dial(client.ParentID(s.cfg.ID)); err != nil {
+			if err := clt.Dial(
+				client.ParentID(s.cfg.ID),
+				client.Discovery(s.Config().Discovery),
+			); err != nil {
 				s.logger.Error("Dial()", zap.String("err", err.Error()))
 			}
 		}(clt)

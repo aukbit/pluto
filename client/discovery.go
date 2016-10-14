@@ -13,7 +13,7 @@ func (dc *defaultClient) register() error {
 		// define service
 		dse := &discovery.Service{
 			Name: dc.cfg.Name,
-			Tags: []string{dc.cfg.Version, dc.cfg.ID},
+			Tags: []string{dc.cfg.ID, dc.cfg.Version},
 		}
 		// define check
 		dck := &discovery.Check{
@@ -63,8 +63,10 @@ func (dc *defaultClient) register() error {
 
 // unregister Server from the service discovery system
 func (dc *defaultClient) unregister() error {
-	if err := dc.cfg.Discovery.Unregister(); err != nil {
-		return err
+	if _, ok := dc.cfg.Discovery.(discovery.Discovery); ok {
+		if err := dc.cfg.Discovery.Unregister(); err != nil {
+			return err
+		}
 	}
 	return nil
 	// if dc.isDiscovered {

@@ -3,8 +3,6 @@ package datastore
 import (
 	"log"
 	"regexp"
-
-	"bitbucket.org/aukbit/pluto/discovery"
 )
 
 type Config struct {
@@ -58,10 +56,10 @@ func TargetDiscovery(name string) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.TargetDiscovery = name
 		// get target from service discovery
-		t, err := discovery.Target(name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cfg.Addr = t
+		// t, err := discovery.Target(name)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// cfg.Addr = t
 	}
 }

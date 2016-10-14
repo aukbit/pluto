@@ -14,7 +14,7 @@ func (ds *defaultServer) register() error {
 		dse := &discovery.Service{
 			Name: ds.cfg.Name,
 			Port: ds.cfg.Port(),
-			Tags: []string{ds.cfg.Version, ds.cfg.ID},
+			Tags: []string{ds.cfg.ID, ds.cfg.Version},
 		}
 		// define check
 		dck := &discovery.Check{
@@ -64,8 +64,10 @@ func (ds *defaultServer) register() error {
 
 // unregister Server from the service discovery system
 func (ds *defaultServer) unregister() error {
-	if err := ds.cfg.Discovery.Unregister(); err != nil {
-		return err
+	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
+		if err := ds.cfg.Discovery.Unregister(); err != nil {
+			return err
+		}
 	}
 	return nil
 	// if ds.isDiscovered {
