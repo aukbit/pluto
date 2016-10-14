@@ -17,7 +17,7 @@ type Datastore interface {
 
 const (
 	// DefaultName prefix datastore client name
-	DefaultName    = "client_db"
+	DefaultName    = "plt_client_db"
 	defaultVersion = "v1.0.0"
 )
 

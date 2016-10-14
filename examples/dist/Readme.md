@@ -12,5 +12,5 @@ $ docker run --name user_backend --network=bridge -p 65060:65060 -p 9090:9090 -d
 ```
 $ docker run golang go get -v bitbucket.org/aukbit/pluto/examples/dist/...
 $ docker commit $(docker ps -lq) pluto
-$ docker run --name user_bff --network=bridge -p 8080:8080 -p 9090:9090 -d pluto user_bff -http_port=:8080 -target_name=user_backend -name=user_bff -consul_addr=192.168.99.102:8500
+$ docker run --name user_bff --network=bridge -p 8082:8082 -p 9090:9090 -d pluto user_bff -http_port=:8082 -target_name=user_backend -name=user_bff -consul_addr=192.168.99.102:8500
 ```
