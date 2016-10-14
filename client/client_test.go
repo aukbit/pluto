@@ -64,7 +64,7 @@ func TestClient(t *testing.T) {
 
 	cfg := c.Config()
 	assert.Equal(t, true, len(cfg.ID) > 0)
-	assert.Equal(t, "client_client_test_gopher", cfg.Name)
+	assert.Equal(t, "client_test_gopher_client", cfg.Name)
 	assert.Equal(t, "grpc", cfg.Format)
 	assert.Equal(t, "gopher super client", cfg.Description)
 
@@ -77,7 +77,7 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	assert.Equal(t, "Hello client_client_test_gopher", r.Message)
+	assert.Equal(t, "Hello client_test_gopher_client", r.Message)
 }
 
 func TestHealth(t *testing.T) {

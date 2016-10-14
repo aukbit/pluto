@@ -48,7 +48,7 @@ func TestPluto(t *testing.T) {
 	// Assert Config
 	cfg := s.Config()
 	assert.Equal(t, true, len(cfg.ID) > 0)
-	assert.Equal(t, "pluto_gopher", cfg.Name)
+	assert.Equal(t, "gopher_pluto", cfg.Name)
 	assert.Equal(t, "gopher super service", cfg.Description)
 
 	// Test

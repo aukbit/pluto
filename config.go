@@ -69,7 +69,7 @@ func Name(n string) ConfigFunc {
 			)
 		}
 		safe := reg.ReplaceAllString(n, "_")
-		cfg.Name = fmt.Sprintf("%s_%s", DefaultName, strings.ToLower(safe))
+		cfg.Name = fmt.Sprintf("%s_%s", strings.ToLower(safe), DefaultName)
 	}
 }
 

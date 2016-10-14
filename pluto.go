@@ -18,7 +18,7 @@ type Service interface {
 
 const (
 	// DefaultName prefix on pluto service name
-	DefaultName    = "plt"
+	DefaultName    = "pluto"
 	defaultVersion = "v1.0.0"
 )
 
