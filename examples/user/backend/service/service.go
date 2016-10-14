@@ -4,13 +4,14 @@ import (
 	"flag"
 
 	"bitbucket.org/aukbit/pluto"
+	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/examples/user/backend/views"
 	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
 	"bitbucket.org/aukbit/pluto/server"
 	"google.golang.org/grpc"
 )
 
-var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
+var db_addr = flag.String("db_addr", "192.168.99.100", "cassandra address")
 var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
 
 func Run() error {
@@ -22,12 +23,15 @@ func Run() error {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &backend.UserViews{})
 		}))
-
+	// db connection
+	db := datastore.NewDatastore(
+		datastore.Target(*db_addr),
+		datastore.Keyspace("pluto_backend"))
 	// Define Pluto Service
 	s := pluto.NewService(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
-		pluto.Datastore(*db_addr),
+		pluto.Datastore(db),
 		pluto.Servers(srv))
 
 	// Run service
