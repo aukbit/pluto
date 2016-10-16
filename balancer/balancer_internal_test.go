@@ -2,11 +2,13 @@ package balancer
 
 import (
 	"log"
+	"sync"
 	"testing"
 	"time"
 )
 
-var NumWorkers = 1
+var wg sync.WaitGroup
+var NumWorkers = 2
 
 func workFn() int {
 	log.Printf("Hello workFn")
@@ -15,17 +17,22 @@ func workFn() int {
 }
 
 func RunBalancer(work chan Request) {
-	wA := &Worker{requests: make(chan Request), pending: 0}
-	log.Printf("RunBalancer worker: %v", wA)
-	// wB := &Worker{requests: make(chan Request), pending: 0}
-	p := Pool{wA}
+	defer wg.Done()
+	doneCh := make(chan *Worker)
+	requestsCh := make(chan Request)
+	wA := &Worker{requests: requestsCh, pending: 0}
+	wB := &Worker{requests: requestsCh, pending: 0}
+	go wA.work(doneCh)
+	go wB.work(doneCh)
+	p := Pool{wA, wB}
 	log.Printf("RunBalancer pool: %v", p)
-	b := &Balancer{pool: p, done: make(chan *Worker)}
+	b := &Balancer{pool: p, done: doneCh}
 	log.Printf("RunBalancer balancer: %v", b)
 	b.balance(work)
 }
 
 func requester(work chan<- Request) {
+	defer wg.Done()
 	log.Printf("requester workCh: %v", work)
 	c := make(chan int)
 	for {
@@ -46,9 +53,13 @@ func TestBalancer(t *testing.T) {
 	workCh := make(chan Request)
 	log.Printf("TestBalancer reqChan: %v", workCh)
 	for i := 0; i < NumWorkers; i++ {
+		wg.Add(1)
 		go requester(workCh)
 	}
-	RunBalancer(workCh)
+	wg.Add(1)
+	go RunBalancer(workCh)
+	wg.Wait()
+	log.Printf("TestBalancer END")
 	// receiveLotsOfResults(out)
 	//
 	// go RunBalancer()

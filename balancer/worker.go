@@ -10,7 +10,7 @@ type Worker struct {
 }
 
 func (w *Worker) work(done chan *Worker) {
-	log.Printf("Worker work 1 %v", done)
+	log.Printf("Worker work %v", done)
 	for {
 		req := <-w.requests // get Request from balancer
 		req.c <- req.fn()   // call fn and send result
