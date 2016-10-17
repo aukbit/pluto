@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 
+	"bitbucket.org/aukbit/pluto/client/balancer"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -15,10 +16,13 @@ import (
 type defaultClient struct {
 	cfg        *Config
 	logger     zap.Logger
-	call       interface{}
-	conn       *grpc.ClientConn
-	healthCall healthpb.HealthClient
+	call       interface{}           // TODO: deprecated managed in balancer
+	conn       *grpc.ClientConn      // TODO: deprecated managed in balancer
+	healthCall healthpb.HealthClient // TODO: deprecated managed in balancer
 	health     *health.Server
+
+	// Load Balancer to manage client connections
+	balancer *balancer.Balancer
 }
 
 // newClient will instantiate a new Client with the given config

@@ -2,7 +2,7 @@ package balancer
 
 // Pool implements heap.Interface and holds Workers.
 // https://golang.org/pkg/container/heap/
-type Pool []*Worker
+type Pool []*Connector
 
 func (p Pool) Len() int           { return len(p) }
 func (p Pool) Less(i, j int) bool { return p[i].pending < p[j].pending }
@@ -16,7 +16,7 @@ func (p Pool) Swap(i, j int) {
 func (p *Pool) Push(item interface{}) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*p = append(*p, item.(*Worker))
+	*p = append(*p, item.(*Connector))
 }
 
 // Pop ...
