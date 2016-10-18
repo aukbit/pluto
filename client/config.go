@@ -14,20 +14,18 @@ type Config struct {
 	Name                    string
 	Description             string
 	Version                 string
+	Targets                 []string
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	TargetName              string // service name on service discovery
 	Format                  string
 	ParentID                string // sets parent ID
-	GRPCRegister            GRPCRegisterFn
+	GRPCRegister            func(*grpc.ClientConn) interface{}
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
 	Discovery               discovery.Discovery
 }
 
 // ConfigFn registers the Config
 type ConfigFn func(*Config)
-
-// GRPCRegisterFn func type
-type GRPCRegisterFn func(*grpc.ClientConn) interface{}
 
 var (
 	defaultTarget = "localhost:65060"
@@ -36,7 +34,11 @@ var (
 
 func newConfig(cfgs ...ConfigFn) *Config {
 
-	cfg := &Config{Target: defaultTarget, Format: defaultFormat, Version: defaultVersion}
+	cfg := &Config{
+		Targets: []string{},
+		Target:  defaultTarget,
+		Format:  defaultFormat,
+		Version: defaultVersion}
 
 	for _, c := range cfgs {
 		c(cfg)
@@ -74,6 +76,13 @@ func Description(d string) ConfigFn {
 	}
 }
 
+// Targets slice of server address
+func Targets(t ...string) ConfigFn {
+	return func(cfg *Config) {
+		cfg.Targets = append(cfg.Targets, t...)
+	}
+}
+
 // Target server address
 func Target(t string) ConfigFn {
 	return func(cfg *Config) {
@@ -99,6 +108,13 @@ func ParentID(id string) ConfigFn {
 func GRPCRegister(fn func(*grpc.ClientConn) interface{}) ConfigFn {
 	return func(cfg *Config) {
 		cfg.GRPCRegister = fn
+	}
+}
+
+// UnaryClientInterceptors ...
+func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) ConfigFn {
+	return func(cfg *Config) {
+		cfg.UnaryClientInterceptors = append(cfg.UnaryClientInterceptors, uci...)
 	}
 }
 

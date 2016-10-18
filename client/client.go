@@ -6,7 +6,7 @@ import (
 
 // Client is an interface to make calls to services
 type Client interface {
-	Dial(...ConfigFunc) error
+	Dial(...ConfigFn) error
 	Call() interface{}
 	Close()
 	Config() *Config
@@ -20,6 +20,6 @@ const (
 )
 
 // NewClient returns a new client with cfg passed in
-func NewClient(cfgs ...ConfigFunc) Client {
+func NewClient(cfgs ...ConfigFn) Client {
 	return newClient(cfgs...)
 }

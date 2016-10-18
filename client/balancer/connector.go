@@ -19,7 +19,8 @@ type Connector struct {
 	logger     zap.Logger
 }
 
-func newConnector(cfgs ...ConfigFn) *Connector {
+// NewConnector ...
+func NewConnector(cfgs ...ConfigFn) *Connector {
 	c := newConfig(cfgs...)
 	return &Connector{
 		cfg:        c,

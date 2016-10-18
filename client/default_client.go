@@ -23,22 +23,67 @@ type defaultClient struct {
 
 	// Load Balancer to manage client connections
 	balancer *balancer.Balancer
+	conns    []*balancer.Connector
 }
 
 // newClient will instantiate a new Client with the given config
-func newClient(cfgs ...ConfigFunc) *defaultClient {
+func newClient(cfgs ...ConfigFn) *defaultClient {
 	c := newConfig(cfgs...)
 	return &defaultClient{
-		cfg:    c,
-		logger: zap.New(zap.NewJSONEncoder()),
-		health: health.NewServer()}
+		cfg:      c,
+		balancer: balancer.NewBalancer(),
+		logger:   zap.New(zap.NewJSONEncoder()),
+		health:   health.NewServer()}
 }
 
 func (dc *defaultClient) Config() *Config {
 	return dc.cfg
 }
 
-func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
+func (dc *defaultClient) initConnectors() (conns []*balancer.Connector) {
+	for _, t := range dc.cfg.Targets {
+		c := balancer.NewConnector(
+			balancer.Target(t),
+			balancer.GRPCRegister(dc.cfg.GRPCRegister),
+			balancer.UnaryClientInterceptors(dc.cfg.UnaryClientInterceptors),
+		)
+		conns = append(conns, c)
+	}
+	return conns
+}
+
+func (dc *defaultClient) initBalancer() error {
+	return nil
+}
+
+func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
+	// set last configs
+	for _, c := range cfgs {
+		c(dc.cfg)
+	}
+	// register at service discovery
+	// if err := dc.register(); err != nil {
+	// 	return err
+	// }
+	// set target from service discovery
+	// if err := dc.target(); err != nil {
+	// 	return err
+	// }
+	// init logger
+	dc.initLogger()
+	// init balancer
+	dc.initBalancer()
+	// start server
+	if err := dc.dialGRPC(); err != nil {
+		return err
+	}
+	// set health
+	dc.health.SetServingStatus(dc.cfg.ID, 1)
+	//
+	return nil
+}
+
+func (dc *defaultClient) DialOld(cfgs ...ConfigFn) error {
 	// set last configs
 	for _, c := range cfgs {
 		c(dc.cfg)
@@ -52,7 +97,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFunc) error {
 		return err
 	}
 	// set logger
-	dc.setLogger()
+	dc.initLogger()
 	// start server
 	if err := dc.dialGRPC(); err != nil {
 		return err
@@ -107,7 +152,7 @@ func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
-func (dc *defaultClient) setLogger() {
+func (dc *defaultClient) initLogger() {
 	dc.logger = dc.logger.With(
 		zap.Nest("client",
 			zap.String("id", dc.cfg.ID),

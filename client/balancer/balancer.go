@@ -9,8 +9,8 @@ type Balancer struct {
 	connsCh chan *Connector
 }
 
-// newBalancer starts a balncer with an empty pool
-func newBalancer() *Balancer {
+// NewBalancer starts a balancer with an empty pool
+func NewBalancer() *Balancer {
 	return &Balancer{
 		pool:    newPool(),
 		connsCh: make(chan *Connector)}

@@ -4,20 +4,16 @@ import "google.golang.org/grpc"
 
 // Config client configuaration options
 type Config struct {
-	Target       string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	GRPCRegister GRPCRegisterFn
-	// UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
+	Target                  string                             // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	GRPCRegister            func(*grpc.ClientConn) interface{} //
+	UnaryClientInterceptors []grpc.UnaryClientInterceptor      // gRPC interceptors
 }
 
 // ConfigFn registers the Config
 type ConfigFn func(*Config)
 
-// GRPCRegisterFn func type
-type GRPCRegisterFn func(*grpc.ClientConn) interface{}
-
 var (
 	defaultTarget = "localhost:65060"
-	defaultFormat = "grpc"
 )
 
 func newConfig(cfgs ...ConfigFn) *Config {
@@ -39,8 +35,15 @@ func Target(t string) ConfigFn {
 }
 
 // GRPCRegister register client gRPC function
-func GRPCRegister(fn GRPCRegisterFn) ConfigFn {
+func GRPCRegister(fn func(*grpc.ClientConn) interface{}) ConfigFn {
 	return func(cfg *Config) {
 		cfg.GRPCRegister = fn
+	}
+}
+
+// UnaryClientInterceptors ...
+func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) ConfigFn {
+	return func(cfg *Config) {
+		cfg.UnaryClientInterceptors = append(cfg.UnaryClientInterceptors, uci...)
 	}
 }

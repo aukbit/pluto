@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 func InitConnectors() (cons []*Connector) {
 	for i := 0; i < numServers; i++ {
 		p := PORT + i
-		c := newConnector(
+		c := NewConnector(
 			Target(fmt.Sprintf("localhost:%d", p)),
 			GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 				return pb.NewGreeterClient(cc)
@@ -77,7 +77,7 @@ func InitConnectors() (cons []*Connector) {
 }
 
 func InitBalancer(inCh <-chan Request) *Balancer {
-	b := newBalancer()
+	b := NewBalancer()
 	go b.balance(inCh)
 	return b
 }
