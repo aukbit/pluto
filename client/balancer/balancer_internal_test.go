@@ -1,7 +1,6 @@
 package balancer
 
 import (
-	"assert"
 	"container/heap"
 	"fmt"
 	"log"
@@ -11,6 +10,7 @@ import (
 
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -63,9 +63,9 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func InitConnectors(inCallsCh chan *Call, outCallsCh chan *Call) (cons []*Connector) {
-	cA := &Connector{target: "localhost:65070", callsCh: inCallsCh}
-	cB := &Connector{target: "localhost:65071", callsCh: inCallsCh}
+func InitConnectors(callsCh chan *Call) (cons []*Connector) {
+	cA := &Connector{target: "localhost:65070", callsCh: callsCh}
+	cB := &Connector{target: "localhost:65071", callsCh: callsCh}
 	// establish connectors
 	cA.dial(func(cc *grpc.ClientConn) interface{} {
 		return pb.NewGreeterClient(cc)
@@ -74,14 +74,14 @@ func InitConnectors(inCallsCh chan *Call, outCallsCh chan *Call) (cons []*Connec
 		return pb.NewGreeterClient(cc)
 	})
 	// watch for requests
-	go cA.watch()
-	go cB.watch()
+	go cA.watch(doneCh)
+	go cB.watch(doneCh)
 
 	cons = append(cons, cA, cB)
 	return cons
 }
 
-func InitBalancer(cons []*Connector, inCh <-chan *Call, outCh chan<- *Call) {
+func InitBalancer(cons []*Connector, inCh <-chan *Call, outCh chan<- *Call, doneCh chan *Connector) {
 	// initialize pool with connectors available
 	p := Pool{}
 	for _, c := range cons {
@@ -91,37 +91,36 @@ func InitBalancer(cons []*Connector, inCh <-chan *Call, outCh chan<- *Call) {
 	log.Printf("RunBalancer pool: %v", p)
 	// set balancer
 
-	b := &Balancer{pool: p, doneCh: make(chan *Connector)}
+	b := &Balancer{pool: p, doneCh: doneCh}
 	log.Printf("RunBalancer balancer: %v", b)
 	b.balance(inCh)
 }
 
 func TestBalancer(t *testing.T) {
-	inCallsCh := make(chan *Call)
-	outCallsCh := make(chan *Call)
-	cons := InitConnectors(inCallsCh, outCallsCh)
-	go InitBalancer(cons, inCallsCh, outCallsCh)
+	callsCh := make(chan *Call)
+	cons := InitConnectors(callsCh)
+	go InitBalancer(cons, callsCh)
 
-	// clients channel
-	clientsCh := make(chan interface{})
-	c := &Call{clientsCh: clientsCh}
+	// connectors channel
+	connsCh := make(chan *Connector)
+	c := &Call{connsCh: connsCh}
 	time.Sleep(time.Second * 1)
 	log.Printf("send call over channel")
-	inCallsCh <- c
-	for {
-		select {
-		case client := <-clientsCh: // wait for client
-			// Make a Call
-			r, err := client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: "Gopher"})
-			if err != nil {
-				log.Fatal(err)
-			}
-			assert.Equal(t, "Hello Gopher", r.Message)
-			c.done()
-		}
-	}
+	callsCh <- c
 
-	// log.Printf("TestBalancer END")
+	// wait for client
+	client := <-clientsCh
+	// Make a Call
+	r, err := client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: "Gopher"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "Hello Gopher", r.Message)
+	// set call has done
+	c.done()
+
+	time.Sleep(time.Second * 1)
+	log.Printf("TestBalancer END")
 }
 
 // func requester(work chan<- Request) {

@@ -9,14 +9,19 @@ import (
 // Call the caller sends calls to the balancer
 type Call struct {
 	clientsCh chan interface{} // grpc client stub channel
-	conn      *Connector
 }
 
-// done receives a callsCh channel with write only constraint
-func (c *Call) done(doneCh chan<- *Connector) {
-	log.Printf("Call it's done") //
-	doneCh <- c.conn
-}
+// func (c *Call) watch(conn *Connector, doneCh chan<- *Connector) {
+// 	log.Printf("Call watch")
+// 	<-c.doneCh
+// 	doneCh <- conn
+// }
+//
+// // done
+// func (c *Call) done() {
+// 	log.Printf("Call it's done") //
+// 	c.doneCh <- true
+// }
 
 // Connector channel of requests
 type Connector struct {
@@ -26,6 +31,7 @@ type Connector struct {
 	target  string           // grpc server address
 	conn    *grpc.ClientConn // grpc connection to communicate with the server
 	client  interface{}      // grpc client stub to perform RPCs
+	doneCh  chan bool        //
 }
 
 // dial establish client grpc connection with the grpc server
@@ -48,24 +54,24 @@ func (c *Connector) dial(regFn func(*grpc.ClientConn) interface{}) error {
 }
 
 // watch waits for any call from balancer
-func (c *Connector) watch() {
+func (c *Connector) watch(doneCh chan<- *Connector) {
 	log.Printf("Connector watch")
-	// doneCh := make(chan *Connector)
 	for {
 		select {
-		case call := <-c.callsCh: // get call from balancer
-			log.Printf("call received")
-			call.clientsCh <- c.client // send client stub over the call clients channel
-			// set connector reference in the call
-			call.conn = c
-			// case <-c.outCh: // call it's done
-			// 	c.done(doneCh)
+		case callCh := <-c.callsCh: // get call from balancer
+			log.Printf("call received %v", c.target) //
+			call.clientsCh <- c.client               // send client stub over the call clients channel
+			// wait for call to finish
+			// go call.watch(c, doneCh)
+
+		case <-c.doneCh:
+			doneCh <- c
 		}
 	}
 }
 
 // done receives a connectors channel with write only constraint
-func (c *Connector) done(doneCh chan<- *Connector) {
+func (c *Connector) done() {
 	log.Printf("Connector it's done")
-	doneCh <- c // send the connector over the channel to inform balancer the request is finish
+	c.doneCh <- true
 }

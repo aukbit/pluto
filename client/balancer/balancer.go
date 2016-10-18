@@ -13,12 +13,12 @@ type Balancer struct {
 }
 
 // balance receives calls on call channel with read only constraint
-func (b *Balancer) balance(callsCh <-chan *Call) {
-	log.Printf("balance callsCh: %v", callsCh)
+func (b *Balancer) balance(inCh <-chan *Call) {
+	log.Printf("balance")
 	for {
 		select {
-		case call := <-callsCh: // received a Call
-			log.Printf("balance: received a Call: %v", call)
+		case call := <-inCh: // received a callCh
+			log.Printf("balance: received a callCh: %v", call)
 			b.dispatch(call) //send it to a Connector
 		case c := <-b.doneCh: // a call has finished
 			log.Printf("balance: a call has finished %v", c.index)
