@@ -14,46 +14,57 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
-	cfg        *Config
-	logger     zap.Logger
+	cfg    *Config
+	logger zap.Logger
+
 	call       interface{}           // TODO: deprecated managed in balancer
 	conn       *grpc.ClientConn      // TODO: deprecated managed in balancer
 	healthCall healthpb.HealthClient // TODO: deprecated managed in balancer
 	health     *health.Server
 
 	// Load Balancer to manage client connections
-	balancer *balancer.Balancer
-	conns    []*balancer.Connector
+	balancer   *balancer.Balancer
+	requestsCh chan balancer.Request
+	connsCh    chan *balancer.Connector
 }
 
 // newClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFn) *defaultClient {
 	c := newConfig(cfgs...)
 	return &defaultClient{
-		cfg:      c,
-		balancer: balancer.NewBalancer(),
-		logger:   zap.New(zap.NewJSONEncoder()),
-		health:   health.NewServer()}
+		cfg:        c,
+		logger:     zap.New(zap.NewJSONEncoder()),
+		health:     health.NewServer(),
+		balancer:   balancer.NewBalancer(),
+		requestsCh: make(chan balancer.Request),
+		connsCh:    make(chan *balancer.Connector)}
 }
 
 func (dc *defaultClient) Config() *Config {
 	return dc.cfg
 }
 
-func (dc *defaultClient) initConnectors() (conns []*balancer.Connector) {
+func (dc *defaultClient) initConnectors() {
 	for _, t := range dc.cfg.Targets {
 		c := balancer.NewConnector(
 			balancer.Target(t),
 			balancer.GRPCRegister(dc.cfg.GRPCRegister),
 			balancer.UnaryClientInterceptors(dc.cfg.UnaryClientInterceptors),
 		)
-		conns = append(conns, c)
+		// establish connection
+		if err := c.Dial(); err != nil {
+			dc.logger.Error("dial", zap.String("err", err.Error()))
+			return
+		}
+		// add connector to the balancer pool
+		dc.balancer.Push(c)
+		// watch for requests
+		go c.Watch()
 	}
-	return conns
 }
 
-func (dc *defaultClient) initBalancer() error {
-	return nil
+func (dc *defaultClient) startBalancer() {
+	go dc.balancer.Balance(dc.requestsCh)
 }
 
 func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
@@ -71,18 +82,34 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	// }
 	// init logger
 	dc.initLogger()
-	// init balancer
-	dc.initBalancer()
-	// start server
-	if err := dc.dialGRPC(); err != nil {
-		return err
-	}
+	// init connectors
+	dc.initConnectors()
+	// start load balancer
+	dc.startBalancer()
+	// // start server
+	// if err := dc.dialGRPC(); err != nil {
+	// 	return err
+	// }
 	// set health
 	dc.health.SetServingStatus(dc.cfg.ID, 1)
 	//
 	return nil
 }
 
+func (dc *defaultClient) Request() *balancer.Connector {
+	r := balancer.NewRequest(dc.connsCh)
+	// send the request over the calls channel
+	dc.requestsCh <- r
+	// return connector from connsCh
+	return <-dc.connsCh
+}
+
+func (dc *defaultClient) Done(conn *balancer.Connector) {
+	// send conn over balancer connsCh
+	dc.balancer.ConnsCh <- conn
+}
+
+// TODO deprecated
 func (dc *defaultClient) DialOld(cfgs ...ConfigFn) error {
 	// set last configs
 	for _, c := range cfgs {
@@ -108,6 +135,7 @@ func (dc *defaultClient) DialOld(cfgs ...ConfigFn) error {
 	return nil
 }
 
+// TODO deprecated
 func (dc *defaultClient) Call() interface{} {
 	if dc.call == nil {
 		return errors.New("Client has not been registered")
@@ -120,9 +148,11 @@ func (dc *defaultClient) Close() {
 	// set health as not serving
 	dc.health.SetServingStatus(dc.cfg.ID, 2)
 	// unregister
-	dc.unregister()
-	// close connection
-	dc.conn.Close()
+	// dc.unregister()
+	// stop connectors
+	for _, c := range dc.balancer.Pool() {
+		go c.Stop()
+	}
 }
 
 func (dc *defaultClient) healthServer() {

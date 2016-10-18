@@ -4,3 +4,7 @@ package balancer
 type Request struct {
 	connsCh chan *Connector
 }
+
+func NewRequest(ch chan *Connector) Request {
+	return Request{ch}
+}

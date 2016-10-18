@@ -3,6 +3,7 @@ package balancer
 import (
 	"github.com/uber-go/zap"
 
+	g "bitbucket.org/aukbit/pluto/client/grpc"
 	"google.golang.org/grpc"
 )
 
@@ -13,7 +14,7 @@ type Connector struct {
 	pending    int              // count pending tasks
 	index      int              // index in the heap
 	conn       *grpc.ClientConn // grpc connection to communicate with the server
-	client     interface{}      // grpc client stub to perform RPCs
+	Client     interface{}      // grpc client stub to perform RPCs
 	stopCh     chan bool        // receive a stop call
 	doneCh     chan bool        // guarantees has beeen stopped correctly
 	logger     zap.Logger
@@ -30,38 +31,45 @@ func NewConnector(cfgs ...ConfigFn) *Connector {
 		logger:     zap.New(zap.NewJSONEncoder())}
 }
 
-// dial establish client grpc connection with the grpc server
-func (c *Connector) dial() error {
+// Dial establish grpc client connection with the grpc server
+func (c *Connector) Dial() error {
+	c.logger.Info("dial")
+	// TODO use TLS
+	// append logger
+	// c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, loggerUnaryClientInterceptor(c))
+	// dial
 	conn, err := grpc.Dial(
 		c.cfg.Target,
-		grpc.WithInsecure())
-
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(g.WrapperUnaryClient(c.cfg.UnaryClientInterceptors...)))
 	if err != nil {
-		c.logger.Error("dial", zap.String("err", err.Error()))
 		return err
 	}
 	// keep connection for later close
 	c.conn = conn
+	// register health methods on connection
+	// c.healthCall = healthpb.NewHealthClient(conn)
 	// register proto client to get a stub to perform RPCs
-	c.client = c.cfg.GRPCRegister(conn)
+	c.Client = c.cfg.GRPCRegister(conn)
 	return nil
 }
 
-// watch waits for any call from balancer
-func (c *Connector) watch() {
+// Watch waits for any call from balancer
+func (c *Connector) Watch() {
 	for {
 		select {
 		case req := <-c.requestsCh: // get request from balancer
 			req.connsCh <- c
 		case <-c.stopCh:
-			c.conn.Close()
 			close(c.doneCh)
 			return
 		}
 	}
 }
 
-func (c *Connector) stop() {
+// Stop stops connector and close grpc connection
+func (c *Connector) Stop() {
+	c.conn.Close()
 	c.stopCh <- true
 	<-c.doneCh
 }

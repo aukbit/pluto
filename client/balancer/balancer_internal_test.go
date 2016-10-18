@@ -1,7 +1,6 @@
 package balancer
 
 import (
-	"assert"
 	"fmt"
 	"log"
 	"math/rand"
@@ -10,14 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/paulormart/assert"
+
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-var numServers = 5
-var numRequests = 10
+var numServers = 1
+var numRequests = 1
 
 const PORT = 65070
 
@@ -69,8 +70,8 @@ func InitConnectors() (cons []*Connector) {
 			GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 				return pb.NewGreeterClient(cc)
 			}))
-		c.dial()
-		go c.watch()
+		c.Dial()
+		go c.Watch()
 		cons = append(cons, c)
 	}
 	return cons
@@ -78,7 +79,7 @@ func InitConnectors() (cons []*Connector) {
 
 func InitBalancer(inCh <-chan Request) *Balancer {
 	b := NewBalancer()
-	go b.balance(inCh)
+	go b.Balance(inCh)
 	return b
 }
 
@@ -114,20 +115,20 @@ func TestBalancer(t *testing.T) {
 			defer wg.Done()
 			conn := <-connsCh
 			// Make a Call
-			r, err := conn.client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: fmt.Sprintf("Gopher %d", i)})
+			r, err := conn.Client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: fmt.Sprintf("Gopher %d", i)})
 			if err != nil {
 				log.Fatal(err)
 			}
 			assert.Equal(t, fmt.Sprintf("Hello Gopher %d", i), r.Message)
 			// send conn over balancer connsCh
-			b.connsCh <- conn
+			b.ConnsCh <- conn
 		}(i)
 	}
 
 	wg.Wait()
 	// close connectors
 	for _, c := range conns {
-		c.stop()
+		c.Stop()
 	}
 	log.Printf("TestBalancer END")
 }

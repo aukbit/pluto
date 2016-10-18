@@ -1,13 +1,16 @@
 package client
 
 import (
+	"bitbucket.org/aukbit/pluto/client/balancer"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Client is an interface to make calls to services
 type Client interface {
 	Dial(...ConfigFn) error
-	Call() interface{}
+	Request() *balancer.Connector
+	Done(*balancer.Connector)
+	Call() interface{} //TODO deprecated
 	Close()
 	Config() *Config
 	Health() *healthpb.HealthCheckResponse
