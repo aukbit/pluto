@@ -1,139 +1,133 @@
 package balancer
 
 import (
-	"container/heap"
+	"assert"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
-	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
+
+var numServers = 5
+var numRequests = 10
+
+const PORT = 65070
+
+var wg sync.WaitGroup
 
 type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	t := rand.Int31n(1000)
+	time.Sleep(time.Duration(t) * time.Millisecond)
 	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
 }
 
 func TestMain(m *testing.M) {
-	// Create pluto server
-	s1 := server.NewServer(
-		server.Name("test_gopher_1"),
-		server.Addr(":65070"),
-		server.GRPCRegister(func(g *grpc.Server) {
-			pb.RegisterGreeterServer(g, &greeter{})
-		}))
-	s2 := server.NewServer(
-		server.Name("test_gopher_2"),
-		server.Addr(":65071"),
-		server.GRPCRegister(func(g *grpc.Server) {
-			pb.RegisterGreeterServer(g, &greeter{})
-		}))
+	var servers []server.Server
 
 	if !testing.Short() {
-		// Run Server
-		go func() {
-			if err := s1.Run(); err != nil {
-				log.Fatal(err)
-			}
-		}()
-		time.Sleep(time.Millisecond * 100)
-		go func() {
-			if err := s2.Run(); err != nil {
-				log.Fatal(err)
-			}
-		}()
-		time.Sleep(time.Millisecond * 100)
+		for i := 0; i < numServers; i++ {
+			p := PORT + i
+			s := server.NewServer(
+				server.Name(fmt.Sprintf("test_gopher_%d", p)),
+				server.Addr(fmt.Sprintf(":%d", p)),
+				server.GRPCRegister(func(g *grpc.Server) {
+					pb.RegisterGreeterServer(g, &greeter{})
+				}))
+			go func() {
+				if err := s.Run(); err != nil {
+					log.Fatal(err)
+				}
+			}()
+			servers = append(servers, s)
+		}
 	}
 	result := m.Run()
 	if !testing.Short() {
-		// Stop Server
-		s1.Stop()
-		time.Sleep(time.Millisecond * 100)
-		s2.Stop()
-		time.Sleep(time.Millisecond * 100)
+		for _, s := range servers {
+			s.Stop()
+		}
 	}
 	os.Exit(result)
 }
 
-func InitConnectors(callsCh chan *Call) (cons []*Connector) {
-	cA := &Connector{target: "localhost:65070", callsCh: callsCh}
-	cB := &Connector{target: "localhost:65071", callsCh: callsCh}
-	// establish connectors
-	cA.dial(func(cc *grpc.ClientConn) interface{} {
-		return pb.NewGreeterClient(cc)
-	})
-	cB.dial(func(cc *grpc.ClientConn) interface{} {
-		return pb.NewGreeterClient(cc)
-	})
-	// watch for requests
-	go cA.watch(doneCh)
-	go cB.watch(doneCh)
-
-	cons = append(cons, cA, cB)
+func InitConnectors() (cons []*Connector) {
+	for i := 0; i < numServers; i++ {
+		p := PORT + i
+		c := newConnector(
+			Target(fmt.Sprintf("localhost:%d", p)),
+			GRPCRegister(func(cc *grpc.ClientConn) interface{} {
+				return pb.NewGreeterClient(cc)
+			}))
+		c.dial()
+		go c.watch()
+		cons = append(cons, c)
+	}
 	return cons
 }
 
-func InitBalancer(cons []*Connector, inCh <-chan *Call, outCh chan<- *Call, doneCh chan *Connector) {
-	// initialize pool with connectors available
-	p := Pool{}
-	for _, c := range cons {
-		p.Push(c)
-	}
-	heap.Init(&p)
-	log.Printf("RunBalancer pool: %v", p)
-	// set balancer
-
-	b := &Balancer{pool: p, doneCh: doneCh}
-	log.Printf("RunBalancer balancer: %v", b)
-	b.balance(inCh)
+func InitBalancer(inCh <-chan Request) *Balancer {
+	b := newBalancer()
+	go b.balance(inCh)
+	return b
 }
 
 func TestBalancer(t *testing.T) {
-	callsCh := make(chan *Call)
-	cons := InitConnectors(callsCh)
-	go InitBalancer(cons, callsCh)
 
-	// connectors channel
-	connsCh := make(chan *Connector)
-	c := &Call{connsCh: connsCh}
-	time.Sleep(time.Second * 1)
-	log.Printf("send call over channel")
-	callsCh <- c
+	requestsCh := make(chan Request)
 
-	// wait for client
-	client := <-clientsCh
-	// Make a Call
-	r, err := client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: "Gopher"})
-	if err != nil {
-		log.Fatal(err)
+	b := InitBalancer(requestsCh)
+	conns := InitConnectors()
+	// fill the pool with connectors
+	for _, c := range conns {
+		b.pool.Push(c)
 	}
-	assert.Equal(t, "Hello Gopher", r.Message)
-	// set call has done
-	c.done()
+	t.Logf("Balancer %v", b)
 
-	time.Sleep(time.Second * 1)
+	connsCh := make(chan *Connector)
+	// fake some requests
+	wg.Add(numRequests)
+	for i := 0; i < numRequests; i++ {
+		go func() {
+			defer wg.Done()
+			r := Request{connsCh: connsCh}
+			time.Sleep(time.Millisecond * 100)
+			// send the call over the calls channel
+			requestsCh <- r
+		}()
+	}
+
+	// read connector from connsCh
+	wg.Add(numRequests)
+	for i := 0; i < numRequests; i++ {
+		go func(i int) {
+			defer wg.Done()
+			conn := <-connsCh
+			// Make a Call
+			r, err := conn.client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: fmt.Sprintf("Gopher %d", i)})
+			if err != nil {
+				log.Fatal(err)
+			}
+			assert.Equal(t, fmt.Sprintf("Hello Gopher %d", i), r.Message)
+			// send conn over balancer connsCh
+			b.connsCh <- conn
+		}(i)
+	}
+
+	wg.Wait()
+	// close connectors
+	for _, c := range conns {
+		c.stop()
+	}
 	log.Printf("TestBalancer END")
 }
-
-// func requester(work chan<- Request) {
-// 	log.Printf("requester workCh: %v", work)
-// 	c := make(chan int)
-// 	for {
-// 		// Kill some time (fake load).
-// 		time.Sleep(time.Second * 3)
-// 		req := Request{workFn, c}
-// 		work <- req // send request
-// 		log.Printf("requester send request workCh:%v req: %v", work, req)
-// 		result := <-c // wait for answer
-// 		// furtherProcess(result)
-// 		log.Printf("requester result %v", result)
-// 	}
-// }

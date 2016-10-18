@@ -1,8 +1,17 @@
 package balancer
 
+import "container/heap"
+
 // Pool implements heap.Interface and holds Workers.
 // https://golang.org/pkg/container/heap/
 type Pool []*Connector
+
+func newPool() Pool {
+	p := Pool{}
+	// initiate heap
+	heap.Init(&p)
+	return p
+}
 
 func (p Pool) Len() int           { return len(p) }
 func (p Pool) Less(i, j int) bool { return p[i].pending < p[j].pending }
@@ -24,6 +33,7 @@ func (p *Pool) Pop() interface{} {
 	old := *p
 	n := len(old)
 	item := old[n-1]
+	// item.index = -1 // for safety
 	*p = old[0 : n-1]
 	return item
 }

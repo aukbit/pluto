@@ -1,38 +1,38 @@
 package balancer
 
-import (
-	"container/heap"
-	"log"
-)
+import "container/heap"
 
 // Balancer needs a pool of connectors and a single channel to which requesters
 // can report task completion
 type Balancer struct {
-	pool   Pool
-	doneCh chan *Connector
+	pool    Pool
+	connsCh chan *Connector
 }
 
-// balance receives calls on call channel with read only constraint
-func (b *Balancer) balance(inCh <-chan *Call) {
-	log.Printf("balance")
+// newBalancer starts a balncer with an empty pool
+func newBalancer() *Balancer {
+	return &Balancer{
+		pool:    newPool(),
+		connsCh: make(chan *Connector)}
+}
+
+// balance receives requests with read only constraint
+func (b *Balancer) balance(inCh <-chan Request) {
 	for {
 		select {
-		case call := <-inCh: // received a callCh
-			log.Printf("balance: received a callCh: %v", call)
-			b.dispatch(call) //send it to a Connector
-		case c := <-b.doneCh: // a call has finished
-			log.Printf("balance: a call has finished %v", c.index)
-			b.completed(c)
+		case req := <-inCh: // received a request
+			b.dispatch(req) //send it to a Connector
+		case c := <-b.connsCh: // a request has finished
+			b.completed(c) //
 		}
 	}
 }
 
-func (b *Balancer) dispatch(call *Call) {
-	log.Printf("dispatch call: %v", call)
+func (b *Balancer) dispatch(req Request) {
 	// get the least loaded connector..
 	c := heap.Pop(&b.pool).(*Connector)
 	// send it the call
-	c.callsCh <- call
+	c.requestsCh <- req
 	// one more in its work queue
 	c.pending++
 	// put it into its place on the heap
@@ -40,7 +40,6 @@ func (b *Balancer) dispatch(call *Call) {
 }
 
 func (b *Balancer) completed(c *Connector) {
-	log.Printf("completed %v", c)
 	// remove one from the queue
 	c.pending--
 	// remove it from the heap
