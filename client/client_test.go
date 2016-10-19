@@ -77,7 +77,7 @@ func TestClient(t *testing.T) {
 	// when finished with request call done on connector
 	defer c.Done(conn)
 	// assert proto type
-	client := conn.Client.(pb.GreeterClient)
+	client := conn.Client().(pb.GreeterClient)
 	// call a method
 	r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	// r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})

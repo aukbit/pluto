@@ -70,6 +70,7 @@ func (s *service) Config() *Config {
 
 // Server returns a server instance by name if initialized in service
 func (s *service) Server(name string) (srv server.Server, ok bool) {
+	name = common.SafeName(name, server.DefaultName)
 	if srv, ok = s.cfg.Servers[name]; !ok {
 		return
 	}
@@ -78,6 +79,7 @@ func (s *service) Server(name string) (srv server.Server, ok bool) {
 
 // Client returns a client instance by name if initialized in service
 func (s *service) Client(name string) (clt client.Client, ok bool) {
+	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
 	}

@@ -8,8 +8,8 @@ import (
 // Client is an interface to make calls to services
 type Client interface {
 	Dial(...ConfigFn) error
-	Request() *balancer.Connector
-	Done(*balancer.Connector)
+	Request() balancer.Connector
+	Done(balancer.Connector)
 	Call() interface{} //TODO deprecated
 	Close()
 	Config() *Config

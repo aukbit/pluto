@@ -19,7 +19,6 @@ type Config struct {
 type ConfigFn func(*Config)
 
 var (
-	defaultName   = "connector"
 	defaultTarget = "localhost:65060"
 )
 
@@ -36,7 +35,7 @@ func newConfig(cfgs ...ConfigFn) *Config {
 	}
 
 	if len(cfg.Name) == 0 {
-		cfg.Name = defaultName
+		cfg.Name = DefaultName
 	}
 
 	return cfg

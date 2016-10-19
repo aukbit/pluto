@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -130,6 +131,7 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 }
 
 func findData(r *router, method, path, sufix, key, segment string, values []string) (*Data, []string) {
+	log.Printf("TESTE findData method:%v path:%v sufix:%v key:%v segment:%v values:%v", method, path, sufix, key, segment, values)
 	// initialize
 	if path != "" && sufix == "" && key == "" {
 		// remove trailing slash
@@ -163,6 +165,7 @@ func findData(r *router, method, path, sufix, key, segment string, values []stri
 	// : stays fixed in the last segment
 	if sufix == "" {
 		x := strings.Index(key, "/:")
+		log.Printf("ALO segment:%v x:%v", segment, x)
 		sufix = key[:x]
 		values = append(values, segment)
 		path = key
@@ -204,6 +207,7 @@ func (r *router) findMatch(req *http.Request) *Match {
 		handler := data.methods[req.Method]
 		return &Match{handler: handler, ctx: ctx}
 	}
+	log.Printf("TESTE findMatch")
 	return nil
 }
 

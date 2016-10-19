@@ -16,11 +16,11 @@ import (
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
 	cfg        *Config
-	balancer   *balancer.Balancer       // Load Balancer to manage client connections
-	requestsCh chan balancer.Request    //
-	connsCh    chan *balancer.Connector //
-	health     *health.Server           // Server implements `service Health`.
-	logger     zap.Logger               // client logger
+	balancer   *balancer.Balancer    // Load Balancer to manage client connections
+	requestsCh chan balancer.Request //
+	connsCh    balancer.ConnsCh      //
+	health     *health.Server        // Server implements `service Health`.
+	logger     zap.Logger            // client logger
 
 	call interface{}      // TODO: deprecated managed in balancer
 	conn *grpc.ClientConn // TODO: deprecated managed in balancer
@@ -33,7 +33,7 @@ func newClient(cfgs ...ConfigFn) *defaultClient {
 		cfg:        c,
 		balancer:   balancer.NewBalancer(),
 		requestsCh: make(chan balancer.Request),
-		connsCh:    make(chan *balancer.Connector),
+		connsCh:    make(balancer.ConnsCh),
 		health:     health.NewServer(),
 		logger:     zap.New(zap.NewJSONEncoder())}
 }
@@ -54,13 +54,11 @@ func (dc *defaultClient) initConnectors() error {
 			balancer.UnaryClientInterceptors(dc.cfg.UnaryClientInterceptors),
 		)
 		// establish connection
-		if err := c.Dial(); err != nil {
+		if err := c.Init(); err != nil {
 			return err
 		}
 		// add connector to the balancer pool
 		dc.balancer.Push(c)
-		// watch for requests
-		go c.Watch()
 	}
 	return nil
 }
@@ -98,7 +96,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	return nil
 }
 
-func (dc *defaultClient) Request() *balancer.Connector {
+func (dc *defaultClient) Request() balancer.Connector {
 	r := balancer.NewRequest(dc.connsCh)
 	// send the request over the calls channel
 	dc.requestsCh <- r
@@ -106,9 +104,9 @@ func (dc *defaultClient) Request() *balancer.Connector {
 	return <-dc.connsCh
 }
 
-func (dc *defaultClient) Done(conn *balancer.Connector) {
+func (dc *defaultClient) Done(conn balancer.Connector) {
 	// tell balancer request it's Done
-	dc.balancer.Done(conn)
+	dc.balancer.Done(conn.Connector())
 }
 
 func (dc *defaultClient) closeConnectors() {

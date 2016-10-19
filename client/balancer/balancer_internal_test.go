@@ -62,16 +62,15 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func InitConnectors() (cons []*Connector) {
+func InitConnectors() (cons []*connector) {
 	for i := 0; i < numServers; i++ {
 		p := PORT + i
-		c := NewConnector(
+		c := newConnector(
 			Target(fmt.Sprintf("localhost:%d", p)),
 			GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 				return pb.NewGreeterClient(cc)
 			}))
-		c.Dial()
-		go c.Watch()
+		c.Init()
 		cons = append(cons, c)
 	}
 	return cons
@@ -95,7 +94,7 @@ func TestBalancer(t *testing.T) {
 	}
 	t.Logf("Balancer %v", b)
 
-	connsCh := make(chan *Connector)
+	connsCh := make(chan *connector)
 	// fake some requests
 	wg.Add(numRequests)
 	for i := 0; i < numRequests; i++ {
@@ -115,7 +114,7 @@ func TestBalancer(t *testing.T) {
 			defer wg.Done()
 			conn := <-connsCh
 			// Make a Call
-			r, err := conn.Client.(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: fmt.Sprintf("Gopher %d", i)})
+			r, err := conn.Client().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: fmt.Sprintf("Gopher %d", i)})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -128,7 +127,7 @@ func TestBalancer(t *testing.T) {
 	wg.Wait()
 	// close connectors
 	for _, c := range conns {
-		c.Stop()
+		c.Close()
 	}
 	log.Printf("TestBalancer END")
 }

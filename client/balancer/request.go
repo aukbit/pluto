@@ -2,9 +2,9 @@ package balancer
 
 // Request requests a connector to make a client call
 type Request struct {
-	connsCh chan *Connector
+	connsCh ConnsCh
 }
 
-func NewRequest(ch chan *Connector) Request {
+func NewRequest(ch ConnsCh) Request {
 	return Request{ch}
 }
