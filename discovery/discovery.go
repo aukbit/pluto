@@ -3,7 +3,7 @@ package discovery
 // Discovery ...
 type Discovery interface {
 	IsAvailable() (bool, error)
-	Service(string) (string, error)
+	Service(string) ([]string, error)
 	Register(...ConfigFunc) error
 	Unregister() error
 }

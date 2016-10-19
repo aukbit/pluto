@@ -31,16 +31,16 @@ func (cd *consulDefault) IsAvailable() (bool, error) {
 }
 
 // Service
-func (cd *consulDefault) Service(name string) (string, error) {
-	if _, err := isAvailable(cd.cfg.URL()); err != nil {
+func (cd *consulDefault) Service(name string) (targets []string, err error) {
+	if _, err = isAvailable(cd.cfg.URL()); err != nil {
 		cd.logger.Error("service discovery not available")
-		return "", err
+		return nil, err
 	}
-	addr, err := Target(cd.cfg.URL(), name)
+	targets, err = Targets(cd.cfg.URL(), name)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return addr, nil
+	return targets, nil
 }
 
 func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {

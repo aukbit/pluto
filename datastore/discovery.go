@@ -10,11 +10,11 @@ import (
 // target get target IP:Port from service discovery system
 func (ds *datastore) target() error {
 	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
-		addr, err := ds.cfg.Discovery.Service(ds.cfg.TargetName)
+		targets, err := ds.cfg.Discovery.Service(ds.cfg.TargetName)
 		if err != nil {
 			return err
 		}
-		ds.cfg.Target = addr
+		ds.cfg.Target = targets[0]
 	}
 	return nil
 }

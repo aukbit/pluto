@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"fmt"
 
 	"bitbucket.org/aukbit/pluto/client/balancer"
 	"github.com/uber-go/zap"
@@ -42,9 +43,13 @@ func (dc *defaultClient) Config() *Config {
 }
 
 func (dc *defaultClient) initConnectors() error {
+	if len(dc.cfg.Targets) == 0 {
+		return fmt.Errorf("connectors will not be initialized because targets were not provided")
+	}
 	for _, t := range dc.cfg.Targets {
 		c := balancer.NewConnector(
 			balancer.Target(t),
+			balancer.ParentID(dc.cfg.ID),
 			balancer.GRPCRegister(dc.cfg.GRPCRegister),
 			balancer.UnaryClientInterceptors(dc.cfg.UnaryClientInterceptors),
 		)
@@ -70,15 +75,17 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 		c(dc.cfg)
 	}
 	// register at service discovery
-	// if err := dc.register(); err != nil {
-	// 	return err
-	// }
-	// set target from service discovery
-	// if err := dc.target(); err != nil {
-	// 	return err
-	// }
+	if err := dc.register(); err != nil {
+		return err
+	}
+	// set targets from service discovery
+	if err := dc.targets(); err != nil {
+		return err
+	}
 	// init logger
 	dc.initLogger()
+	//
+	dc.logger.Info("start")
 	// init connectors
 	if err := dc.initConnectors(); err != nil {
 		return err
@@ -87,6 +94,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	dc.startBalancer()
 	// health check
 	dc.healthCheck()
+	//
 	return nil
 }
 
@@ -103,32 +111,33 @@ func (dc *defaultClient) Done(conn *balancer.Connector) {
 	dc.balancer.Done(conn)
 }
 
+func (dc *defaultClient) closeConnectors() {
+	for _, c := range dc.balancer.Pool() {
+		c.Close()
+	}
+}
+
 func (dc *defaultClient) Close() {
 	dc.logger.Info("close")
 	// set health as not serving
 	dc.health.SetServingStatus(dc.cfg.ID, 2)
+	// close connectors
+	dc.closeConnectors()
 	// unregister
-	// dc.unregister()
-	// stop connectors
-	for _, c := range dc.balancer.Pool() {
-		c.Close()
-	}
+	dc.unregister()
 }
 
 // perform client health check on a random connector
 func (dc *defaultClient) healthCheck() {
 	// request a connector
 	conn := dc.Request()
-	// health check
-	hcr, err := conn.Health.Check(
-		context.Background(), &healthpb.HealthCheckRequest{})
-	if err != nil {
-		dc.logger.Error("Health", zap.String("err", err.Error()))
-		dc.health.SetServingStatus(dc.cfg.ID, hcr.Status)
+	// connector health check
+	if ok := conn.Health(); !ok {
+		dc.health.SetServingStatus(dc.cfg.ID, 2)
 		// TODO remove error connector and perform health check immediately!
 		return
 	}
-	dc.health.SetServingStatus(dc.cfg.ID, hcr.Status)
+	dc.health.SetServingStatus(dc.cfg.ID, 1)
 }
 
 // Health health check on client take in consideration

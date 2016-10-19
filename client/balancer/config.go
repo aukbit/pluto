@@ -49,6 +49,13 @@ func Target(t string) ConfigFn {
 	}
 }
 
+// ParentID sets id of parent client
+func ParentID(id string) ConfigFn {
+	return func(cfg *Config) {
+		cfg.ParentID = id
+	}
+}
+
 // GRPCRegister register client gRPC function
 func GRPCRegister(fn func(*grpc.ClientConn) interface{}) ConfigFn {
 	return func(cfg *Config) {

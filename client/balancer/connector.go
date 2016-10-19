@@ -1,6 +1,8 @@
 package balancer
 
 import (
+	"context"
+
 	"github.com/uber-go/zap"
 
 	g "bitbucket.org/aukbit/pluto/client/grpc"
@@ -18,7 +20,7 @@ type Connector struct {
 	Client     interface{}           // grpc client stub to perform RPCs
 	stopCh     chan bool             // receive a stop call
 	doneCh     chan bool             // guarantees has beeen stopped correctly
-	Health     healthpb.HealthClient // Client API for Health service
+	health     healthpb.HealthClient // Client API for Health service
 	logger     zap.Logger
 }
 
@@ -55,7 +57,7 @@ func (c *Connector) Dial() error {
 	// register proto client to get a stub to perform RPCs
 	c.Client = c.cfg.GRPCRegister(conn)
 	// register proto health client to get a stub to perform RPCs
-	c.Health = healthpb.NewHealthClient(conn)
+	c.health = healthpb.NewHealthClient(conn)
 	return nil
 }
 
@@ -78,6 +80,16 @@ func (c *Connector) Close() {
 	c.conn.Close()
 	c.stopCh <- true
 	<-c.doneCh
+}
+
+// Health check if a round trip with server is valid or not
+func (c *Connector) Health() bool {
+	hcr, err := c.health.Check(
+		context.Background(), &healthpb.HealthCheckRequest{})
+	if err != nil {
+		return false
+	}
+	return hcr.Status.String() == "SERVING"
 }
 
 func (c *Connector) initLogger() {
