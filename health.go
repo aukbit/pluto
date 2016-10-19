@@ -1,9 +1,11 @@
 package pluto
 
 import (
-	"log"
 	"net/http"
+	"strings"
 
+	"bitbucket.org/aukbit/pluto/client"
+	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
 	"bitbucket.org/aukbit/pluto/server/router"
@@ -13,54 +15,49 @@ import (
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
-	n := ctx.Value("name").(string)
-	log.Printf("TESTE %v", n)
 	m := ctx.Value("module").(string)
-	log.Printf("TESTE %v", m)
-	// n := ctx.Value("name").(string)
-	// log.Printf("TESTE %v", n)
-	// s := ctx.Value("pluto").(Service)
+	n := ctx.Value("name").(string)
+	s := ctx.Value("pluto").(Service)
 
-	// switch m {
-	// case "server":
-	// 	log.Printf("TESTE %v", n)
-	// 	srv, ok := s.Server(n)
-	// 	log.Printf("TESTE %v", n)
-	// 	if !ok {
-	// 		reply.Json(w, r, http.StatusNotFound, hcr)
-	// 		return
-	// 	}
-	// 	hcr = srv.Health()
-	// case "client":
-	// 	clt, ok := s.Client(n)
-	// 	if !ok {
-	// 		reply.Json(w, r, http.StatusNotFound, hcr)
-	// 		return
-	// 	}
-	// 	hcr = clt.Health()
-	// case "db":
-	// 	db, ok := s.Config().Datastore.(datastore.Datastore)
-	// 	if !ok {
-	// 		reply.Json(w, r, http.StatusNotFound, hcr)
-	// 		return
-	// 	}
-	// 	if n != db.Config().Name {
-	// 		reply.Json(w, r, http.StatusNotFound, hcr)
-	// 		return
-	// 	}
-	// 	hcr = db.Health()
-	// case "pluto":
-	// 	log.Printf("TESTE 2 %v", n)
-	// 	if n != s.Config().Name {
-	// 		reply.Json(w, r, http.StatusNotFound, hcr)
-	// 		return
-	// 	}
-	// 	hcr = s.Health()
-	// }
-	// if hcr.Status.String() != "SERVING" {
-	// 	reply.Json(w, r, http.StatusTooManyRequests, hcr)
-	// 	return
-	// }
+	switch m {
+	case "server":
+		name := strings.Replace(n, "_"+server.DefaultName, "", 1)
+		srv, ok := s.Server(name)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = srv.Health()
+	case "client":
+		name := strings.Replace(n, "_"+client.DefaultName, "", 1)
+		clt, ok := s.Client(name)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = clt.Health()
+	case "db":
+		db, ok := s.Config().Datastore.(datastore.Datastore)
+		if !ok {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		if n != db.Config().Name {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = db.Health()
+	case "pluto":
+		if n != s.Config().Name {
+			reply.Json(w, r, http.StatusNotFound, hcr)
+			return
+		}
+		hcr = s.Health()
+	}
+	if hcr.Status.String() != "SERVING" {
+		reply.Json(w, r, http.StatusTooManyRequests, hcr)
+		return
+	}
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
