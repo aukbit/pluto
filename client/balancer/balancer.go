@@ -6,14 +6,14 @@ import "container/heap"
 // can report task completion
 type Balancer struct {
 	pool    Pool
-	ConnsCh chan *Connector
+	connsCh chan *Connector
 }
 
 // NewBalancer starts a balancer with an empty pool
 func NewBalancer() *Balancer {
 	return &Balancer{
 		pool:    newPool(),
-		ConnsCh: make(chan *Connector)}
+		connsCh: make(chan *Connector)}
 }
 
 // Push pushes the connector onto the heap
@@ -27,17 +27,24 @@ func (b *Balancer) Pop() *Connector {
 	return heap.Pop(&b.pool).(*Connector)
 }
 
+// Pool returns balancer pool
 func (b *Balancer) Pool() Pool {
 	return b.pool
 }
 
-// balance receives requests with read only constraint
+// Done send connector over connsCh channel
+func (b *Balancer) Done(conn *Connector) {
+	// send conn over balancer connsCh
+	b.connsCh <- conn
+}
+
+// Balance receives requests with read only constraint
 func (b *Balancer) Balance(ch <-chan Request) {
 	for {
 		select {
 		case req := <-ch: // received a request
 			b.dispatch(req) //send it to a Connector
-		case c := <-b.ConnsCh: // a request has finished
+		case c := <-b.connsCh: // a request has finished
 			b.completed(c) //
 		}
 	}

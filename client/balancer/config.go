@@ -1,10 +1,16 @@
 package balancer
 
-import "google.golang.org/grpc"
+import (
+	"bitbucket.org/aukbit/pluto/common"
+	"google.golang.org/grpc"
+)
 
 // Config client configuaration options
 type Config struct {
+	ID                      string
+	Name                    string
 	Target                  string                             // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	ParentID                string                             // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{} //
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor      // gRPC interceptors
 }
@@ -13,6 +19,7 @@ type Config struct {
 type ConfigFn func(*Config)
 
 var (
+	defaultName   = "connector"
 	defaultTarget = "localhost:65060"
 )
 
@@ -22,6 +29,14 @@ func newConfig(cfgs ...ConfigFn) *Config {
 
 	for _, c := range cfgs {
 		c(cfg)
+	}
+
+	if len(cfg.ID) == 0 {
+		cfg.ID = common.RandID("con_", 6)
+	}
+
+	if len(cfg.Name) == 0 {
+		cfg.Name = defaultName
 	}
 
 	return cfg

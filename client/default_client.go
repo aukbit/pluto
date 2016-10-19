@@ -14,18 +14,15 @@ import (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type defaultClient struct {
-	cfg    *Config
-	logger zap.Logger
+	cfg        *Config
+	balancer   *balancer.Balancer       // Load Balancer to manage client connections
+	requestsCh chan balancer.Request    //
+	connsCh    chan *balancer.Connector //
+	health     *health.Server           // Server implements `service Health`.
+	logger     zap.Logger               // client logger
 
-	call       interface{}           // TODO: deprecated managed in balancer
-	conn       *grpc.ClientConn      // TODO: deprecated managed in balancer
-	healthCall healthpb.HealthClient // TODO: deprecated managed in balancer
-	health     *health.Server
-
-	// Load Balancer to manage client connections
-	balancer   *balancer.Balancer
-	requestsCh chan balancer.Request
-	connsCh    chan *balancer.Connector
+	call interface{}      // TODO: deprecated managed in balancer
+	conn *grpc.ClientConn // TODO: deprecated managed in balancer
 }
 
 // newClient will instantiate a new Client with the given config
@@ -33,18 +30,18 @@ func newClient(cfgs ...ConfigFn) *defaultClient {
 	c := newConfig(cfgs...)
 	return &defaultClient{
 		cfg:        c,
-		logger:     zap.New(zap.NewJSONEncoder()),
-		health:     health.NewServer(),
 		balancer:   balancer.NewBalancer(),
 		requestsCh: make(chan balancer.Request),
-		connsCh:    make(chan *balancer.Connector)}
+		connsCh:    make(chan *balancer.Connector),
+		health:     health.NewServer(),
+		logger:     zap.New(zap.NewJSONEncoder())}
 }
 
 func (dc *defaultClient) Config() *Config {
 	return dc.cfg
 }
 
-func (dc *defaultClient) initConnectors() {
+func (dc *defaultClient) initConnectors() error {
 	for _, t := range dc.cfg.Targets {
 		c := balancer.NewConnector(
 			balancer.Target(t),
@@ -53,14 +50,14 @@ func (dc *defaultClient) initConnectors() {
 		)
 		// establish connection
 		if err := c.Dial(); err != nil {
-			dc.logger.Error("dial", zap.String("err", err.Error()))
-			return
+			return err
 		}
 		// add connector to the balancer pool
 		dc.balancer.Push(c)
 		// watch for requests
 		go c.Watch()
 	}
+	return nil
 }
 
 func (dc *defaultClient) startBalancer() {
@@ -83,16 +80,13 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	// init logger
 	dc.initLogger()
 	// init connectors
-	dc.initConnectors()
+	if err := dc.initConnectors(); err != nil {
+		return err
+	}
 	// start load balancer
 	dc.startBalancer()
-	// // start server
-	// if err := dc.dialGRPC(); err != nil {
-	// 	return err
-	// }
-	// set health
-	dc.health.SetServingStatus(dc.cfg.ID, 1)
-	//
+	// health check
+	dc.healthCheck()
 	return nil
 }
 
@@ -105,42 +99,8 @@ func (dc *defaultClient) Request() *balancer.Connector {
 }
 
 func (dc *defaultClient) Done(conn *balancer.Connector) {
-	// send conn over balancer connsCh
-	dc.balancer.ConnsCh <- conn
-}
-
-// TODO deprecated
-func (dc *defaultClient) DialOld(cfgs ...ConfigFn) error {
-	// set last configs
-	for _, c := range cfgs {
-		c(dc.cfg)
-	}
-	// register at service discovery
-	if err := dc.register(); err != nil {
-		return err
-	}
-	// set target from service discovery
-	if err := dc.target(); err != nil {
-		return err
-	}
-	// set logger
-	dc.initLogger()
-	// start server
-	if err := dc.dialGRPC(); err != nil {
-		return err
-	}
-	// set health
-	dc.health.SetServingStatus(dc.cfg.ID, 1)
-	//
-	return nil
-}
-
-// TODO deprecated
-func (dc *defaultClient) Call() interface{} {
-	if dc.call == nil {
-		return errors.New("Client has not been registered")
-	}
-	return dc.call
+	// tell balancer request it's Done
+	dc.balancer.Done(conn)
 }
 
 func (dc *defaultClient) Close() {
@@ -151,28 +111,32 @@ func (dc *defaultClient) Close() {
 	// dc.unregister()
 	// stop connectors
 	for _, c := range dc.balancer.Pool() {
-		go c.Stop()
+		c.Close()
 	}
 }
 
-func (dc *defaultClient) healthServer() {
-	// make health call on server
-	hcr, err := dc.healthCall.Check(
+// perform client health check on a random connector
+func (dc *defaultClient) healthCheck() {
+	// request a connector
+	conn := dc.Request()
+	// health check
+	hcr, err := conn.Health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
 		dc.logger.Error("Health", zap.String("err", err.Error()))
-		dc.health.SetServingStatus(dc.cfg.ID, 2)
+		dc.health.SetServingStatus(dc.cfg.ID, hcr.Status)
+		// TODO remove error connector and perform health check immediately!
 		return
 	}
 	dc.health.SetServingStatus(dc.cfg.ID, hcr.Status)
 }
 
 // Health health check on client take in consideration
-// the health check on server
+// a round trip to a server
 func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
-	//
-	dc.healthServer()
-	// make health call on client
+	// perform health check on a server
+	dc.healthCheck()
+	// check client status
 	hcr, err := dc.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: dc.cfg.ID})
 	if err != nil {
@@ -188,6 +152,15 @@ func (dc *defaultClient) initLogger() {
 			zap.String("id", dc.cfg.ID),
 			zap.String("name", dc.cfg.Name),
 			zap.String("format", dc.cfg.Format),
-			zap.String("target", dc.cfg.Target),
 			zap.String("parent", dc.cfg.ParentID)))
+}
+
+//££££££££££££££££££££
+
+// TODO deprecated
+func (dc *defaultClient) Call() interface{} {
+	if dc.call == nil {
+		return errors.New("Client has not been registered")
+	}
+	return dc.call
 }

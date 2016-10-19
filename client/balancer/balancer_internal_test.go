@@ -121,7 +121,7 @@ func TestBalancer(t *testing.T) {
 			}
 			assert.Equal(t, fmt.Sprintf("Hello Gopher %d", i), r.Message)
 			// send conn over balancer connsCh
-			b.ConnsCh <- conn
+			b.connsCh <- conn
 		}(i)
 	}
 
