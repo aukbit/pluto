@@ -68,20 +68,19 @@ func CatalogService(url, service string) (ns []*NodeService, err error) {
 	return ns, nil
 }
 
-func Target(url, service string) (string, error) {
+// Targets create a slice of addresses based on the services
+// returned from CatalogService
+func Targets(url, service string) (targets []string, err error) {
 	ns, err := CatalogService(url, service)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if len(ns) > 0 {
-		// var addr string
-		// if ns[0].ServiceAddress != "" {
-		// 	addr = ns[0].ServiceAddress
-		// } else {
-		// 	addr = ns[0].Address
-		// }
-		t := fmt.Sprintf("%s:%d", ns[0].Address, ns[0].ServicePort)
-		return t, nil
+	if len(ns) == 0 {
+		return nil, fmt.Errorf("nodes not available with service: %s", service)
 	}
-	return "", fmt.Errorf("nodes not available with service: %s", service)
+	for _, n := range ns {
+		t := fmt.Sprintf("%s:%d", n.Address, n.ServicePort)
+		targets = append(targets, t)
+	}
+	return targets, nil
 }

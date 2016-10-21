@@ -1,8 +1,6 @@
-package client
+package grpc
 
 import (
-	"bitbucket.org/aukbit/pluto/common"
-	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -27,18 +25,4 @@ func wrap(ui grpc.UnaryInvoker, interceptors ...grpc.UnaryClientInterceptor) grp
 		ui = h(i, ui)
 	}
 	return ui
-}
-
-// loggerUnaryClientInterceptor ...
-func loggerUnaryClientInterceptor(clt *defaultClient) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// get or create unique event id for every request
-		e, ctx := common.GetOrCreateEventID(ctx)
-		// create new log instance with eventID
-		l := clt.logger.With(
-			zap.String("event", e))
-		l.Info("call",
-			zap.String("method", method))
-		return invoker(ctx, method, req, reply, cc, opts...)
-	}
 }

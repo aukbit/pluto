@@ -73,6 +73,8 @@ func TestServer(t *testing.T) {
 	router := router.NewMux()
 	router.Handle("GET", "/", IndexHandler)
 	router.Handle("GET", "/home", GetHandler)
+	router.Handle("GET", "/home/home", GetHandler)
+	router.Handle("GET", "/home/home/home", GetHandler)
 	router.Handle("POST", "/home", PostHandler)
 	router.Handle("GET", "/home/:id", GetDetailHandler)
 	router.Handle("PUT", "/home/:id", PutDetailHandler)
@@ -100,6 +102,18 @@ func TestServer(t *testing.T) {
 		{
 			Method:       "GET",
 			Path:         "/home",
+			BodyContains: `"Hello World"`,
+			Status:       http.StatusOK,
+		},
+		{
+			Method:       "GET",
+			Path:         "/home/home",
+			BodyContains: `"Hello World"`,
+			Status:       http.StatusOK,
+		},
+		{
+			Method:       "GET",
+			Path:         "/home/home/home",
 			BodyContains: `"Hello World"`,
 			Status:       http.StatusOK,
 		},

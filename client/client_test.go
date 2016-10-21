@@ -55,7 +55,7 @@ func TestClient(t *testing.T) {
 	c := client.NewClient(
 		client.Name("client_test_gopher"),
 		client.Description("gopher super client"),
-		client.Target("localhost:65061"),
+		client.Targets("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
@@ -70,24 +70,33 @@ func TestClient(t *testing.T) {
 
 	// Connect
 	if err := c.Dial(); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
-	// Make a Call
-	r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	// request a conn from client
+	conn := c.Request()
+	// when finished with request call done on connector
+	defer c.Done(conn)
+	// assert proto type
+	client := conn.Client().(pb.GreeterClient)
+	// call a method
+	r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	// r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, "Hello client_test_gopher_client", r.Message)
+
 }
 
 func TestHealth(t *testing.T) {
 	c := client.NewClient(
-		client.Target("localhost:65061"),
+		client.Targets("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
 	defer c.Close()
+	// Connect
 	err := c.Dial()
 	if err != nil {
 		t.Fatal(err)

@@ -129,14 +129,15 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 	return key, value, prefix, params
 }
 
-func findData(r *router, method, path, sufix, key, segment string, values []string) (*Data, []string) {
+func findData(r *router, method, path, suffix, key, segment string, values []string) (*Data, []string) {
+	// log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v", method, path, suffix, key, segment, values)
 	// initialize
-	if path != "" && sufix == "" && key == "" {
+	if path != "" && suffix == "" && key == "" {
 		// remove trailing slash
 		if len(path) > 1 && strings.LastIndex(path, "/") == len(path)-1 {
 			path = path[:len(path)-1]
 		}
-		sufix = path
+		suffix = path
 		key = path
 	}
 
@@ -161,27 +162,28 @@ func findData(r *router, method, path, sufix, key, segment string, values []stri
 
 	// initialize for the inner loop
 	// : stays fixed in the last segment
-	if sufix == "" {
+	if suffix == "" {
 		x := strings.Index(key, "/:")
-		sufix = key[:x]
+		suffix = key[:x]
 		values = append(values, segment)
 		path = key
 	}
 
 	// TODO maybe try to use Regex
-	i := strings.Index(sufix[1:], "/")
+	i := strings.Index(suffix[1:], "/")
 	if i == -1 {
-		segment = sufix[1:]
-		key = strings.Replace(path, segment, ":", 1)
-		sufix = ""
+		segment = suffix[1:]
+		key = path[:strings.LastIndex(path, segment)] + strings.Replace(path[strings.LastIndex(path, segment):], segment, ":", 1)
+		// key = strings.Replace(path, segment, ":", 1)
+		suffix = ""
 	} else {
-		segment = sufix[1 : i+1]
+		segment = suffix[1 : i+1]
 		key = strings.Replace(path, segment, ":", 1)
-		sufix = sufix[i+1:]
+		suffix = suffix[i+1:]
 	}
 	values = append(values, segment)
 
-	return findData(r, method, path, sufix, key, segment, values)
+	return findData(r, method, path, suffix, key, segment, values)
 }
 
 func setContext(ctx context.Context, vars, values []string) context.Context {

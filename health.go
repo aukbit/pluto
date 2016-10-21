@@ -2,7 +2,9 @@ package pluto
 
 import (
 	"net/http"
+	"strings"
 
+	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server"
@@ -16,16 +18,19 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	m := ctx.Value("module").(string)
 	n := ctx.Value("name").(string)
 	s := ctx.Value("pluto").(Service)
+
 	switch m {
 	case "server":
-		srv, ok := s.Server(n)
+		name := strings.Replace(n, "_"+server.DefaultName, "", 1)
+		srv, ok := s.Server(name)
 		if !ok {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}
 		hcr = srv.Health()
 	case "client":
-		clt, ok := s.Client(n)
+		name := strings.Replace(n, "_"+client.DefaultName, "", 1)
+		clt, ok := s.Client(name)
 		if !ok {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
