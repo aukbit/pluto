@@ -80,12 +80,17 @@ func TestClient(t *testing.T) {
 	client := conn.Client().(pb.GreeterClient)
 	// call a method
 	r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
-	// r, err := c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, "Hello client_test_gopher_client", r.Message)
-
+	//
+	// or call method Call() directly if load balencer is serving only one service
+	r, err = c.Call().(pb.GreeterClient).SayHello(context.Background(), &pb.HelloRequest{Name: cfg.Name})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, "Hello client_test_gopher_client", r.Message)
 }
 
 func TestHealth(t *testing.T) {

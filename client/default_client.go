@@ -1,13 +1,11 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 
 	"bitbucket.org/aukbit/pluto/client/balancer"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -21,9 +19,6 @@ type defaultClient struct {
 	connsCh    balancer.ConnsCh      //
 	health     *health.Server        // Server implements `service Health`.
 	logger     zap.Logger            // client logger
-
-	call interface{}      // TODO: deprecated managed in balancer
-	conn *grpc.ClientConn // TODO: deprecated managed in balancer
 }
 
 // newClient will instantiate a new Client with the given config
@@ -96,6 +91,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	return nil
 }
 
+// Request requests client for a connection to make a call
 func (dc *defaultClient) Request() balancer.Connector {
 	r := balancer.NewRequest(dc.connsCh)
 	// send the request over the calls channel
@@ -104,9 +100,21 @@ func (dc *defaultClient) Request() balancer.Connector {
 	return <-dc.connsCh
 }
 
+// Done tells client that we no longer need the connection
+// this methods is critical for load balancer to plays accordingly
+// when service discovery is active
 func (dc *defaultClient) Done(conn balancer.Connector) {
 	// tell balancer request it's Done
 	dc.balancer.Done(conn.Connector())
+}
+
+// Call acts as a shortcut. e.g if load balancer is serving a single service
+// calling Request() and then Done(conn) is redundant so this could be
+// wrapped internally and expose only the interface to be called directly on views
+func (dc *defaultClient) Call() interface{} {
+	conn := dc.Request()
+	defer dc.Done(conn)
+	return conn.Client()
 }
 
 func (dc *defaultClient) closeConnectors() {
@@ -160,14 +168,4 @@ func (dc *defaultClient) initLogger() {
 			zap.String("name", dc.cfg.Name),
 			zap.String("format", dc.cfg.Format),
 			zap.String("parent", dc.cfg.ParentID)))
-}
-
-//££££££££££££££££££££
-
-// TODO deprecated
-func (dc *defaultClient) Call() interface{} {
-	if dc.call == nil {
-		return errors.New("Client has not been registered")
-	}
-	return dc.call
 }

@@ -10,7 +10,7 @@ type Client interface {
 	Dial(...ConfigFn) error
 	Request() balancer.Connector
 	Done(balancer.Connector)
-	Call() interface{} //TODO deprecated
+	Call() interface{}
 	Close()
 	Config() *Config
 	Health() *healthpb.HealthCheckResponse
