@@ -8,15 +8,6 @@ import (
 
 const URL = "http://192.168.99.100:8500"
 
-func TestNodes(t *testing.T) {
-
-	nodes, err := Nodes(URL)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Logf("nodes %v", nodes)
-}
-
 func TestServices(t *testing.T) {
 
 	services, err := services(URL)

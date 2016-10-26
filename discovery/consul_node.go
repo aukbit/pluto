@@ -2,45 +2,59 @@ package discovery
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
 const (
-	NODES = "/v1/catalog/nodes"
+	nodesPath = "/v1/catalog/nodes"
 )
 
+// Node single consul node
 type Node struct {
 	Node            string            `json:"Node"`
 	Address         string            `json:"Address"`
 	TaggedAddresses map[string]string `json:"TaggedAddresses,omitempty"`
 }
 
-func Nodes(url string) (nodes []*Node, err error) {
+// Nodes slice of nodes
+type Nodes []Node
 
+// Noder interface
+type Noder interface {
+	GetNodes(addr, path string) (Nodes, error)
+}
+
+// DefaultNoder struct to append GetNodes
+type DefaultNoder struct{}
+
+// GetNodes make GET request on consul api
+func (dn *DefaultNoder) GetNodes(addr, path string) (Nodes, error) {
 	qs := "?near=_agent"
-	resp, err := http.Get(url + NODES + qs)
+	url := fmt.Sprintf("http://%s%s%s", addr, path, qs)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	var data []json.RawMessage
-	err = json.Unmarshal(body, &data)
-	if err != nil {
+	nodes := []Node{}
+	if err := json.Unmarshal(body, &nodes); err != nil {
 		return nil, err
 	}
-	for _, node := range data {
-		n := &Node{}
-		if err := json.Unmarshal(node, n); err != nil {
-			return nil, err
-		}
-		log.Printf("nodes %v", n)
-		nodes = append(nodes, n)
+	return nodes, nil
+}
+
+// GetNodes function to get slice of nodes
+func GetNodes(n Noder, addr string) (Nodes, error) {
+	nodes, err := n.GetNodes(addr, nodesPath)
+	if err != nil {
+		return nil, fmt.Errorf("Error querying Consul API: %s", err)
 	}
 	return nodes, nil
 }
