@@ -30,7 +30,7 @@ func Addr(a string) ConfigFunc {
 	}
 }
 
-func Services(s ...*Service) ConfigFunc {
+func ServicesFn(s ...*Service) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Services = append(cfg.Services, s...)
 	}
