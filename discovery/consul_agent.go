@@ -32,7 +32,7 @@ type Servicer interface {
 	GetServices(addr, path string) (Services, error)
 }
 type Register interface {
-	Regist(addr, path string)
+	Regist(addr, path string, s *Service)
 }
 
 // DefaultServicer struct to implement Servicer default methods
@@ -65,6 +65,35 @@ func GetServices(s Servicer, addr string) (Services, error) {
 		return nil, fmt.Errorf("Error querying Consul API: %s", err)
 	}
 	return services, nil
+}
+
+// DefaultRegister struct to implement Register default methods
+type DefaultRegister struct{}
+
+func (dr *DefaultRegister) Regist(addr, path string, s *Service) error {
+
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s%s", addr, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Error %v", string(body))
+	}
+	return nil
 }
 
 func services(url string) (map[string]*Service, error) {
