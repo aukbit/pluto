@@ -8,7 +8,7 @@ import (
 
 const URL = "http://192.168.99.100:8500"
 
-func TestServices(t *testing.T) {
+func _TestServices(t *testing.T) {
 
 	services, err := services(URL)
 	if err != nil {
@@ -17,12 +17,12 @@ func TestServices(t *testing.T) {
 	t.Logf("services %v", services)
 }
 
-func TestRegisterService(t *testing.T) {
+func _TestRegisterService(t *testing.T) {
 	s := &Service{
-		ID:   "test1",
-		Name: "test1",
-		Tags: []string{"auth", "api"},
-		Port: 60500,
+		ID:      "test1",
+		Service: "test1",
+		Tags:    []string{"auth", "api"},
+		Port:    60500,
 	}
 	err := registerService(URL, s)
 	if err != nil {
@@ -34,7 +34,7 @@ func TestRegisterService(t *testing.T) {
 	}
 }
 
-func TestCatalogServices(t *testing.T) {
+func _TestCatalogServices(t *testing.T) {
 	services, err := CatalogServices(URL)
 	if err != nil {
 		t.Error(err)
@@ -42,12 +42,12 @@ func TestCatalogServices(t *testing.T) {
 	t.Logf("services %v", services)
 }
 
-func TestCatalogService(t *testing.T) {
+func _TestCatalogService(t *testing.T) {
 	s := &Service{
-		ID:   "test2",
-		Name: "test2",
-		Tags: []string{"auth", "api"},
-		Port: 60500,
+		ID:      "test2",
+		Service: "test2",
+		Tags:    []string{"auth", "api"},
+		Port:    60500,
 	}
 	err := registerService(URL, s)
 	if err != nil {
@@ -74,10 +74,10 @@ func TestIsAvailable(t *testing.T) {
 
 func TestRegisterCheck(t *testing.T) {
 	s := &Service{
-		ID:   "test3",
-		Name: "test3",
-		Tags: []string{"auth", "api"},
-		Port: 60500,
+		ID:      "test3",
+		Service: "test3",
+		Tags:    []string{"auth", "api"},
+		Port:    60500,
 	}
 	err := registerService(URL, s)
 	if err != nil {

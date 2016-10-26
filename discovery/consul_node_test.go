@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"assert"
+	"github.com/paulormart/assert"
 )
 
 type FakeNoder struct {

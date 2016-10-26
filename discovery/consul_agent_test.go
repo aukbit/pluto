@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"assert"
+	"github.com/paulormart/assert"
 )
 
 type FakeServicer struct {
