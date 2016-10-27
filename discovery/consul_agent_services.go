@@ -1,7 +1,6 @@
 package discovery
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -75,52 +74,12 @@ type DefaultServiceRegister struct{}
 
 // Register make PUT request on consul api
 func (dr *DefaultServiceRegister) Register(addr, path string, s *Service) error {
-
-	b, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("http://%s%s", addr, path)
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(b))
-	if err != nil {
-		return err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(string(body))
-	}
-	return nil
+	return register(addr, path, s)
 }
 
 // Unregister make PUT request on consul api
 func (dr *DefaultServiceRegister) Unregister(addr, path, serviceID string) error {
-
-	url := fmt.Sprintf("http://%s%s/%s", addr, path, serviceID)
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte("{}")))
-	if err != nil {
-		return err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(string(body))
-	}
-	return nil
+	return unregister(addr, path, serviceID)
 }
 
 // DoServiceRegister function to register a new service

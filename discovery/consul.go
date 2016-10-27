@@ -19,7 +19,6 @@ type consulDefault struct {
 	isDiscovered bool
 }
 
-// newServer will instantiate a new defaultServer with the given config
 func newConsulDefault(cfgs ...ConfigFunc) *consulDefault {
 	c := newConfig(cfgs...)
 	return &consulDefault{cfg: c, logger: zap.New(zap.NewJSONEncoder())}
@@ -62,7 +61,7 @@ func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
 	}
 	// register checks
 	for _, c := range cd.cfg.Checks {
-		err := registerCheck(cd.cfg.URL(), c)
+		err := DoCheckRegister(&DefaultCheckRegister{}, cd.cfg.Addr, c)
 		if err != nil {
 			return err
 		}
@@ -80,7 +79,7 @@ func (cd *consulDefault) Unregister() error {
 		}
 		// register checks
 		for _, c := range cd.cfg.Checks {
-			if err := deregisterCheck(cd.cfg.URL(), c.ID); err != nil {
+			if err := DoCheckUnregister(&DefaultCheckRegister{}, cd.cfg.Addr, c.ID); err != nil {
 				return err
 			}
 		}

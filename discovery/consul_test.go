@@ -47,37 +47,10 @@ func _TestCatalogServices(t *testing.T) {
 // 	}
 // }
 
-func TestIsAvailable(t *testing.T) {
+func _TestIsAvailable(t *testing.T) {
 	ok, err := isAvailable(URL)
 	if err != nil {
 		t.Error(err)
 	}
 	assert.Equal(t, true, ok)
-}
-
-func _TestRegisterCheck(t *testing.T) {
-	// s := &Service{
-	// 	ID:      "test3",
-	// 	Service: "test3",
-	// 	Tags:    []string{"auth", "api"},
-	// 	Port:    60500,
-	// }
-	// err := registerService(URL, s)
-	// if err != nil {
-	// 	t.Error(err)
-	// }
-	c := &Check{
-		ID:    "test3_check",
-		Name:  "TCP check",
-		Notes: "Ensure the server is listening on the specific port",
-		DeregisterCriticalServiceAfter: "1m",
-		TCP:       ":60500",
-		Interval:  "10s",
-		Timeout:   "1s",
-		ServiceID: "test3",
-	}
-	err := registerCheck(URL, c)
-	if err != nil {
-		t.Error(err)
-	}
 }
