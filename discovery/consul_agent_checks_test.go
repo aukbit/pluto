@@ -9,6 +9,12 @@ import (
 	"github.com/paulormart/assert"
 )
 
+func TestChecksPath(t *testing.T) {
+	assert.Equal(t, "/v1/agent/checks", agentChecksPath)
+	assert.Equal(t, "/v1/agent/check/register", agentCheckRegisterPath)
+	assert.Equal(t, "/v1/agent/check/deregister", agentCheckDeregisterPath)
+}
+
 type FakeChecker struct {
 	Response Checks
 	Err      error

@@ -35,11 +35,12 @@ func (cd *consulDefault) Service(name string) (targets []string, err error) {
 		cd.logger.Error("service discovery not available")
 		return nil, err
 	}
-	targets, err = Targets(cd.cfg.URL(), name)
-	if err != nil {
-		return nil, err
-	}
-	return targets, nil
+	// targets, err = Targets(cd.cfg.URL(), name)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return targets, nil
+	return nil, nil
 }
 
 func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {

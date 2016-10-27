@@ -17,13 +17,13 @@ const URL = "http://192.168.99.100:8500"
 // 	t.Logf("services %v", services)
 // }
 
-func _TestCatalogServices(t *testing.T) {
-	services, err := CatalogServices(URL)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Logf("services %v", services)
-}
+// func _TestCatalogServices(t *testing.T) {
+// 	services, err := CatalogServices(URL)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	t.Logf("services %v", services)
+// }
 
 // func _TestCatalogService(t *testing.T) {
 // 	s := &Service{

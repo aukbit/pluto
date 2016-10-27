@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	checksPath          = "/v1/agent/checks"                     // Returns the checks the local agent is managing
-	registerCheckPath   = "/v1/agent/check/register"             // Registers a new local check
-	deregisterCheckPath = "/v1/agent/check/deregister/<checkID>" // Deregisters a local check
+	agentChecksPath          = "/v1/agent/checks"           // Returns the checks the local agent is managing
+	agentCheckRegisterPath   = "/v1/agent/check/register"   // Registers a new local check
+	agentCheckDeregisterPath = "/v1/agent/check/deregister" // Deregisters a local check
 )
 
 // Check struct
@@ -41,7 +41,7 @@ type Checker interface {
 	GetChecks(addr, path string) (Checks, error)
 }
 
-// DefaultServicer struct to implement Servicer default methods
+// DefaultChecker struct to implement Checker default methods
 type DefaultChecker struct{}
 
 // GetChecks make GET request on consul api
@@ -66,7 +66,7 @@ func (ds *DefaultChecker) GetChecks(addr, path string) (Checks, error) {
 
 // GetChecks function to get a map of checks
 func GetChecks(c Checker, addr string) (Checks, error) {
-	checks, err := c.GetChecks(addr, checksPath)
+	checks, err := c.GetChecks(addr, agentChecksPath)
 	if err != nil {
 		return nil, fmt.Errorf("Error querying Consul API: %s", err)
 	}
@@ -92,18 +92,18 @@ func (dr *DefaultCheckRegister) Unregister(addr, path, checkID string) error {
 	return unregister(addr, path, checkID)
 }
 
-// DoServiceRegister function to register a new service
+// DoCheckRegister function to register a new check
 func DoCheckRegister(cr CheckRegister, addr string, c *Check) error {
-	err := cr.Register(addr, registerCheckPath, c)
+	err := cr.Register(addr, agentCheckRegisterPath, c)
 	if err != nil {
 		return fmt.Errorf("Error registering check Consul API: %s", err)
 	}
 	return nil
 }
 
-// DoServiceUnregister function to unregister a service by ID
+// DoCheckUnregister function to unregister a check by ID
 func DoCheckUnregister(cr CheckRegister, addr, checkID string) error {
-	err := cr.Unregister(addr, deregisterServicePath, checkID)
+	err := cr.Unregister(addr, agentCheckDeregisterPath, checkID)
 	if err != nil {
 		return fmt.Errorf("Error unregistering check Consul API: %s", err)
 	}

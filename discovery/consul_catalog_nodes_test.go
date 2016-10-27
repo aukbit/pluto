@@ -9,6 +9,10 @@ import (
 	"github.com/paulormart/assert"
 )
 
+func TestCatalogNodesPath(t *testing.T) {
+	assert.Equal(t, "/v1/catalog/nodes", catalogNodesPath)
+}
+
 type FakeNoder struct {
 	Response Nodes
 	Err      error
@@ -55,7 +59,7 @@ func TestGetNodes(t *testing.T) {
 	}
 }
 
-func TestNoder(t *testing.T) {
+func TestNoderInterface(t *testing.T) {
 	var tests = []struct {
 		hf           http.HandlerFunc
 		expectedResp Nodes
@@ -77,7 +81,7 @@ func TestNoder(t *testing.T) {
 				w.Write([]byte(`{}`))
 			},
 			expectedResp: nil,
-			expectedErr:  errors.New("Error querying Consul API: json: cannot unmarshal object into Go value of type []discovery.Node"),
+			expectedErr:  errors.New("Error querying Consul API: json: cannot unmarshal object into Go value of type discovery.Nodes"),
 		},
 	}
 	for _, test := range tests {

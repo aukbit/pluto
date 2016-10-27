@@ -9,6 +9,12 @@ import (
 	"github.com/paulormart/assert"
 )
 
+func TestServicesPath(t *testing.T) {
+	assert.Equal(t, "/v1/agent/services", agentServicesPath)
+	assert.Equal(t, "/v1/agent/service/register", agentServiceRegisterPath)
+	assert.Equal(t, "/v1/agent/service/deregister", agentServiceDeregisterPath)
+}
+
 type FakeServicer struct {
 	Response Services
 	Err      error

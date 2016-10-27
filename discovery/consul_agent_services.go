@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	servicesPath          = "/v1/agent/services"           // Returns the services the local agent is managing
-	registerServicePath   = "/v1/agent/service/register"   // Registers a new local service
-	deregisterServicePath = "/v1/agent/service/deregister" // Deregisters a local service
+	agentServicesPath          = "/v1/agent/services"           // Returns the services the local agent is managing
+	agentServiceRegisterPath   = "/v1/agent/service/register"   // Registers a new local service
+	agentServiceDeregisterPath = "/v1/agent/service/deregister" // Deregisters a local service
 )
 
 // Service single consul service
@@ -56,7 +56,7 @@ func (ds *DefaultServicer) GetServices(addr, path string) (Services, error) {
 
 // GetServices function to get a map of services
 func GetServices(s Servicer, addr string) (Services, error) {
-	services, err := s.GetServices(addr, servicesPath)
+	services, err := s.GetServices(addr, agentServicesPath)
 	if err != nil {
 		return nil, fmt.Errorf("Error querying Consul API: %s", err)
 	}
@@ -84,7 +84,7 @@ func (dr *DefaultServiceRegister) Unregister(addr, path, serviceID string) error
 
 // DoServiceRegister function to register a new service
 func DoServiceRegister(sr ServiceRegister, addr string, s *Service) error {
-	err := sr.Register(addr, registerServicePath, s)
+	err := sr.Register(addr, agentServiceRegisterPath, s)
 	if err != nil {
 		return fmt.Errorf("Error registering service Consul API: %s", err)
 	}
@@ -93,7 +93,7 @@ func DoServiceRegister(sr ServiceRegister, addr string, s *Service) error {
 
 // DoServiceUnregister function to unregister a service by ID
 func DoServiceUnregister(sr ServiceRegister, addr, serviceID string) error {
-	err := sr.Unregister(addr, deregisterServicePath, serviceID)
+	err := sr.Unregister(addr, agentServiceDeregisterPath, serviceID)
 	if err != nil {
 		return fmt.Errorf("Error unregistering service Consul API: %s", err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	nodesPath = "/v1/catalog/nodes"
+	catalogNodesPath = "/v1/catalog/nodes" //Lists nodes in a given DC
 )
 
 // Node single consul node
@@ -43,7 +43,7 @@ func (dn *DefaultNoder) GetNodes(addr, path string) (Nodes, error) {
 	if err != nil {
 		return nil, err
 	}
-	nodes := []Node{}
+	nodes := Nodes{}
 	if err := json.Unmarshal(body, &nodes); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (dn *DefaultNoder) GetNodes(addr, path string) (Nodes, error) {
 
 // GetNodes function to get slice of nodes
 func GetNodes(n Noder, addr string) (Nodes, error) {
-	nodes, err := n.GetNodes(addr, nodesPath)
+	nodes, err := n.GetNodes(addr, catalogNodesPath)
 	if err != nil {
 		return nil, fmt.Errorf("Error querying Consul API: %s", err)
 	}

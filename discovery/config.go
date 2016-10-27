@@ -30,18 +30,21 @@ func Addr(a string) ConfigFunc {
 	}
 }
 
+// ServicesCfg ..
 func ServicesCfg(s ...*Service) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Services = append(cfg.Services, s...)
 	}
 }
 
+// ChecksCfg ..
 func ChecksCfg(c ...*Check) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Checks = append(cfg.Checks, c...)
 	}
 }
 
+// URL service discovery url
 func (c *Config) URL() string {
 	return fmt.Sprintf("http://%s", c.Addr)
 }
