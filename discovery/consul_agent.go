@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 const (
-	servicesPath          = "/v1/agent/services"                       // Returns the services the local agent is managing
-	registerServicePath   = "/v1/agent/service/register"               // Registers a new local service
-	deregisterServicePath = "/v1/agent/service/deregister/<serviceID>" // Deregisters a local service
+	servicesPath          = "/v1/agent/services"           // Returns the services the local agent is managing
+	registerServicePath   = "/v1/agent/service/register"   // Registers a new local service
+	deregisterServicePath = "/v1/agent/service/deregister" // Deregisters a local service
 )
 
 // Service single consul service
 type Service struct {
 	ID      string   `json:"ID"`
 	Service string   `json:"Service"`
+	Name    string   `json:"Name"`
 	Tags    []string `json:"Tags,omitempty"`
 	Address string   `json:"Address,omitempty"`
 	Port    int      `json:"Port"`
@@ -30,9 +30,6 @@ type Services map[string]Service
 // Servicer interface
 type Servicer interface {
 	GetServices(addr, path string) (Services, error)
-}
-type Register interface {
-	Regist(addr, path string, s *Service)
 }
 
 // DefaultServicer struct to implement Servicer default methods
@@ -67,10 +64,17 @@ func GetServices(s Servicer, addr string) (Services, error) {
 	return services, nil
 }
 
-// DefaultRegister struct to implement Register default methods
-type DefaultRegister struct{}
+// ServiceRegister interface
+type ServiceRegister interface {
+	Register(addr, path string, s *Service) error
+	Unregister(addr, path, serviceID string) error
+}
 
-func (dr *DefaultRegister) Regist(addr, path string, s *Service) error {
+// DefaultServiceRegister struct to implement Register default methods
+type DefaultServiceRegister struct{}
+
+// Register make PUT request on consul api
+func (dr *DefaultServiceRegister) Register(addr, path string, s *Service) error {
 
 	b, err := json.Marshal(s)
 	if err != nil {
@@ -85,43 +89,22 @@ func (dr *DefaultRegister) Regist(addr, path string, s *Service) error {
 	if err != nil {
 		return err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error %v", string(body))
+		return fmt.Errorf(string(body))
 	}
 	return nil
 }
 
-func services(url string) (map[string]*Service, error) {
+// Unregister make PUT request on consul api
+func (dr *DefaultServiceRegister) Unregister(addr, path, serviceID string) error {
 
-	resp, err := http.Get(url + servicesPath)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	var data map[string]*Service
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func registerService(url string, s *Service) error {
-
-	b, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequest("PUT", url+registerServicePath, bytes.NewBuffer(b))
+	url := fmt.Sprintf("http://%s%s/%s", addr, path, serviceID)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer([]byte("{}")))
 	if err != nil {
 		return err
 	}
@@ -129,34 +112,31 @@ func registerService(url string, s *Service) error {
 	if err != nil {
 		return err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error %v", string(body))
+		return fmt.Errorf(string(body))
 	}
 	return nil
 }
 
-func deregisterService(url string, serviceID string) error {
+// DoServiceRegister function to register a new service
+func DoServiceRegister(sr ServiceRegister, addr string, s *Service) error {
+	err := sr.Register(addr, registerServicePath, s)
+	if err != nil {
+		return fmt.Errorf("Error registering service Consul API: %s", err)
+	}
+	return nil
+}
 
-	req, err := http.NewRequest("PUT", url+strings.Replace(deregisterServicePath, "<serviceID>", serviceID, 1), bytes.NewBuffer([]byte(`{}`)))
+// DoServiceUnregister function to unregister a service by ID
+func DoServiceUnregister(sr ServiceRegister, addr, serviceID string) error {
+	err := sr.Unregister(addr, deregisterServicePath, serviceID)
 	if err != nil {
-		return err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error %v", string(body))
+		return fmt.Errorf("Error unregistering service Consul API: %s", err)
 	}
 	return nil
 }

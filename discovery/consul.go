@@ -55,7 +55,7 @@ func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
 	}
 	// register services
 	for _, s := range cd.cfg.Services {
-		err := registerService(cd.cfg.URL(), s)
+		err := DoServiceRegister(&DefaultServiceRegister{}, cd.cfg.Addr, s)
 		if err != nil {
 			return err
 		}
@@ -74,7 +74,7 @@ func (cd *consulDefault) Unregister() error {
 	if cd.isDiscovered {
 		// unregister services
 		for _, s := range cd.cfg.Services {
-			if err := deregisterService(cd.cfg.URL(), s.ID); err != nil {
+			if err := DoServiceUnregister(&DefaultServiceRegister{}, cd.cfg.Addr, s.ID); err != nil {
 				return err
 			}
 		}
