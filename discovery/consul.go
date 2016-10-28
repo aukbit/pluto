@@ -3,9 +3,8 @@ package discovery
 import "github.com/uber-go/zap"
 
 type consulDefault struct {
-	cfg          *Config
-	logger       zap.Logger
-	isDiscovered bool
+	cfg    *Config
+	logger zap.Logger
 }
 
 func newConsulDefault(cfgs ...ConfigFunc) *consulDefault {
@@ -24,11 +23,6 @@ func (cd *consulDefault) Service(serviceID string) ([]string, error) {
 }
 
 func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
-	// if _, err := isAvailable(cd.cfg.URL()); err != nil {
-	// 	cd.logger.Error("service discovery not available")
-	// 	return err
-	// }
-	cd.isDiscovered = true
 	// set last configs
 	for _, c := range cfgs {
 		c(cd.cfg)
@@ -51,20 +45,17 @@ func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
 }
 
 func (cd *consulDefault) Unregister() error {
-	if cd.isDiscovered {
-		// unregister services
-		for _, s := range cd.cfg.Services {
-			if err := DoServiceUnregister(&DefaultServiceRegister{}, cd.cfg.Addr, s.ID); err != nil {
-				return err
-			}
+	// unregister services
+	for _, s := range cd.cfg.Services {
+		if err := DoServiceUnregister(&DefaultServiceRegister{}, cd.cfg.Addr, s.ID); err != nil {
+			return err
 		}
-		// register checks
-		for _, c := range cd.cfg.Checks {
-			if err := DoCheckUnregister(&DefaultCheckRegister{}, cd.cfg.Addr, c.ID); err != nil {
-				return err
-			}
+	}
+	// unregister checks
+	for _, c := range cd.cfg.Checks {
+		if err := DoCheckUnregister(&DefaultCheckRegister{}, cd.cfg.Addr, c.ID); err != nil {
+			return err
 		}
-		cd.isDiscovered = false
 	}
 	return nil
 }

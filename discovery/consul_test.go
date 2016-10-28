@@ -11,7 +11,6 @@ import (
 
 func TestNewConsulDefault(t *testing.T) {
 	cd := newConsulDefault()
-	assert.Equal(t, false, cd.isDiscovered)
 	assert.Equal(t, "info", cd.logger.Level().String())
 	assert.Equal(t, "localhost:8500", cd.cfg.Addr)
 	assert.Equal(t, "http://localhost:8500", cd.cfg.URL())
@@ -110,8 +109,15 @@ func TestRegister(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{"ID": "redis","Name": "redis","Address": "","Port": 8000}`))
 			},
-			expectedResp: Service{ID: "redis", Name: "redis", Address: "", Port: 8000},
-			expectedErr:  nil,
+			expectedErr: nil,
+		},
+		{
+			hf: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"ID": "service:redis","Name": "Service 'redis' check","Status": "passing","Notes": "","Output": "","ServiceID": "redis","ServiceName": "redis"}`))
+			},
+			expectedErr: nil,
 		},
 		{
 			hf: func(w http.ResponseWriter, r *http.Request) {
@@ -119,8 +125,7 @@ func TestRegister(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{}`))
 			},
-			expectedResp: Service{},
-			expectedErr:  nil,
+			expectedErr: nil,
 			// expectedErr:  errors.New("Error service: redis is not available in any of the nodes"),
 		},
 	}
@@ -131,9 +136,20 @@ func TestRegister(t *testing.T) {
 			Service: "redis",
 			Port:    8000,
 		}
-		cd := newConsulDefault(Addr(ts.Listener.Addr().String()), ServicesCfg(s))
-		err := cd.Register()
-		// assert.Equal(t, test.expectedResp, resp)
+		c := Check{
+			ID:    "test_check",
+			Name:  "TCP check",
+			Notes: "Ensure the server is listening on the specific port",
+			DeregisterCriticalServiceAfter: "1m",
+			TCP:       ":60500",
+			Interval:  "10s",
+			Timeout:   "1s",
+			ServiceID: "test",
+		}
+		cd := NewDiscovery(Addr(ts.Listener.Addr().String()))
+		err := cd.Register(ServicesCfg(s), ChecksCfg(c))
+		assert.Equal(t, test.expectedErr, err)
+		err = cd.Unregister()
 		assert.Equal(t, test.expectedErr, err)
 		ts.Close()
 	}
