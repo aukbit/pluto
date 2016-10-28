@@ -1,17 +1,6 @@
 package discovery
 
-import (
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/uber-go/zap"
-)
-
-const (
-	SELF = "/v1/agent/self" // Returns the local node configuration
-)
+import "github.com/uber-go/zap"
 
 type consulDefault struct {
 	cfg          *Config
@@ -86,20 +75,4 @@ func (cd *consulDefault) Unregister() error {
 		cd.isDiscovered = false
 	}
 	return nil
-}
-
-func isAvailable(url string) (bool, error) {
-	resp, err := http.Get(url + SELF)
-	if err != nil {
-		return false, err
-	}
-	_, err = io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return false, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("Consul not available at this node")
-	}
-	return true, nil
 }

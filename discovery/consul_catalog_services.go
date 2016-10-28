@@ -42,7 +42,7 @@ func GetServiceNodes(s ServiceNoder, addr, serviceID string) (ServiceNodes, erro
 // DefaultServiceNoder struct to append GetNodeServices
 type DefaultServiceNoder struct{}
 
-// GetNodeServices make GET request on consul api
+// GetServiceNodes make GET request on consul api
 func (dn *DefaultServiceNoder) GetServiceNodes(addr, path, serviceID string) (ServiceNodes, error) {
 	qs := "?near=_agent"
 	url := fmt.Sprintf("http://%s%s/%s%s", addr, path, serviceID, qs)
