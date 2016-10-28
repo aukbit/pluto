@@ -12,13 +12,13 @@ func TestDefaults(t *testing.T) {
 }
 
 func TestConfigs(t *testing.T) {
-	s := &Service{
+	s := Service{
 		ID:      "test",
 		Service: "test",
 		Tags:    []string{"auth", "api"},
 		Port:    60500,
 	}
-	c := &Check{
+	c := Check{
 		ID:    "test_check",
 		Name:  "TCP check",
 		Notes: "Ensure the server is listening on the specific port",
@@ -35,6 +35,6 @@ func TestConfigs(t *testing.T) {
 	)
 	assert.Equal(t, "192.168.99.100:8500", cfg.Addr)
 	assert.Equal(t, "http://192.168.99.100:8500", cfg.URL())
-	assert.Equal(t, []*Service{s}, cfg.Services)
-	assert.Equal(t, []*Check{c}, cfg.Checks)
+	assert.Equal(t, Services{s.ID: s}, cfg.Services)
+	assert.Equal(t, Checks{c.ID: c}, cfg.Checks)
 }

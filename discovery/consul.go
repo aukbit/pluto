@@ -15,27 +15,19 @@ func newConsulDefault(cfgs ...ConfigFunc) *consulDefault {
 
 // IsAvailable
 func (cd *consulDefault) IsAvailable() (bool, error) {
-	return isAvailable(cd.cfg.URL())
+	return isAvailable(cd.cfg.Addr)
 }
 
 // Service
 func (cd *consulDefault) Service(serviceID string) ([]string, error) {
-	if _, err := isAvailable(cd.cfg.URL()); err != nil {
-		cd.logger.Error("service discovery not available")
-		return nil, err
-	}
-	targets, err := GetServiceTargets(cd.cfg.Addr, serviceID)
-	if err != nil {
-		return nil, err
-	}
-	return targets, nil
+	return GetServiceTargets(cd.cfg.Addr, serviceID)
 }
 
 func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
-	if _, err := isAvailable(cd.cfg.URL()); err != nil {
-		cd.logger.Error("service discovery not available")
-		return err
-	}
+	// if _, err := isAvailable(cd.cfg.URL()); err != nil {
+	// 	cd.logger.Error("service discovery not available")
+	// 	return err
+	// }
 	cd.isDiscovered = true
 	// set last configs
 	for _, c := range cfgs {
@@ -43,14 +35,14 @@ func (cd *consulDefault) Register(cfgs ...ConfigFunc) error {
 	}
 	// register services
 	for _, s := range cd.cfg.Services {
-		err := DoServiceRegister(&DefaultServiceRegister{}, cd.cfg.Addr, s)
+		err := DoServiceRegister(&DefaultServiceRegister{}, cd.cfg.Addr, &s)
 		if err != nil {
 			return err
 		}
 	}
 	// register checks
 	for _, c := range cd.cfg.Checks {
-		err := DoCheckRegister(&DefaultCheckRegister{}, cd.cfg.Addr, c)
+		err := DoCheckRegister(&DefaultCheckRegister{}, cd.cfg.Addr, &c)
 		if err != nil {
 			return err
 		}
