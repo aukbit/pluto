@@ -23,12 +23,12 @@ func (ds *datastore) target() error {
 func (ds *datastore) register() error {
 	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
 		// define service
-		dse := &discovery.Service{
+		dse := discovery.Service{
 			Name: ds.cfg.Name,
 			Tags: []string{ds.cfg.ID, ds.cfg.Version},
 		}
 		// define check
-		dck := &discovery.Check{
+		dck := discovery.Check{
 			Name:  fmt.Sprintf("Service '%s' check", ds.cfg.Name),
 			Notes: fmt.Sprintf("Ensure the bd client is able to connect to %s - %s", ds.cfg.Target, ds.cfg.TargetName),
 			DeregisterCriticalServiceAfter: "10m",
@@ -37,7 +37,7 @@ func (ds *datastore) register() error {
 			Timeout:   "1s",
 			ServiceID: ds.cfg.Name,
 		}
-		if err := ds.cfg.Discovery.Register(discovery.Services(dse), discovery.Checks(dck)); err != nil {
+		if err := ds.cfg.Discovery.Register(discovery.ServicesCfg(dse), discovery.ChecksCfg(dck)); err != nil {
 			return err
 		}
 	}
