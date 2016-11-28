@@ -9,16 +9,20 @@ import (
 // the metadata context is then sent over the wire - gRPC calls
 // and available to other services
 func GetOrCreateEventID(ctx context.Context) (string, context.Context) {
-	// get
+	// get metadata from context
 	md, ok := metadata.FromContext(ctx)
-	if ok {
-		e, ok := md["event"]
-		if ok {
-			return e[0], ctx
-		}
+	if !ok {
+		md = metadata.New(map[string]string{})
 	}
-	// create
-	e := RandID("evt_", 12)
-	ctx = metadata.NewContext(ctx, metadata.Pairs("event", e))
-	return e, ctx
+	e, ok := md["event"]
+	if !ok {
+		// append new evt id
+		md["event"] = append(md["event"], RandID("evt_", 12))
+	}
+	ctx = metadata.NewContext(ctx, md)
+	e, _ = md["event"]
+	// log.Printf("GetOrCreateEventID md:%v", md)
+	// log.Printf("GetOrCreateEventID ctx:%v", ctx)
+
+	return e[0], ctx
 }
