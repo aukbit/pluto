@@ -61,19 +61,19 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
-func newHealthServer() server.Server {
+func newHealthServer(name string) server.Server {
 	// Define Router
 	mux := router.NewMux()
 	mux.GET("/_health/:module/:name", healthHandler)
 	// Define server
 	return server.NewServer(
-		server.Name("health"),
+		server.Name(name+"_health"),
 		server.Addr(":9090"),
 		server.Mux(mux))
 }
 
 func (s *service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
-	srv := newHealthServer()
+	srv := newHealthServer(s.cfg.Name)
 	s.cfg.Servers[srv.Config().Name] = srv
 }

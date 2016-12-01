@@ -15,13 +15,14 @@ import (
 
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/discovery"
 	"bitbucket.org/aukbit/pluto/server"
 	pb "bitbucket.org/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
+
+var serviceName = "gopher"
 
 type greeter struct{}
 
@@ -34,13 +35,13 @@ func TestMain(m *testing.M) {
 
 	// Create pluto server
 	srvHTTP := server.NewServer(
-		server.Name("http"),
+		server.Name(serviceName+"_http"),
 		server.Description("gopher super server"),
 		server.Addr(":8080"),
 	)
 	// Create grpc pluto server
 	srvGRPC := server.NewServer(
-		server.Name("grpc"),
+		server.Name(serviceName+"_grpc"),
 		server.Description("grpc super server"),
 		server.Addr(":65060"),
 		server.GRPCRegister(func(g *grpc.Server) {
@@ -48,25 +49,28 @@ func TestMain(m *testing.M) {
 		}))
 	// Create grpc pluto client
 	cltGRPC := client.NewClient(
-		client.Name("grpc"),
-		// client.Targets("localhost:65060"),
-		client.TargetName("grpc"),
+		client.Name(serviceName),
+		client.Targets("localhost:65060"),
+		// client.TargetName("grpc"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
 	// Create db client
-	db := datastore.NewDatastore(datastore.TargetName("cassandra"))
+	// db := datastore.NewDatastore(datastore.TargetName("cassandra"))
+	db := datastore.NewDatastore(
+		datastore.Name(serviceName),
+		datastore.Target("localhost"))
 	// Define service Discovery
-	d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
+	// d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
 	// Define Pluto Service
 	s := NewService(
-		Name("gopher"),
+		Name(serviceName),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
 		Clients(cltGRPC),
 		Datastore(db),
-		Discovery(d),
+		// Discovery(d),
 	)
 
 	if !testing.Short() {
@@ -100,17 +104,17 @@ func TestHealth(t *testing.T) {
 		Status       int
 	}{
 		{
-			Path:         "/server/health_server",
+			Path:         "/server/" + serviceName + "_pluto_health_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
 		{
-			Path:         "/server/http_server",
+			Path:         "/server/" + serviceName + "_http_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
 		{
-			Path:         "/server/grpc_server",
+			Path:         "/server/" + serviceName + "_grpc_server",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
@@ -120,12 +124,12 @@ func TestHealth(t *testing.T) {
 			Status:       http.StatusNotFound,
 		},
 		{
-			Path:         "/client/grpc_client",
-			BodyContains: `NOT_SERVING`,
-			Status:       http.StatusTooManyRequests,
+			Path:         "/client/" + serviceName + "_client",
+			BodyContains: `SERVING`,
+			Status:       http.StatusOK,
 			// if discovery is active when testing this handler is not serving
-			// BodyContains: `SERVING`,
-			// Status:       http.StatusOK,
+			// BodyContains: `NOT_SERVING`,
+			// Status:       http.StatusTooManyRequests,
 		},
 		{
 			Path:         "/client/something_wrong",
@@ -143,7 +147,7 @@ func TestHealth(t *testing.T) {
 			Status:       http.StatusNotFound,
 		},
 		{
-			Path:         "/db/client_db",
+			Path:         "/db/" + serviceName + "_client_db",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},
