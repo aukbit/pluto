@@ -1,6 +1,7 @@
 package pluto_test
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -29,11 +30,19 @@ func TestPluto(t *testing.T) {
 		server.Addr(":8083"),
 		server.Mux(mux))
 
+	fn1 := func(ctx context.Context) {
+		t.Log("first run after service starts")
+	}
+	fn2 := func(ctx context.Context) {
+		t.Log("second run after service starts")
+	}
 	// Define Service
 	s := pluto.NewService(
 		pluto.Name("gopher"),
 		pluto.Description("gopher super service"),
-		pluto.Servers(srv))
+		pluto.Servers(srv),
+		pluto.HookAfterStart(fn1, fn2),
+	)
 
 	// 5. Run service
 	go func() {

@@ -51,6 +51,8 @@ func (s *service) Run() error {
 	if err := s.start(); err != nil {
 		return err
 	}
+	// hook run after start
+	s.hookAfterStart()
 	// wait for all go routines to finish
 	s.wg.Wait()
 	s.logger.Info("exit")
@@ -119,6 +121,17 @@ func (s *service) start() error {
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
 	return nil
+}
+
+func (s *service) hookAfterStart() {
+	hooks, ok := s.cfg.Hooks["after_start"]
+	if !ok {
+		return
+	}
+	ctx := context.WithValue(context.Background(), "pluto", s)
+	for _, h := range hooks {
+		h(ctx)
+	}
 }
 
 func (s *service) connectDB() {

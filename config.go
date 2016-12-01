@@ -1,6 +1,8 @@
 package pluto
 
 import (
+	"context"
+
 	"bitbucket.org/aukbit/pluto/client"
 	"bitbucket.org/aukbit/pluto/common"
 	"bitbucket.org/aukbit/pluto/datastore"
@@ -21,16 +23,22 @@ type Config struct {
 	Clients     map[string]client.Client
 	Datastore   datastore.Datastore
 	Discovery   discovery.Discovery
+	Hooks       map[string][]HookFunc
 }
 
 // ConfigFunc registers the Config
 type ConfigFunc func(*Config)
 
+// HookFunc hook function type
+type HookFunc func(context.Context)
+
 func newConfig(cfgs ...ConfigFunc) *Config {
 
 	cfg := &Config{Version: defaultVersion,
 		Servers: make(map[string]server.Server),
-		Clients: make(map[string]client.Client)}
+		Clients: make(map[string]client.Client),
+		Hooks:   make(map[string][]HookFunc),
+	}
 
 	for _, c := range cfgs {
 		c(cfg)
@@ -93,5 +101,12 @@ func Datastore(d datastore.Datastore) ConfigFunc {
 func Discovery(d discovery.Discovery) ConfigFunc {
 	return func(cfg *Config) {
 		cfg.Discovery = d
+	}
+}
+
+// HookAfterStart execute functions after service starts
+func HookAfterStart(fn ...HookFunc) ConfigFunc {
+	return func(cfg *Config) {
+		cfg.Hooks["after_start"] = append(cfg.Hooks["after_start"], fn...)
 	}
 }
