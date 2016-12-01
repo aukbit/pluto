@@ -128,7 +128,9 @@ func (s *service) hookAfterStart() {
 	if !ok {
 		return
 	}
-	ctx := context.WithValue(context.Background(), "pluto", s)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "pluto", s)
+	ctx = context.WithValue(ctx, "logger", s.logger)
 	for _, h := range hooks {
 		h(ctx)
 	}
