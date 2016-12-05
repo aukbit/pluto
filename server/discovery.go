@@ -23,7 +23,7 @@ func (ds *defaultServer) register() error {
 			Notes: fmt.Sprintf("Ensure the server is listening on port %s", ds.cfg.Addr),
 			DeregisterCriticalServiceAfter: "10m",
 			HTTP:      fmt.Sprintf("http://%s:9090/_health/server/%s", common.IPaddress(), ds.cfg.Name),
-			Interval:  "10s",
+			Interval:  "30s",
 			Timeout:   "1s",
 			ServiceID: ds.cfg.Name,
 		}
