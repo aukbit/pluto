@@ -2,6 +2,7 @@ package pluto
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -152,14 +153,18 @@ func (s *service) startServers() {
 		s.wg.Add(1)
 		go func(srv server.Server) {
 			defer s.wg.Done()
-			err := srv.Run(
-				server.ParentID(s.cfg.ID),
-				server.Middlewares(serviceContextMiddleware(s)),
-				server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
-				server.Discovery(s.Config().Discovery))
-			if err != nil {
-				s.logger.Error("Run()", zap.String("err", err.Error()))
-				delete(s.cfg.Servers, srv.Config().Name)
+			for {
+				err := srv.Run(
+					server.ParentID(s.cfg.ID),
+					server.Middlewares(serviceContextMiddleware(s)),
+					server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
+					server.Discovery(s.Config().Discovery))
+				if err == nil {
+					return
+				}
+				s.logger.Error(fmt.Sprintf("Run failed on server: %v. Error: %v. On hold by 10s...", srv.Config().Name, err.Error()))
+				time.Sleep(time.Second * 10)
+				// delete(s.cfg.Servers, srv.Config().Name)
 			}
 		}(srv)
 	}
@@ -171,12 +176,15 @@ func (s *service) startClients() {
 		s.wg.Add(1)
 		go func(clt client.Client) {
 			defer s.wg.Done()
-			err := clt.Dial(
-				client.ParentID(s.cfg.ID),
-				client.Discovery(s.Config().Discovery))
-			if err != nil {
-				s.logger.Error("Dial()", zap.String("err", err.Error()))
-				delete(s.cfg.Clients, clt.Config().Name)
+			for {
+				err := clt.Dial(
+					client.ParentID(s.cfg.ID),
+					client.Discovery(s.Config().Discovery))
+				if err == nil {
+					return
+				}
+				s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
+				time.Sleep(time.Second * 10)
 			}
 		}(clt)
 	}
