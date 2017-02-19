@@ -13,24 +13,16 @@ import (
 // R extended ASCII
 const R = 256
 
+//
+// TRIE
+//
+
 // Trie struct
 type Trie struct {
 	// root of trie
 	root *Node
 	// number of keys in trie
 	n int
-}
-
-// Node trie node
-type Node struct {
-	data *Data
-	next [R]*Node
-}
-
-// NewNode creates new instace node
-func NewNode() *Node {
-	//return &Node{data: &Data{}}
-	return &Node{data: NewData()}
 }
 
 // NewTrie creates new instace trie
@@ -227,4 +219,51 @@ func (t *Trie) longestPrefixOf(n *Node, query string, d, length int) int {
 	}
 	c := query[d]
 	return t.longestPrefixOf(n.next[c], query, d+1, length)
+}
+
+//
+// NODE
+//
+
+// Node a trie node
+type Node struct {
+	data *Data
+	next [R]*Node
+}
+
+// NewNode creates new instace node
+func NewNode() *Node {
+	//return &Node{data: &Data{}}
+	return &Node{data: NewData()}
+}
+
+//
+// DATA
+//
+
+// Data a data struct that each node can handle
+type Data struct {
+	value   string
+	prefix  string
+	vars    []string
+	methods map[string]Handler
+}
+
+// NewData returns a new data instance
+func NewData() *Data {
+	return &Data{
+		value:   "",
+		prefix:  "",
+		vars:    []string{},
+		methods: make(map[string]Handler)}
+}
+
+// GetValue returns data value
+func (d *Data) GetValue() string {
+	return d.value
+}
+
+// SetValue sets data value
+func (d *Data) SetValue(val string) {
+	d.value = val
 }
