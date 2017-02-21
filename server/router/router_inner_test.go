@@ -81,21 +81,22 @@ func TestTransformPath(t *testing.T) {
 }
 
 func TestValidPaths(t *testing.T) {
+	out := make(map[string][]string)
 	var tests = []struct {
 		Path  string
 		Paths map[string][]string
 	}{
+		// {
+		// 	Path:  "/",
+		// 	Paths: map[string][]string{"/": {}},
+		// },
 		{
-			Path:  "/",
-			Paths: map[string][]string{"/": {}},
-		},
-		{
-			Path:  "/a/b",
+			Path:  "/a/b/c",
 			Paths: map[string][]string{"/a": {}, "/:": {"a"}},
 		},
 	}
 	for _, test := range tests {
-		paths := validPaths(test.Path)
+		paths := validPaths(test.Path, "", []string{}, out)
 		assert.Equal(t, test.Paths, paths)
 	}
 }

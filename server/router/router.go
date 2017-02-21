@@ -142,36 +142,40 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 // eg. /home/123/room -> {"/home/123/room":[], "/home/123/:":["room"],
 // "/home/:/room":["123"], "/:/123/room":["home"], "/home/:/:":["123","room"],
 // "/:/123/:":["home","room"], "/:/:/room":["home","123"], "/:/:/:":["home","123","room"]}
-func validPaths(path string, segment string, in map[string][]string) map[string][]string {
-	if in == nil {
-		in = make(map[string][]string)
+func validPaths(path string, segment string, track []string, out map[string][]string) map[string][]string {
+	fmt.Printf("validPaths %v %v %v %v\n", path, segment, track, out)
+	if out == nil {
+		out = make(map[string][]string)
 	}
 	if path == "/" {
-		in["/"] = []string{}
-		return in
+		out[path] = []string{}
+		return out
 	}
 	// remove trailing slash `/`
 	if len(path) > 1 && path[len(path)-1:] == `/` {
 		path = path[:len(path)-1]
 	}
-	// replace path by segment
+	//
+
 	if segment != "" {
-		path = strings.Replace(path, "/"+segment, "/:", 1)
+		// replace path by segment
+		path = strings.Replace(path, `/`+segment, "/-", 1)
 	}
-	// in[path]
+	out[path] = append(out[path], track...)
 	//
 	segments := strings.Split(path, "/")[1:]
 	for _, s := range segments {
-		fmt.Printf("validPaths %v \n", s)
-		if s != `:` {
-			validPaths(path, s, in)
+		if s != `-` {
+			track = append(track, s)
+			return validPaths(path, s, track, out)
 		}
+
 		// if s[0] == ':' {
 		// 	params = append(params, s[1:])
 		// 	path = strings.Replace(path, s, ":", 1)
 	}
-
-	return in
+	fmt.Printf("out %v %v \n", out, path)
+	return out
 }
 
 func findData(r *Router, method, path, suffix, key, segment string, values []string) (*data, []string) {
