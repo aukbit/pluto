@@ -7,12 +7,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/paulormart/assert"
 
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -70,21 +70,21 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestServer(t *testing.T) {
-	router := router.NewMux()
-	router.Handle("GET", "/", IndexHandler)
-	router.Handle("GET", "/home", GetHandler)
-	router.Handle("GET", "/home/home", GetHandler)
-	router.Handle("GET", "/home/home/home", GetHandler)
-	router.Handle("POST", "/home", PostHandler)
+	router := router.NewRouter()
+	// router.Handle("GET", "/", IndexHandler)
+	// router.Handle("GET", "/home", GetHandler)
+	// router.Handle("GET", "/home/home", GetHandler)
+	// router.Handle("GET", "/home/home/home", GetHandler)
+	// router.Handle("POST", "/home", PostHandler)
 	router.Handle("GET", "/home/:id", GetDetailHandler)
-	router.Handle("PUT", "/home/:id", PutDetailHandler)
-	router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
-	router.Handle("GET", "/home/:id/room", GetRoomHandler)
-	router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
-	router.GET("/home", GetHandler)
-	router.POST("/home", PostHandler)
-	router.PUT("/home/:id", PutDetailHandler)
-	router.DELETE("/home/:id", DeleteDetailHandler)
+	// router.Handle("PUT", "/home/:id", PutDetailHandler)
+	// router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
+	// router.Handle("GET", "/home/:id/room", GetRoomHandler)
+	// router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+	// router.GET("/home", GetHandler)
+	// router.POST("/home", PostHandler)
+	// router.PUT("/home/:id", PutDetailHandler)
+	// router.DELETE("/home/:id", DeleteDetailHandler)
 
 	var tests = []struct {
 		Method       string
@@ -93,86 +93,86 @@ func TestServer(t *testing.T) {
 		BodyContains string
 		Status       int
 	}{
-		{
-			Method:       "GET",
-			Path:         "/",
-			BodyContains: `"Hello World"`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home",
-			BodyContains: `"Hello World"`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home/home",
-			BodyContains: `"Hello World"`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home/home/home",
-			BodyContains: `"Hello World"`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "POST",
-			Path:         "/home",
-			Body:         strings.NewReader(`{"name":"Gopher house"}`),
-			BodyContains: `{"name":"Gopher house"}`,
-			Status:       http.StatusCreated,
-		},
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/",
+		// 	BodyContains: `"Hello World"`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home",
+		// 	BodyContains: `"Hello World"`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home/home",
+		// 	BodyContains: `"Hello World"`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home/home/home",
+		// 	BodyContains: `"Hello World"`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "POST",
+		// 	Path:         "/home",
+		// 	Body:         strings.NewReader(`{"name":"Gopher house"}`),
+		// 	BodyContains: `{"name":"Gopher house"}`,
+		// 	Status:       http.StatusCreated,
+		// },
 		{
 			Method:       "GET",
 			Path:         "/home/123",
 			BodyContains: `{"id":"123","message":"Hello World"}`,
 			Status:       http.StatusOK,
 		},
-		{
-			Method:       "PUT",
-			Path:         "/home/123",
-			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-			BodyContains: `{"id":"123","message":"Hello World"}`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "DELETE",
-			Path:         "/home/123",
-			BodyContains: `{"id":"123","message":"deleted"}`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home/456/room",
-			BodyContains: `{"id":"456","message":"Hello World"}`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home/456/room/999",
-			BodyContains: `{"category":"999","id":"456","message":"Hello World"}`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/home/",
-			BodyContains: `"Hello World"`,
-			Status:       http.StatusOK,
-		},
-		{
-			Method:       "GET",
-			Path:         "/abc",
-			BodyContains: `"404 page not found"`,
-			Status:       http.StatusNotFound,
-		},
-		{
-			Method:       "GET",
-			Path:         "/somethingelse/123/w444/f444",
-			BodyContains: `"404 page not found"`,
-			Status:       http.StatusNotFound,
-		},
+		// {
+		// 	Method:       "PUT",
+		// 	Path:         "/home/123",
+		// 	Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
+		// 	BodyContains: `{"id":"123","message":"Hello World"}`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "DELETE",
+		// 	Path:         "/home/123",
+		// 	BodyContains: `{"id":"123","message":"deleted"}`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home/456/room",
+		// 	BodyContains: `{"id":"456","message":"Hello World"}`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home/456/room/999",
+		// 	BodyContains: `{"category":"999","id":"456","message":"Hello World"}`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/home/",
+		// 	BodyContains: `"Hello World"`,
+		// 	Status:       http.StatusOK,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/abc",
+		// 	BodyContains: `"404 page not found"`,
+		// 	Status:       http.StatusNotFound,
+		// },
+		// {
+		// 	Method:       "GET",
+		// 	Path:         "/somethingelse/123/w444/f444",
+		// 	BodyContains: `"404 page not found"`,
+		// 	Status:       http.StatusNotFound,
+		// },
 	}
 
 	server := httptest.NewServer(router)

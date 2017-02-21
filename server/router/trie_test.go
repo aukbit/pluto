@@ -1,87 +1,104 @@
-package router_test
+package router
 
 import (
 	"reflect"
 	"testing"
 
-	"bitbucket.org/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
 
-func TestStructs(t *testing.T) {
-	// comparing structs
-	type A struct {
-		val int
-	}
-	assert.Equal(t, false, &A{} == &A{})
-	assert.Equal(t, false, &A{} == new(A))
-	assert.Equal(t, false, new(A) == new(A))
-	assert.Equal(t, true, reflect.DeepEqual(&A{}, &A{}))
-	assert.Equal(t, true, reflect.DeepEqual(&A{}, new(A)))
-	assert.Equal(t, true, reflect.DeepEqual(new(A), new(A)))
-	cc := &A{}
-	assert.Equal(t, true, reflect.DeepEqual(cc, new(A)))
-
-	//fmt.Printf("new(A) = %v", new(A))
-	assert.Equal(t, true, reflect.DeepEqual(*(new(A)), A{}))
+func TestNewTrie(t *testing.T) {
+	tr := newTrie()
+	assert.Equal(t, reflect.TypeOf(&trie{}), reflect.TypeOf(tr))
+	assert.Equal(t, 0, tr.n)
+	assert.Equal(t, 0, tr.Size())
+	assert.Equal(t, true, tr.IsEmpty())
+	assert.Equal(t, reflect.TypeOf(&node{}), reflect.TypeOf(tr.root))
 }
 
-func TestTrie(t *testing.T) {
+func TestNewData(t *testing.T) {
+	d := newData()
+	d.value = "home"
+	d.prefix = "/"
+	assert.Equal(t, reflect.TypeOf(&data{}), reflect.TypeOf(d))
+	assert.Equal(t, "home", d.value)
+	assert.Equal(t, "/", d.prefix)
+	assert.Equal(t, []string{}, d.vars)
+	assert.Equal(t, make(map[string]Handler), d.methods)
+}
 
-	data := router.NewData()
-	assert.Equal(t, reflect.TypeOf(&router.Data{}), reflect.TypeOf(data))
-	node := router.NewNode()
-	assert.Equal(t, reflect.TypeOf(&router.Node{}), reflect.TypeOf(node))
-	trie := router.NewTrie()
-	assert.Equal(t, reflect.TypeOf(&router.Trie{}), reflect.TypeOf(trie))
+func TestPut(t *testing.T) {
+	d := newData()
+	d.value = "home"
+	d.prefix = "/"
+	tr := newTrie()
+	tr.Put("/home", d)
+	assert.Equal(t, 1, tr.Size())
+}
 
-	g := trie.Get("home")
-	assert.Equal(t, data, g)
-	assert.Equal(t, false, trie.Contains("home"))
-	//
-	d := &router.Data{}
-	d.SetValue("hello")
-	trie.Put("home", d)
-	assert.Equal(t, true, trie.Contains("home"))
-	assert.Equal(t, 1, trie.Size())
-	assert.Equal(t, false, trie.IsEmpty())
-	//
-	trie.Remove("home")
-	assert.Equal(t, false, trie.Contains("home"))
-	assert.Equal(t, 0, trie.Size())
-	assert.Equal(t, true, trie.IsEmpty())
-	//
-	a := &router.Data{}
-	a.SetValue("hello home")
-	trie.Put("home", a)
-	b := &router.Data{}
-	b.SetValue("hello room")
-	trie.Put("room", b)
-	c := &router.Data{}
-	c.SetValue("hello bedroom")
-	trie.Put("bedroom", c)
-	k := trie.Keys()
-	assert.Equal(t, 3, len(k))
-	//
-	kwp := trie.KeysWithPrefix("hom")
-	assert.Equal(t, 1, len(kwp))
-	//
-	ktm := trie.KeysThatMatch("")
+func TestGet(t *testing.T) {
+	tr := newTrie()
+	// empty
+	assert.Equal(t, 0, tr.Size())
+	assert.Equal(t, nil, tr.Get("/home"))
+
+	d := newData()
+	d.value = "/home"
+	d.prefix = "/"
+	tr.Put("/home", d)
+	assert.Equal(t, 1, tr.Size())
+	assert.Equal(t, true, tr.Contains("/home"))
+	// nil
+	assert.Equal(t, nil, tr.Get("/"))
+}
+
+func TestKeys(t *testing.T) {
+	// key /home
+	d := newData()
+	d.value = "/home"
+	d.prefix = "/"
+	tr := newTrie()
+	tr.Put("/home", d)
+	// key /room
+	d = newData()
+	d.value = "/room"
+	d.prefix = "/"
+	tr.Put("/room", d)
+	assert.Equal(t, 2, tr.Size())
+	// KeysWithPrefix
+	kwp := tr.KeysWithPrefix("/")
+	assert.Equal(t, 2, len(kwp))
+	// KeysThatMatch
+	ktm := tr.KeysThatMatch("")
 	assert.Equal(t, 0, len(ktm))
-	ktm1 := trie.KeysThatMatch("home")
+	ktm1 := tr.KeysThatMatch("/home")
 	assert.Equal(t, 1, len(ktm1))
-	ktm2 := trie.KeysThatMatch("room")
+	ktm2 := tr.KeysThatMatch("/room")
 	assert.Equal(t, 1, len(ktm2))
-	ktm3 := trie.KeysThatMatch(".o..")
+	ktm3 := tr.KeysThatMatch("..o..")
 	assert.Equal(t, 2, len(ktm3))
-	ktm4 := trie.KeysThatMatch("....")
+	ktm4 := tr.KeysThatMatch(".....")
 	assert.Equal(t, 2, len(ktm4))
-	ktm5 := trie.KeysThatMatch(".")
+	ktm5 := tr.KeysThatMatch(".")
 	assert.Equal(t, 0, len(ktm5))
-
-	lpo := trie.LongestPrefixOf("")
+	// Keys
+	k := tr.Keys()
+	assert.Equal(t, 2, len(k))
+	// LongestPrefixOf
+	lpo := tr.LongestPrefixOf("")
 	assert.Equal(t, "", lpo)
-	lpo1 := trie.LongestPrefixOf("home")
-	assert.Equal(t, "home", lpo1)
+	lpo1 := tr.LongestPrefixOf("/home")
+	assert.Equal(t, "/home", lpo1)
+}
 
+func BenchmarkPutTrie(b *testing.B) {
+	d := newData()
+	d.value = "home"
+	d.prefix = "/"
+
+	// run the Put function b.N times
+	for n := 0; n < b.N; n++ {
+		tr := newTrie()
+		tr.Put("/test", d)
+	}
 }

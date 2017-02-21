@@ -6,9 +6,7 @@
 //
 package router
 
-import (
-	"bytes"
-)
+import "bytes"
 
 // R extended ASCII
 const R = 256
@@ -17,85 +15,85 @@ const R = 256
 // TRIE
 //
 
-// Trie struct
-type Trie struct {
+// trie struct
+type trie struct {
 	// root of trie
-	root *Node
+	root *node
 	// number of keys in trie
 	n int
 }
 
-// NewTrie creates new instace trie
-func NewTrie() *Trie {
-	return &Trie{root: NewNode()}
+// newTrie creates new instace trie
+func newTrie() *trie {
+	return &trie{root: newNode()}
 }
 
 // Get returns the value associated with the given key
-func (t *Trie) Get(key string) *Data {
+func (t *trie) Get(key string) *data {
 	n := get(t.root, key, 0)
 	if n == nil {
-		//return &Data{}
-		return NewData()
-		//return nil
+		return nil
 	}
 	return n.data
 }
 
 // get
-func get(n *Node, key string, d int) *Node {
+func get(n *node, key string, index int) *node {
 	if n == nil {
+		// n = newNode()
 		return nil
 	}
-	if d == len(key) {
+	if index == len(key) {
 		return n
 	}
-	return get(n.next[key[d]], key, d+1)
+	ascii := key[index]
+	return get(n.next[ascii], key, index+1)
 }
 
 // Contains verify if a key exists in the Trie
-func (t *Trie) Contains(key string) bool {
+func (t *trie) Contains(key string) bool {
 	return t.Get(key).value != ""
 }
 
 // Put Inserts the key-value pair into the symbol table, overwriting the old value
 // with the new value if the key is already in the symbol table.
 // If the value is nil, this effectively deletes the key from the symbol table.
-func (t *Trie) Put(key string, data *Data) {
+func (t *trie) Put(key string, data *data) {
 	if data.value == "" {
 		t.Remove(key)
-	} else {
-		t.root = t.put(t.root, key, data, 0)
+	}
+	var ok bool
+
+	_, ok = put(t.root, key, data, 0)
+	if ok {
+		t.n++
 	}
 }
 
 // put
-func (t *Trie) put(n *Node, key string, data *Data, d int) *Node {
-	//log.Printf("put n=%v key=%v data=%v d=%v", &n, key, data, d)
+func put(n *node, key string, data *data, index int) (*node, bool) {
 	if n == nil {
-		n = NewNode()
+		n = newNode()
 	}
-	//log.Printf("put n.data=%v len(n.next)=%v", n.data, len(n.next))
-	if d == len(key) {
-		//log.Printf("put d==len(key) %v, n.data.value=%v", d, n.data.value)
-		if n.data.value == "" {
-			t.n++
+	var ok bool
+	if index == len(key) {
+		if n.data == nil {
+			ok = true
 		}
-		//log.Printf("put t.n %v", t.n)
 		n.data = data
-		return n
+		return n, ok
 	}
-	c := key[d]
-	//log.Printf("put n.next[c]=%v", n.next[c])
-	n.next[c] = t.put(n.next[c], key, data, d+1)
-	return n
+	ascii := key[index]
+	n.next[ascii], ok = put(n.next[ascii], key, data, index+1)
+	return n, ok
 }
 
 // Remove the key from the trie if present
-func (t *Trie) Remove(key string) {
+func (t *trie) Remove(key string) {
 	t.root = t.remove(t.root, key, 0)
 }
 
-func (t *Trie) remove(n *Node, key string, d int) *Node {
+func (t *trie) remove(n *node, key string, d int) *node {
 	if n == nil {
 		return nil
 	}
@@ -104,14 +102,14 @@ func (t *Trie) remove(n *Node, key string, d int) *Node {
 			t.n--
 		}
 		n.data.value = ""
-		//n.data = &Data{}
+		//n.data = &data{}
 	} else {
 		c := key[d]
 		n.next[c] = t.remove(n.next[c], key, d+1)
 	}
 
 	// remove sub-trie rooted at n if its completely empty
-	//if !reflect.DeepEqual(n.data, &Data{}) {
+	//if !reflect.DeepEqual(n.data, &data{}) {
 	if n.data.value != "" {
 		return n
 	}
@@ -124,56 +122,57 @@ func (t *Trie) remove(n *Node, key string, d int) *Node {
 }
 
 // Size returns the number of key-value pairs in this trie
-func (t *Trie) Size() int {
+func (t *trie) Size() int {
 	return t.n
 }
 
 // IsEmpty returns the number of key-value pairs in this trie
-func (t *Trie) IsEmpty() bool {
+func (t *trie) IsEmpty() bool {
 	return t.n == 0
 }
 
 // Keys returns all keys in the trie
-func (t *Trie) Keys() []string {
+func (t *trie) Keys() []string {
 	return (t.KeysWithPrefix(""))
 }
 
 // KeysWithPrefix returns all keys in the trie
 // that start with a prefix
-func (t *Trie) KeysWithPrefix(prefix string) []string {
+func (t *trie) KeysWithPrefix(prefix string) []string {
 	n := get(t.root, prefix, 0)
 	results := &[]string{}
-	t.collectKeysWithPrefix(n, prefix, results)
+	collectKeysWithPrefix(n, prefix, results)
 	return *results
 }
 
-func (t *Trie) collectKeysWithPrefix(n *Node, prefix string, results *[]string) {
+func collectKeysWithPrefix(n *node, prefix string, results *[]string) {
 	if n == nil {
 		return
 	}
-	if n.data.value != "" {
+	if n.data != nil {
 		*results = append(*results, prefix)
 	}
+
 	for c := 0; c < R; c++ {
 		buffer := bytes.NewBufferString(prefix)
 		buffer.WriteByte(byte(c))
-		t.collectKeysWithPrefix(n.next[c], buffer.String(), results)
+		collectKeysWithPrefix(n.next[c], buffer.String(), results)
 	}
 }
 
 // KeysThatMatch returns all keys in the trie that match a pattern
 // where . symbol is treated as a wildcard character
-func (t *Trie) KeysThatMatch(pattern string) []string {
+func (t *trie) KeysThatMatch(pattern string) []string {
 	results := &[]string{}
-	t.collectKeysThatMatch(t.root, "", pattern, results)
+	collectKeysThatMatch(t.root, "", pattern, results)
 	return *results
 }
 
-func (t *Trie) collectKeysThatMatch(n *Node, prefix, pattern string, results *[]string) {
+func collectKeysThatMatch(n *node, prefix, pattern string, results *[]string) {
 	if n == nil {
 		return
 	}
-	if len(prefix) == len(pattern) && n.data.value != "" {
+	if len(prefix) == len(pattern) && n.data != nil {
 		*results = append(*results, prefix)
 	}
 	if len(prefix) == len(pattern) {
@@ -184,19 +183,19 @@ func (t *Trie) collectKeysThatMatch(n *Node, prefix, pattern string, results *[]
 		for c := 0; c < R; c++ {
 			buffer := bytes.NewBufferString(prefix)
 			buffer.WriteByte(byte(c))
-			t.collectKeysThatMatch(n.next[c], buffer.String(), pattern, results)
+			collectKeysThatMatch(n.next[c], buffer.String(), pattern, results)
 		}
 	} else {
 		buffer := bytes.NewBufferString(prefix)
 		buffer.WriteByte(byte(p))
-		t.collectKeysThatMatch(n.next[p], buffer.String(), pattern, results)
+		collectKeysThatMatch(n.next[p], buffer.String(), pattern, results)
 	}
 }
 
 // LongestPrefixOf returns the string that is the longest prefix
 // or null, if no such string
-func (t *Trie) LongestPrefixOf(query string) string {
-	length := t.longestPrefixOf(t.root, query, 0, -1)
+func (t *trie) LongestPrefixOf(query string) string {
+	length := longestPrefixOf(t.root, query, 0, -1)
 	if length == -1 {
 		return ""
 	}
@@ -207,34 +206,33 @@ func (t *Trie) LongestPrefixOf(query string) string {
 // rooted at x that is a prefix of the query string,
 // assuming the first d character match and we have already
 // found a prefix match of given length (-1 if no such match)
-func (t *Trie) longestPrefixOf(n *Node, query string, d, length int) int {
+func longestPrefixOf(n *node, query string, d, length int) int {
 	if n == nil {
 		return length
 	}
-	if n.data.value != "" {
+	if n.data != nil {
 		length = d
 	}
 	if d == len(query) {
 		return length
 	}
 	c := query[d]
-	return t.longestPrefixOf(n.next[c], query, d+1, length)
+	return longestPrefixOf(n.next[c], query, d+1, length)
 }
 
 //
 // NODE
 //
 
-// Node a trie node
-type Node struct {
-	data *Data
-	next [R]*Node
+// node a representation of each trie node
+type node struct {
+	data *data
+	next [R]*node
 }
 
 // NewNode creates new instace node
-func NewNode() *Node {
-	//return &Node{data: &Data{}}
-	return &Node{data: NewData()}
+func newNode() *node {
+	return &node{}
 }
 
 //
@@ -242,28 +240,27 @@ func NewNode() *Node {
 //
 
 // Data a data struct that each node can handle
-type Data struct {
+type data struct {
 	value   string
 	prefix  string
 	vars    []string
 	methods map[string]Handler
 }
 
-// NewData returns a new data instance
-func NewData() *Data {
-	return &Data{
-		value:   "",
-		prefix:  "",
+// newData returns a new data instance
+func newData() *data {
+	return &data{
 		vars:    []string{},
-		methods: make(map[string]Handler)}
+		methods: make(map[string]Handler),
+	}
 }
 
 // GetValue returns data value
-func (d *Data) GetValue() string {
+func (d *data) Value() string {
 	return d.value
 }
 
 // SetValue sets data value
-func (d *Data) SetValue(val string) {
+func (d *data) SetValue(val string) {
 	d.value = val
 }
