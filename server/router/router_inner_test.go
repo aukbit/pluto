@@ -91,12 +91,12 @@ func TestValidPaths(t *testing.T) {
 		// 	Paths: map[string][]string{"/": {}},
 		// },
 		{
-			Path:  "/a/b/c",
+			Path:  "/abc/def/ghi",
 			Paths: map[string][]string{"/a": {}, "/:": {"a"}},
 		},
 	}
 	for _, test := range tests {
-		paths := validPaths(test.Path, "", []string{}, out)
+		paths := validPaths(test.Path, "", "", "", 0, []string{}, out)
 		assert.Equal(t, test.Paths, paths)
 	}
 }
