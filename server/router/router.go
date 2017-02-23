@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -142,8 +141,8 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 // eg. /home/123/room -> {"/home/123/room":[], "/home/123/:":["room"],
 // "/home/:/room":["123"], "/:/123/room":["home"], "/home/:/:":["123","room"],
 // "/:/123/:":["home","room"], "/:/:/room":["home","123"], "/:/:/:":["home","123","room"]}
-func validPaths(path, key, segment, cutset string, c int, track []string, out map[string][]string) map[string][]string {
-	// fmt.Printf("validPaths %v %v %v %v\n", path, segment, track, out)
+func validPaths(path, key, segment, cutset string, track []string, out map[string][]string) map[string][]string {
+	// fmt.Printf("validPaths path %v, key %v, segment %v, cutset %v, track %v, out %v\n", path, key, segment, cutset, track, out)
 	if out == nil {
 		out = make(map[string][]string)
 	}
@@ -151,6 +150,7 @@ func validPaths(path, key, segment, cutset string, c int, track []string, out ma
 		out[path] = []string{}
 		return out
 	}
+	// first iteration
 	if path != "" && len(key) == 0 {
 		// remove trailing slash `/`
 		if len(path) > 1 && path[len(path)-1:] == `/` {
@@ -158,87 +158,36 @@ func validPaths(path, key, segment, cutset string, c int, track []string, out ma
 		}
 		key = path
 		cutset = path
-
+		out[key] = []string{}
 	}
-
-	// initialize for the inner loop
-	// : stays fixed in the last segment
-	if cutset == "" {
-		x := strings.Index(key, "/:")
-		cutset = key[:x]
-		path = key
+	// all done end iteration
+	if strings.Count(path, "/") == strings.Count(key, ":") {
+		return out
 	}
 
 	// TODO maybe try to use Regex
-	// i := strings.Index(cutset[1:], "/")
-	// if i == -1 {
-	// 	segment = cutset[1:]
-	// 	key = path[:strings.LastIndex(path, segment)] + strings.Replace(path[strings.LastIndex(path, segment):], segment, ":", 1)
-	// 	track = append(track, segment)
-	// 	fmt.Printf("format 1 %v %v\n", track, cutset)
-	// 	out[key] = append(out[key], track...)
-	// 	cutset = ""
-	// } else {
-	// 	segment = cutset[1 : i+1]
-	// 	key = strings.Replace(path, segment, ":", 1)
-	// 	cutset = cutset[i+1:]
-	// 	fmt.Printf("format 2 %v %v\n", segment, cutset)
-	// 	out[key] = append(out[key], segment)
-	// 	// fmt.Printf("*** %v %v %v\n", segment, key, cutset)
-	// }
-
 	i := strings.Index(cutset[1:], "/")
-	fmt.Printf("i %v\n", i)
 	if i == -1 {
 		segment = cutset[1:]
 		key = path[:strings.LastIndex(path, segment)] + strings.Replace(path[strings.LastIndex(path, segment):], segment, ":", 1)
-		fmt.Printf("path %v key %v\n", path, key)
-		track = append(track, segment)
+		tmp := []string{segment}
+		track = append(tmp, track...)
 		out[key] = append(out[key], track...)
-		cutset = ""
-		track = []string{segment}
-		c++
-	} else {
-		segment = cutset[1 : i+1]
-		key = strings.Replace(path, segment, ":", 1)
-		cutset = cutset[i+1:]
-		if c > 0 {
-			track = append(track, segment)
-			out[key] = append(out[key], track...)
-			// track = []string{}
-		} else {
-			out[key] = append(out[key], segment)
-		}
+		// prepare inputs
+		cutset = key[:strings.Index(key, "/:")]
+		return validPaths(key, key, segment, cutset, track, out)
 	}
+	segment = cutset[1 : i+1]
+	key = strings.Replace(path, segment, ":", 1)
+	out[key] = append(out[key], segment)
+	out[key] = append(out[key], track...)
+	cutset = cutset[i+1:]
+	return validPaths(path, key, segment, cutset, track, out)
 
-	//
-
-	fmt.Printf("out %v, path %v\n", out, path)
-	out = validPaths(path, key, segment, cutset, c, track, out)
-	return out
-	// if segment != "" {
-	// 	// replace path by segment
-	// 	path = strings.Replace(path, `/`+segment, "/-", 1)
-	// }
-	// out[test] = append(out[test], track...)
-	// //
-	// segments := strings.Split(test, "/")[1:]
-	// for _, s := range segments {
-	// 	if s != `-` {
-	// 		track = append(track, s)
-	// 		return validPaths(path, s, test, track, out)
-	// 	}
-	//
-	// 	// if s[0] == ':' {
-	// 	// 	params = append(params, s[1:])
-	// 	// 	path = strings.Replace(path, s, ":", 1)
-	// }
-	// fmt.Printf("out %v %v %v %v\n", out, path, cutset, segment)
-	// return out
 }
 
 func findData(r *Router, method, path, suffix, key, segment string, values []string) (*data, []string) {
-	log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v\n", method, path, suffix, key, segment, values)
+	// log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v\n", method, path, suffix, key, segment, values)
 	// initialize
 	if path != "" && suffix == "" && key == "" {
 		// remove trailing slash `/`
@@ -248,8 +197,6 @@ func findData(r *Router, method, path, suffix, key, segment string, values []str
 		suffix = path
 		key = path
 	}
-
-	fmt.Printf("key 1 %v\n", key)
 
 	// test key
 	if key != "" {
@@ -277,8 +224,6 @@ func findData(r *Router, method, path, suffix, key, segment string, values []str
 			values = []string{}
 		}
 	}
-
-	fmt.Printf("key 3 %v\n", key)
 
 	// initialize for the inner loop
 	// : stays fixed in the last segment

@@ -81,23 +81,42 @@ func TestTransformPath(t *testing.T) {
 }
 
 func TestValidPaths(t *testing.T) {
-	out := make(map[string][]string)
 	var tests = []struct {
 		Path  string
 		Paths map[string][]string
 	}{
-		// {
-		// 	Path:  "/",
-		// 	Paths: map[string][]string{"/": {}},
-		// },
 		{
-			Path:  "/abc/def/ghi",
+			Path:  "/",
+			Paths: map[string][]string{"/": {}},
+		},
+		{
+			Path:  "/a",
 			Paths: map[string][]string{"/a": {}, "/:": {"a"}},
+		},
+		{
+			Path:  "/a/",
+			Paths: map[string][]string{"/a": {}, "/:": {"a"}},
+		},
+		{
+			Path:  "/a/b",
+			Paths: map[string][]string{"/a/b": {}, "/a/:": {"b"}, "/:/b": {"a"}, "/:/:": {"a", "b"}},
 		},
 	}
 	for _, test := range tests {
-		paths := validPaths(test.Path, "", "", "", 0, []string{}, out)
+		out := make(map[string][]string)
+		paths := validPaths(test.Path, "", "", "", nil, out)
 		assert.Equal(t, test.Paths, paths)
+	}
+}
+
+func BenchmarkValidPaths(b *testing.B) {
+	d := newData()
+	d.value = "home"
+	path := "/a/b/c"
+
+	// run the Put function b.N times
+	for n := 0; n < b.N; n++ {
+		validPaths(path, "", "", "", nil, nil)
 	}
 }
 
