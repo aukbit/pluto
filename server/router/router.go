@@ -98,16 +98,29 @@ func (r *Router) WrapperMiddleware(mids ...Middleware) {
 	}
 }
 
-func (r *Router) findMatch(req *http.Request) *Match {
+func (r *Router) findMatchOld(req *http.Request) *Match {
 	path := req.URL.Path
 	method := req.Method
 	data, values := findData(r, method, path, "", "", "", []string{})
-	// if data != nil {
-	// 	ctx := setContext(req.Context(), data.vars, values)
-	// 	handler := data.methods[req.Method]
-	// 	return &Match{handler: handler, ctx: ctx}
-	// }
-	fmt.Printf("findMatch  %v %v\n", data, values)
+	if data != nil {
+		ctx := setContext(req.Context(), data.vars, values)
+		handler := data.methods[req.Method]
+		return &Match{handler: handler, ctx: ctx}
+	}
+	return nil
+}
+
+func (r *Router) findMatch(req *http.Request) *Match {
+	path := req.URL.Path
+	paths := validPaths(path, "", "", "", nil, nil)
+	for key, values := range paths {
+		data := r.trie.Get(key)
+		if data != nil {
+			ctx := setContext(req.Context(), data.vars, values)
+			handler := data.methods[req.Method]
+			return &Match{handler: handler, ctx: ctx}
+		}
+	}
 	return nil
 }
 
