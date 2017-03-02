@@ -82,10 +82,6 @@ func TestServer(t *testing.T) {
 	router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
 	router.Handle("GET", "/home/:id/room", GetRoomHandler)
 	router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
-	router.GET("/home", GetHandler)
-	router.POST("/home", PostHandler)
-	router.PUT("/home/:id", PutDetailHandler)
-	router.DELETE("/home/:id", DeleteDetailHandler)
 
 	var tests = []struct {
 		Method       string

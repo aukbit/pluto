@@ -114,6 +114,7 @@ func (r *Router) findMatch(req *http.Request) *Match {
 	path := req.URL.Path
 	paths := validPaths(path, "", "", "", nil, nil)
 	for key, values := range paths {
+		fmt.Printf("key %v, values %v\n", key, values)
 		data := r.trie.Get(key)
 		if data != nil {
 			ctx := setContext(req.Context(), data.vars, values)
@@ -266,13 +267,23 @@ func findData(r *Router, method, path, suffix, key, segment string, values []str
 	return d, v
 }
 
-func setContext(ctx context.Context, vars, values []string) context.Context {
+func setContextOld(ctx context.Context, vars, values []string) context.Context {
 	if len(vars) != len(values) {
 		return ctx
 	}
 	for i, value := range values {
 		// pick opposite var
 		ctx = context.WithValue(ctx, vars[len(vars)-1-i], value)
+	}
+	return ctx
+}
+
+func setContext(ctx context.Context, vars, values []string) context.Context {
+	if len(vars) != len(values) {
+		return ctx
+	}
+	for i, value := range values {
+		ctx = context.WithValue(ctx, vars[i], value)
 	}
 	return ctx
 }
