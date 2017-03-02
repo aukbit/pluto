@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/server/router"
 )
 
 // serviceContextMiddleware Middleware that adds service instance

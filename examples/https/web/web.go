@@ -3,9 +3,9 @@ package web
 import (
 	"flag"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 )
 
 var https_port = flag.String("https_port", ":8443", "https port")

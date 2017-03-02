@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 
-	"bitbucket.org/aukbit/pluto/examples/user/backend/service"
+	"github.com/aukbit/pluto/examples/user/backend/service"
 )
 
 func main() {

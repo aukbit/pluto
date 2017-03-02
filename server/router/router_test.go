@@ -12,8 +12,8 @@ import (
 
 	"github.com/paulormart/assert"
 
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server/router"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {

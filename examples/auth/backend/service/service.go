@@ -5,12 +5,12 @@ import (
 
 	"github.com/uber-go/zap"
 
-	"bitbucket.org/aukbit/pluto"
-	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/examples/auth/backend/views"
-	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"bitbucket.org/aukbit/pluto/server"
+	"github.com/aukbit/pluto"
+	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/examples/auth/backend/views"
+	pbu "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/server"
 	"google.golang.org/grpc"
 )
 

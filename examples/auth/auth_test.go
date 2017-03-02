@@ -17,15 +17,15 @@ import (
 
 	"google.golang.org/grpc"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/auth"
-	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/examples/auth/backend/service"
-	"bitbucket.org/aukbit/pluto/examples/auth/frontend/service"
-	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/auth"
+	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/examples/auth/backend/service"
+	"github.com/aukbit/pluto/examples/auth/frontend/service"
+	pbu "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
 

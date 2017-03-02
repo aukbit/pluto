@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"bitbucket.org/aukbit/pluto"
-	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/aukbit/pluto"
+	pb "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/reply"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/uber-go/zap"
 )

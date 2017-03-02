@@ -11,8 +11,8 @@ import (
 
 	"github.com/paulormart/assert"
 
-	"bitbucket.org/aukbit/pluto/server"
-	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"github.com/aukbit/pluto/server"
+	pb "github.com/aukbit/pluto/server/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

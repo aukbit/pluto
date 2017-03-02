@@ -11,10 +11,10 @@ import (
 
 	"github.com/uber-go/zap"
 
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/common"
-	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/server"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/datastore"
+	"github.com/aukbit/pluto/server"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )

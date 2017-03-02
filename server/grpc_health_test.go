@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "bitbucket.org/aukbit/pluto/server/proto"
+	pb "github.com/aukbit/pluto/server/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 )

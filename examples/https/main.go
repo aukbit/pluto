@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"bitbucket.org/aukbit/pluto/examples/https/web"
+	"github.com/aukbit/pluto/examples/https/web"
 )
 
 func main(){

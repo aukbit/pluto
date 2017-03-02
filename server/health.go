@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server/router"
 	"golang.org/x/net/context"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )

@@ -3,12 +3,12 @@ package frontend
 import (
 	"flag"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/examples/user/frontend/views"
-	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/examples/user/frontend/views"
+	pb "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	"google.golang.org/grpc"
 )
 

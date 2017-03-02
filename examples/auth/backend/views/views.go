@@ -3,10 +3,10 @@ package backend
 import (
 	"errors"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/auth/jwt"
-	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	pbu "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/auth/jwt"
+	pba "github.com/aukbit/pluto/auth/proto"
+	pbu "github.com/aukbit/pluto/examples/user/proto"
 	"golang.org/x/net/context"
 )
 

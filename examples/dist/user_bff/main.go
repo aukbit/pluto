@@ -6,13 +6,13 @@ import (
 
 	"google.golang.org/grpc"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/discovery"
-	pb "bitbucket.org/aukbit/pluto/examples/dist/user_bff/proto"
-	"bitbucket.org/aukbit/pluto/examples/dist/user_bff/views"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/discovery"
+	pb "github.com/aukbit/pluto/examples/dist/user_bff/proto"
+	"github.com/aukbit/pluto/examples/dist/user_bff/views"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 )
 
 var httpPort = flag.String("http_port", ":8080", "backend for frontend http port")

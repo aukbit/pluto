@@ -1,7 +1,7 @@
 package web
 
 import (
-	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/reply"
 	"net/http"
 )
 

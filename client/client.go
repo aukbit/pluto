@@ -1,7 +1,7 @@
 package client
 
 import (
-	"bitbucket.org/aukbit/pluto/client/balancer"
+	"github.com/aukbit/pluto/client/balancer"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 

@@ -26,13 +26,13 @@ WORKDIR $GOPATH
 
 # My Golang project
 # Download project dependencies
-RUN go get bitbucket.org/aukbit/pluto
+RUN go get github.com/aukbit/pluto
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/bitbucket.org/aukbit/pluto/examples/user/backend
+ADD . /go/src/github.com/aukbit/pluto/examples/user/backend
 
 # Build the pluto-sample-frontend command inside the container.
-RUN go install bitbucket.org/aukbit/pluto/examples/user/backend
+RUN go install github.com/aukbit/pluto/examples/user/backend
 
 # Run the pluto-sample-frontend command by default when the container starts.
 ENTRYPOINT /go/bin/backend -db_addr=192.168.99.100 -grpc_port=:65060

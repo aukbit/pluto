@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
 

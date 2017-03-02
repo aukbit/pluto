@@ -1,8 +1,8 @@
 package pluto
 
 import (
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/server"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/server"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 

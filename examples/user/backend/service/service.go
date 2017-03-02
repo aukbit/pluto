@@ -3,11 +3,11 @@ package backend
 import (
 	"flag"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/examples/user/backend/views"
-	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
-	"bitbucket.org/aukbit/pluto/server"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/datastore"
+	"github.com/aukbit/pluto/examples/user/backend/views"
+	pb "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/server"
 	"google.golang.org/grpc"
 )
 

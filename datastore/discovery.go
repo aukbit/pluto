@@ -3,8 +3,8 @@ package datastore
 import (
 	"fmt"
 
-	"bitbucket.org/aukbit/pluto/common"
-	"bitbucket.org/aukbit/pluto/discovery"
+	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/discovery"
 )
 
 // target get target IP:Port from service discovery system
