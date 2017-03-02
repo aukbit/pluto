@@ -15,5 +15,5 @@ type Mux interface {
 
 // NewMux creates a new router
 func NewMux() Mux {
-	return newRouter()
+	return NewRouter()
 }

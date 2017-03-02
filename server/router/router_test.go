@@ -10,9 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/paulormart/assert"
+
 	"bitbucket.org/aukbit/pluto/reply"
 	"bitbucket.org/aukbit/pluto/server/router"
-	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +71,7 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestServer(t *testing.T) {
-	router := router.NewMux()
+	router := router.NewRouter()
 	router.Handle("GET", "/", IndexHandler)
 	router.Handle("GET", "/home", GetHandler)
 	router.Handle("GET", "/home/home", GetHandler)

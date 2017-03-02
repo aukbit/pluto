@@ -6,9 +6,14 @@ import (
 	"regexp"
 	"strings"
 
+	"context"
+
 	"bitbucket.org/aukbit/pluto/reply"
-	"golang.org/x/net/context"
 )
+
+//
+// HANDLER
+//
 
 // Handler is a function type like "net/http" Handler
 type Handler func(http.ResponseWriter, *http.Request)
@@ -18,38 +23,22 @@ func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f(w, r)
 }
 
-// Middleware wraps an http.Handler with additional
-// functionality.
-type Middleware func(Handler) Handler
+//
+// ROUTER
+//
 
-// Match wraps an Handler and context
-type Match struct {
-	handler Handler
-	ctx     context.Context
+// Router ..
+type Router struct {
+	trie *trie
 }
 
-// router
-type router struct {
-	trie *Trie
-}
-
-// DefaultRootHandler hello world handler
-func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World!\n")
-}
-
-// NotFoundHandler default not found resource json handler
-func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	reply.Json(w, r, http.StatusNotFound, "404 page not found")
-}
-
-// newRouter creates a new router instance
-func newRouter() *router {
-	return &router{trie: NewTrie()}
+// NewRouter creates a new router instance
+func NewRouter() *Router {
+	return &Router{trie: newTrie()}
 }
 
 // Handle takes a method, pattern, and http handler for a route.
-func (r *router) Handle(method, path string, handler Handler) {
+func (r *Router) Handle(method, path string, handler Handler) {
 	if matches, err := regexp.MatchString("^[A-Z]+$", method); !matches || err != nil {
 		panic("Http method " + method + " is not valid")
 	}
@@ -58,6 +47,9 @@ func (r *router) Handle(method, path string, handler Handler) {
 	}
 	key, value, prefix, vars := transformPath(path)
 	data := r.trie.Get(key)
+	if data == nil {
+		data = newData()
+	}
 	data.value = value
 	data.prefix = prefix
 	data.vars = vars
@@ -65,27 +57,38 @@ func (r *router) Handle(method, path string, handler Handler) {
 	r.trie.Put(key, data)
 }
 
-// Get is a shortcut for Handle with method "GET"
-func (r *router) GET(path string, handler Handler) {
+// GET is a shortcut for Handle with method "GET"
+func (r *Router) GET(path string, handler Handler) {
 	r.Handle("GET", path, handler)
 }
 
-// Post is a shortcut for Handle with method "GET"
-func (r *router) POST(path string, handler Handler) {
+// POST is a shortcut for Handle with method "GET"
+func (r *Router) POST(path string, handler Handler) {
 	r.Handle("POST", path, handler)
 }
 
-// Get is a shortcut for Handle with method "GET"
-func (r *router) PUT(path string, handler Handler) {
+// PUT is a shortcut for Handle with method "GET"
+func (r *Router) PUT(path string, handler Handler) {
 	r.Handle("PUT", path, handler)
 }
 
-// Get is a shortcut for Handle with method "GET"
-func (r *router) DELETE(path string, handler Handler) {
+// DELETE is a shortcut for Handle with method "GET"
+func (r *Router) DELETE(path string, handler Handler) {
 	r.Handle("DELETE", path, handler)
 }
 
-func (r *router) WrapperMiddleware(mids ...Middleware) {
+// ServeHTTP
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	m := r.findMatch(req)
+	if m == nil {
+		NotFoundHandler(w, req)
+		return
+	}
+	m.ServeHTTP(w, req)
+}
+
+// WrapperMiddleware ..
+func (r *Router) WrapperMiddleware(mids ...Middleware) {
 	for _, k := range r.trie.Keys() {
 		data := r.trie.Get(k)
 		for m, h := range data.methods {
@@ -95,12 +98,30 @@ func (r *router) WrapperMiddleware(mids ...Middleware) {
 	}
 }
 
-// Wrap h with all specified middlewares.
-func Wrap(h Handler, middlewares ...Middleware) Handler {
-	for _, m := range middlewares {
-		h = m(h)
+func (r *Router) findMatchOld(req *http.Request) *Match {
+	path := req.URL.Path
+	method := req.Method
+	data, values := findData(r, method, path, "", "", "", []string{})
+	if data != nil {
+		ctx := setContext(req.Context(), data.vars, values)
+		handler := data.methods[req.Method]
+		return &Match{handler: handler, ctx: ctx}
 	}
-	return h
+	return nil
+}
+
+func (r *Router) findMatch(req *http.Request) *Match {
+	path := req.URL.Path
+	paths := validPaths(path, "", "", "", nil, nil)
+	for key, values := range paths {
+		data := r.trie.Get(key)
+		if data != nil {
+			ctx := setContext(req.Context(), data.vars, values)
+			handler := data.methods[req.Method]
+			return &Match{handler: handler, ctx: ctx}
+		}
+	}
+	return nil
 }
 
 // transformPath returns a tuple with key, value, prefix and params for the
@@ -129,11 +150,60 @@ func transformPath(path string) (key, value, prefix string, params []string) {
 	return key, value, prefix, params
 }
 
-func findData(r *router, method, path, suffix, key, segment string, values []string) (*Data, []string) {
-	// log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v", method, path, suffix, key, segment, values)
+// validPaths returns candidate paths to be searched on trie
+// eg. /home/123/room -> {"/home/123/room":[], "/home/123/:":["room"],
+// "/home/:/room":["123"], "/:/123/room":["home"], "/home/:/:":["123","room"],
+// "/:/123/:":["home","room"], "/:/:/room":["home","123"], "/:/:/:":["home","123","room"]}
+func validPaths(path, key, segment, cutset string, track []string, out map[string][]string) map[string][]string {
+	// fmt.Printf("validPaths path %v, key %v, segment %v, cutset %v, track %v, out %v\n", path, key, segment, cutset, track, out)
+	if out == nil {
+		out = make(map[string][]string)
+	}
+	if path == "/" {
+		out[path] = []string{}
+		return out
+	}
+	// first iteration
+	if path != "" && len(key) == 0 {
+		// remove trailing slash `/`
+		if len(path) > 1 && path[len(path)-1:] == `/` {
+			path = path[:len(path)-1]
+		}
+		key = path
+		cutset = path
+		out[key] = []string{}
+	}
+	// all done end iteration
+	if strings.Count(path, "/") == strings.Count(key, ":") {
+		return out
+	}
+
+	// TODO maybe try to use Regex
+	i := strings.Index(cutset[1:], "/")
+	if i == -1 {
+		segment = cutset[1:]
+		key = path[:strings.LastIndex(path, segment)] + strings.Replace(path[strings.LastIndex(path, segment):], segment, ":", 1)
+		tmp := []string{segment}
+		track = append(tmp, track...)
+		out[key] = append(out[key], track...)
+		// prepare inputs
+		cutset = key[:strings.Index(key, "/:")]
+		return validPaths(key, key, segment, cutset, track, out)
+	}
+	segment = cutset[1 : i+1]
+	key = strings.Replace(path, segment, ":", 1)
+	out[key] = append(out[key], segment)
+	out[key] = append(out[key], track...)
+	cutset = cutset[i+1:]
+	return validPaths(path, key, segment, cutset, track, out)
+
+}
+
+func findData(r *Router, method, path, suffix, key, segment string, values []string) (*data, []string) {
+	// log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v\n", method, path, suffix, key, segment, values)
 	// initialize
 	if path != "" && suffix == "" && key == "" {
-		// remove trailing slash
+		// remove trailing slash `/`
 		if len(path) > 1 && strings.LastIndex(path, "/") == len(path)-1 {
 			path = path[:len(path)-1]
 		}
@@ -144,13 +214,21 @@ func findData(r *router, method, path, suffix, key, segment string, values []str
 	// test key
 	if key != "" {
 		// if key is valid returns
-		if d := r.trie.Get(key); d.methods[method] != nil {
+
+		if d := r.trie.Get(key); d != nil {
 			return d, values
 		}
+		// if d := r.trie.Get(key); d.methods[method] != nil {
+		// 	return d, values
+		// }
+		fmt.Printf("key 2 %v\n", key)
+
 		// Nothing found, returns nil
 		if c := strings.Count(key, ":"); c != 0 && c == strings.Count(key, "/") {
+			fmt.Printf("key 2.1 %v %v\n", key, values)
 			return nil, []string{}
 		}
+
 		// restore values
 		if len(values) > 1 {
 			// remove last segment in the slice
@@ -183,7 +261,9 @@ func findData(r *router, method, path, suffix, key, segment string, values []str
 	}
 	values = append(values, segment)
 
-	return findData(r, method, path, suffix, key, segment, values)
+	d, v := findData(r, method, path, suffix, key, segment, values)
+	fmt.Printf("key 4 %v %v\n", d, v)
+	return d, v
 }
 
 func setContext(ctx context.Context, vars, values []string) context.Context {
@@ -197,28 +277,34 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 	return ctx
 }
 
-func (r *router) findMatch(req *http.Request) *Match {
-	path := req.URL.Path
-	method := req.Method
-	data, values := findData(r, method, path, "", "", "", []string{})
-	if data != nil {
-		ctx := setContext(req.Context(), data.vars, values)
-		handler := data.methods[req.Method]
-		return &Match{handler: handler, ctx: ctx}
+// Middleware wraps an http.Handler with additional
+// functionality.
+type Middleware func(Handler) Handler
+
+// Wrap h with all specified middlewares.
+func Wrap(h Handler, middlewares ...Middleware) Handler {
+	for _, m := range middlewares {
+		h = m(h)
 	}
-	return nil
+	return h
+}
+
+// Match wraps an Handler and context
+type Match struct {
+	handler Handler
+	ctx     context.Context
 }
 
 func (m *Match) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	m.handler.ServeHTTP(w, req.WithContext(m.ctx))
 }
 
-// ServeHTTP
-func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	m := r.findMatch(req)
-	if m == nil {
-		NotFoundHandler(w, req)
-		return
-	}
-	m.ServeHTTP(w, req)
+// DefaultRootHandler hello world handler
+func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Hello World!\n")
+}
+
+// NotFoundHandler default not found resource json handler
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	reply.Json(w, r, http.StatusNotFound, "404 page not found")
 }
