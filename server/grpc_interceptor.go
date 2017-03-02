@@ -1,7 +1,7 @@
 package server
 
 import (
-	"bitbucket.org/aukbit/pluto/common"
+	"github.com/aukbit/pluto/common"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

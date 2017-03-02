@@ -4,12 +4,12 @@ import (
 	"flag"
 	"log"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/discovery"
-	pb "bitbucket.org/aukbit/pluto/examples/dist/user_backend/proto"
-	"bitbucket.org/aukbit/pluto/examples/dist/user_backend/views"
-	"bitbucket.org/aukbit/pluto/server"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/datastore"
+	"github.com/aukbit/pluto/discovery"
+	pb "github.com/aukbit/pluto/examples/dist/user_backend/proto"
+	"github.com/aukbit/pluto/examples/dist/user_backend/views"
+	"github.com/aukbit/pluto/server"
 	"google.golang.org/grpc"
 )
 

@@ -3,8 +3,8 @@ package pluto
 import (
 	"fmt"
 
-	"bitbucket.org/aukbit/pluto/common"
-	"bitbucket.org/aukbit/pluto/discovery"
+	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/discovery"
 )
 
 // register Pluto Service within the service discovery system

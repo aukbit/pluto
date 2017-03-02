@@ -2,7 +2,7 @@ package web_test
 
 import (
 	"github.com/paulormart/assert"
-	"bitbucket.org/aukbit/pluto/examples/https/web"
+	"github.com/aukbit/pluto/examples/https/web"
 	"testing"
 	"log"
 	"io"

@@ -6,9 +6,9 @@ import (
 
 	"github.com/uber-go/zap"
 
-	"bitbucket.org/aukbit/pluto"
-	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/aukbit/pluto"
+	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/reply"
 )
 
 var (

@@ -3,7 +3,7 @@ package client
 import (
 	"fmt"
 
-	"bitbucket.org/aukbit/pluto/client/balancer"
+	"github.com/aukbit/pluto/client/balancer"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health"

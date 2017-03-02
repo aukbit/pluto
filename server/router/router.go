@@ -8,7 +8,7 @@ import (
 
 	"context"
 
-	"bitbucket.org/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/reply"
 )
 
 //

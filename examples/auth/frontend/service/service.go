@@ -3,11 +3,11 @@ package frontend
 import (
 	"flag"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/auth"
-	"bitbucket.org/aukbit/pluto/examples/auth/frontend/views"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/auth"
+	"github.com/aukbit/pluto/examples/auth/frontend/views"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 )
 
 var target = flag.String("target", "127.0.0.1:65081", "auth backend address")

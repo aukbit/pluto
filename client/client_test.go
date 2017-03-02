@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/server"
-	pb "bitbucket.org/aukbit/pluto/server/proto"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/server"
+	pb "github.com/aukbit/pluto/server/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

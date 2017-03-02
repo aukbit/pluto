@@ -1,8 +1,8 @@
 package auth
 
 import (
-	pb "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/client"
+	pb "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/client"
 	"google.golang.org/grpc"
 )
 

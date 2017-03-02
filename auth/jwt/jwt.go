@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"bitbucket.org/aukbit/pluto/auth/jws"
+	"github.com/aukbit/pluto/auth/jws"
 )
 
 var (

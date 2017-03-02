@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	"bitbucket.org/aukbit/pluto"
-	"bitbucket.org/aukbit/pluto/auth/jwt"
-	pba "bitbucket.org/aukbit/pluto/auth/proto"
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/auth/jwt"
+	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server/router"
 )
 
 // MiddlewareBearerAuth Middleware to validate all handlers with

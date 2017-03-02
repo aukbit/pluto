@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"bitbucket.org/aukbit/pluto"
-	pb "bitbucket.org/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto"
+	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )

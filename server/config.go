@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"bitbucket.org/aukbit/pluto/common"
-	"bitbucket.org/aukbit/pluto/discovery"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/discovery"
+	"github.com/aukbit/pluto/server/router"
 	"google.golang.org/grpc"
 )
 

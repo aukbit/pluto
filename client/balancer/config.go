@@ -1,7 +1,7 @@
 package balancer
 
 import (
-	"bitbucket.org/aukbit/pluto/common"
+	"github.com/aukbit/pluto/common"
 	"google.golang.org/grpc"
 )
 

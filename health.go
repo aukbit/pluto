@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"bitbucket.org/aukbit/pluto/client"
-	"bitbucket.org/aukbit/pluto/datastore"
-	"bitbucket.org/aukbit/pluto/reply"
-	"bitbucket.org/aukbit/pluto/server"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/client"
+	"github.com/aukbit/pluto/datastore"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 

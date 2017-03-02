@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"bitbucket.org/aukbit/pluto/common"
-	"bitbucket.org/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/server/router"
 	"github.com/uber-go/zap"
 	"golang.org/x/net/context"
 )
