@@ -70,7 +70,7 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, data)
 }
 
-func TestServer(t *testing.T) {
+func TestRouter(t *testing.T) {
 	router := router.NewRouter()
 	router.Handle("GET", "/", IndexHandler)
 	router.Handle("GET", "/home", GetHandler)
@@ -191,7 +191,39 @@ func TestServer(t *testing.T) {
 		assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
 		assert.Equal(t, test.Status, response.StatusCode)
 		assert.Equal(t, test.BodyContains, string(actualBody))
-
 	}
 
+}
+
+// GOMAXPROCS=1 go test ./server/router -bench=BenchmarkRouter -benchmem
+// BenchmarkRouter             1000           1945098 ns/op           21038 B/op        211 allocs/op
+func BenchmarkRouter(b *testing.B) {
+	router := router.NewRouter()
+	router.Handle("GET", "/", IndexHandler)
+	router.Handle("GET", "/home", GetHandler)
+	router.Handle("GET", "/home/home", GetHandler)
+	router.Handle("GET", "/home/home/home", GetHandler)
+	router.Handle("POST", "/home", PostHandler)
+	router.Handle("GET", "/home/:id", GetDetailHandler)
+	router.Handle("PUT", "/home/:id", PutDetailHandler)
+	router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
+	router.Handle("GET", "/home/:id/room", GetRoomHandler)
+	router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+
+	server := httptest.NewServer(router)
+	defer server.Close()
+	// run the Put function b.N times
+	for n := 0; n < b.N; n++ {
+		// create new request
+		r, err := http.NewRequest("GET", server.URL+"/home/456/room/999", strings.NewReader(`{}`))
+		if err != nil {
+			b.Fatal(err)
+		}
+		// call handler
+		response, err := http.DefaultClient.Do(r)
+		if err != nil {
+			b.Fatal(err)
+		}
+		response.Body.Close()
+	}
 }

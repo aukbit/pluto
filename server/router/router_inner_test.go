@@ -120,34 +120,34 @@ func BenchmarkValidPaths(b *testing.B) {
 	}
 }
 
-// func TestFindData(t *testing.T) {
-// 	r := NewRouter()
-// 	r.GET("/home", DefaultRootHandler)
-// 	var tests = []struct {
-// 		Method string
-// 		Path   string
-// 		Data   *data
-// 		Values []string
-// 	}{
-// 		{
-// 			Method: "GET",
-// 			Path:   "/home",
-// 			Data: &data{
-// 				value:   "/home",
-// 				prefix:  "",
-// 				vars:    []string{},
-// 				methods: map[string]Handler{"GET": DefaultRootHandler},
-// 			},
-// 			Values: []string{},
-// 		},
-// 	}
-// 	for _, test := range tests {
-// 		data, values := findData(r, test.Method, test.Path, "", "", "", []string{})
-// 		if data != nil {
-// 			assert.Equal(t, test.Data.Value(), data.Value())
-// 			assert.Equal(t, test.Values, values)
-// 		} else {
-// 			assert.Equal(t, test.Data, data)
-// 		}
-// 	}
-// }
+func TestFindData(t *testing.T) {
+	r := NewRouter()
+	r.GET("/home", DefaultRootHandler)
+	var tests = []struct {
+		Method string
+		Path   string
+		Data   *data
+		Values []string
+	}{
+		{
+			Method: "GET",
+			Path:   "/home",
+			Data: &data{
+				value:   "/home",
+				prefix:  "",
+				vars:    []string{},
+				methods: map[string]Handler{"GET": DefaultRootHandler},
+			},
+			Values: []string{},
+		},
+	}
+	for _, test := range tests {
+		data, values := findData(r, test.Method, test.Path, "", "", "", []string{})
+		if data != nil {
+			assert.Equal(t, test.Data.Value(), data.Value())
+			assert.Equal(t, test.Values, values)
+		} else {
+			assert.Equal(t, test.Data, data)
+		}
+	}
+}
