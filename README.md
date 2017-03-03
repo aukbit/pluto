@@ -47,7 +47,7 @@ ok      pluto/examples/user     0.037s
 This project got some inspiration after I read Building Microservices by Sam Newman.
 The idea was to create a library for microservices to tackle some of the challenges in distributed systems.
 
-Projects that had influence on design and technical challenges.
+Projects that had influence in Pluto design and helped to solve technical barriers.
 - [go-kit](https://github.com/go-kit/kit)
 - [go-micro](https://github.com/myodc/go-micro)
 
