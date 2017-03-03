@@ -1,21 +1,23 @@
-# Pluto 
- An implementation of micro-services with golang
+**Note**: This project is still a work in progress, no stable version has yet been released.
 
-### Just a simple example available in examples/user
-This example shows how to create json endpoints using pluto services
+# Pluto
+An implementation of micro-services with golang.
+
+### Examples available under examples/user
+
 
 ### Prerequisites
-You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go) 
+You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go)
 Also the keyspace **pluto_backend** and schema **users** still set up, as mentioned here [pluto/README-cassandra.md](../../README-cassandra.md)
 README-cassandra.md
 
 You should already have a gRPC installed. You can follow instructions here [gRPC](http://www.grpc.io/docs/quickstart/go.html#prerequisites)
 
-### 1. Compile proto file from proto directory
+#### 1. Compile proto file from proto directory
 ```
 protoc ./user.proto --go_out=plugins=grpc:.
 ```
-### 2. Run Backend Service
+#### 2. Run Backend Service
 ```
 $ go run examples/user/backend/main.go
 2016/09/19 18:14:35 START pluto_backend 	5014b5df-6d5d-42c0-891f-46c8808ce0aa
@@ -23,7 +25,7 @@ $ go run examples/user/backend/main.go
 2016/09/19 18:14:35 START grpc server_default 	589f7f38-b345-4675-9ca3-e138a5495cbb
 2016/09/19 18:14:35 ----- grpc server_default listening on [::]:65060
 ```
-### 3. Run Tests
+#### 3. Run Tests
 ```
 $ go test -v pluto/examples/user -run ^TestAll$
 === RUN   TestAll
@@ -41,21 +43,24 @@ PASS
 ok      pluto/examples/user     0.037s
 ```
 
+### Inspiration
+This project got some inspiration after I read Building Microservices by Sam Newman.
+It should have the foundations of a microservice already implemented, making it easier to deploy new features.
 
-## API Design
+Amazing projects available were also source of inspirations to some technical challenges.
+- [go-kit](https://github.com/go-kit/kit)
+- [go-micro](https://github.com/myodc/go-micro)
 
-### Web Api (json)
+### Microservice Foundations
+
+#### Web Api (json)
 Define http json handlers
 
-### Service Api (proto)
+#### Service Api (proto)
 Use gRPC to communicate between services
 
-## Data
+#### Data Api
 
-## Message Broker
+#### Registration
 
-## Registration
-
-## Server
-
-## Client
+#### Client/Server
