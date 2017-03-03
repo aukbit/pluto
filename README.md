@@ -1,7 +1,7 @@
 **Note**: This project is still a work in progress, no stable version has yet been released.
 
 # Pluto
-An implementation of micro-services with golang.
+An implementation of microservices with golang to tackle some of the challenges in distributed systems.
 
 ### Examples available under examples/user
 
@@ -45,9 +45,9 @@ ok      pluto/examples/user     0.037s
 
 ### Inspiration
 This project got some inspiration after I read Building Microservices by Sam Newman.
-It should have the foundations of a microservice already implemented, making it easier to deploy new features.
+The idea was to create a library for microservices to tackle some of the challenges in distributed systems.
 
-Amazing projects available were also source of inspirations to some technical challenges.
+Projects that had influence on design and technical challenges.
 - [go-kit](https://github.com/go-kit/kit)
 - [go-micro](https://github.com/myodc/go-micro)
 
