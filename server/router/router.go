@@ -98,17 +98,17 @@ func (r *Router) WrapperMiddleware(mids ...Middleware) {
 	}
 }
 
-func (r *Router) findMatchOld(req *http.Request) *Match {
-	path := req.URL.Path
-	method := req.Method
-	data, values := findData(r, method, path, "", "", "", []string{})
-	if data != nil {
-		ctx := setContext(req.Context(), data.vars, values)
-		handler := data.methods[req.Method]
-		return &Match{handler: handler, ctx: ctx}
-	}
-	return nil
-}
+// func (r *Router) findMatch(req *http.Request) *Match {
+// 	path := req.URL.Path
+// 	method := req.Method
+// 	data, values := findData(r, method, path, "", "", "", []string{})
+// 	if data != nil {
+// 		ctx := setContext(req.Context(), data.vars, values)
+// 		handler := data.methods[req.Method]
+// 		return &Match{handler: handler, ctx: ctx}
+// 	}
+// 	return nil
+// }
 
 func (r *Router) findMatch(req *http.Request) *Match {
 	path := req.URL.Path
@@ -199,6 +199,7 @@ func validPaths(path, key, segment, cutset string, track []string, out map[strin
 
 }
 
+// findData.. deprecated
 func findData(r *Router, method, path, suffix, key, segment string, values []string) (*data, []string) {
 	// log.Printf("findData method:%v path:%v suffix:%v key:%v segment:%v values:%v\n", method, path, suffix, key, segment, values)
 	// initialize
@@ -221,11 +222,9 @@ func findData(r *Router, method, path, suffix, key, segment string, values []str
 		// if d := r.trie.Get(key); d.methods[method] != nil {
 		// 	return d, values
 		// }
-		fmt.Printf("key 2 %v\n", key)
 
 		// Nothing found, returns nil
 		if c := strings.Count(key, ":"); c != 0 && c == strings.Count(key, "/") {
-			fmt.Printf("key 2.1 %v %v\n", key, values)
 			return nil, []string{}
 		}
 
@@ -262,17 +261,26 @@ func findData(r *Router, method, path, suffix, key, segment string, values []str
 	values = append(values, segment)
 
 	d, v := findData(r, method, path, suffix, key, segment, values)
-	fmt.Printf("key 4 %v %v\n", d, v)
 	return d, v
 }
+
+// func setContext(ctx context.Context, vars, values []string) context.Context {
+// 	if len(vars) != len(values) {
+// 		return ctx
+// 	}
+// 	for i, value := range values {
+// 		// pick opposite var
+// 		ctx = context.WithValue(ctx, vars[len(vars)-1-i], value)
+// 	}
+// 	return ctx
+// }
 
 func setContext(ctx context.Context, vars, values []string) context.Context {
 	if len(vars) != len(values) {
 		return ctx
 	}
 	for i, value := range values {
-		// pick opposite var
-		ctx = context.WithValue(ctx, vars[len(vars)-1-i], value)
+		ctx = context.WithValue(ctx, vars[i], value)
 	}
 	return ctx
 }
