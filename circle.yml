@@ -1,7 +1,14 @@
 machine:
+  environment:
+    GODIST: "go1.8.linux-amd64.tar.gz"
   services:
     - docker
-
+  post:
+    - mkdir -p downloads
+    - test -e download/$GODIST || curl -o download/$GODIST https://storage.googleapis.com/golang/$GODIST
+    - sudo rm -rf /usr/local/go
+    - sudo tar -C /usr/local -xzf download/$GODIST
+  
 dependencies:
   override:
     - mkdir -p ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
@@ -18,5 +25,6 @@ dependencies:
 test:
   pre:
     - docker run --link cassandra:cassandra -v $PWD/test/config/cassandra:/config cassandra:3.7 /config/wait-for-cassandra.sh cassandra cqlsh -f /config/commands.cql cassandra
+    - go vet ./...
   override:
     - go test -v .

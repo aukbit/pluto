@@ -26,7 +26,7 @@ func Run() error {
 	s := pluto.NewService(
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
-		pluto.Servers(srv)
+		pluto.Servers(srv),
 	)
 
 	// Run service
