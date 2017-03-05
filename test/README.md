@@ -6,7 +6,7 @@ On OS X we'll launch Docker inside a boot2docker VM via Docker Machine.
 * You will need to have Docker installed (1.12.1 or newer), Docker Machine would be installed with Docker engine (v0.8.1 or newer).
 
 ## Start a cassandra server instance
-To get more information on how to run a cassandra instance with docker go to [Docker Cassandra](https://hub.docker.com/_/cassandra/)
+To get more information on how to run a cassandra instance with docker go to [hub.docker.com](https://hub.docker.com/_/cassandra/)
 
 Start a cassandra instance, export port 7000 to allow other cassandra nodes to connect and export port 9042 to allow services to connect:
 ```
