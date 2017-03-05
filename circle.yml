@@ -14,7 +14,8 @@ dependencies:
   override:
     - go get golang.org/x/net/context
     - go get google.golang.org/grpc
-    - go get github.com/golang/protobuf
+    - go get github.com/golang/protobuf/proto
+    - go get github.com/golang/protobuf/jsonpb
     - go get github.com/uber-go/zap
     - go get google.golang.org/grpc/health/grpc_health_v1
     - go get github.com/gocql/gocql
