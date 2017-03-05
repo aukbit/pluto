@@ -16,8 +16,8 @@ dependencies:
     - go get -t -d -v google.golang.org/grpc
     - go get -t -d -v github.com/golang/protobuf/proto
     - go get -t -d -v github.com/golang/protobuf/jsonpb
-    - go get -t -d -v go.uber.org/zap
-    - go get -t -d -v github.com/uber-go/zap
+    # - go get -t -d -v go.uber.org/zap
+    # - go get -t -d -v github.com/uber-go/zap
     - go get -t -d -v google.golang.org/grpc/health/grpc_health_v1
     - go get -t -d -v github.com/gocql/gocql
     - go get -t -d -v github.com/google/uuid
