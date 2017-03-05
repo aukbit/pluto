@@ -3,10 +3,6 @@
 ## Install Docker Cassandra
 [Docker Cassandra](https://hub.docker.com/_/cassandra/)
 
-### Create a docker image
-```
-$ docker build --name cassandra -d cassandra:3.7
-```
 ### Create docker container
 Make it broadcast the ip address and exporting ports 7000 (to be visible to other cassandra nodes), also export the port 9042 for services to connect
 

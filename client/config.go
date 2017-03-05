@@ -10,13 +10,13 @@ import (
 
 // Config client configuaration options
 type Config struct {
-	ID                      string
-	Name                    string
-	Description             string
-	Version                 string
-	Targets                 []string // slice of TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Target                  string   // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	TargetName              string   // service name on service discovery
+	ID          string
+	Name        string
+	Description string
+	Version     string
+	Targets     []string // slice of TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	// Target                  string   // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	TargetName              string // service name on service discovery
 	Format                  string
 	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
@@ -35,8 +35,7 @@ var (
 func newConfig(cfgs ...ConfigFn) *Config {
 
 	cfg := &Config{
-		Targets: []string{},
-		Target:  defaultTarget,
+		Targets: []string{defaultTarget},
 		Format:  defaultFormat,
 		Version: defaultVersion}
 
@@ -53,6 +52,14 @@ func newConfig(cfgs ...ConfigFn) *Config {
 	}
 
 	return cfg
+}
+
+// Target return client Target address
+func (c *Config) Target() string {
+	if len(c.Targets) > 0 {
+		return c.Targets[0]
+	}
+	return ""
 }
 
 // ID client id
@@ -79,14 +86,14 @@ func Description(d string) ConfigFn {
 // Targets slice of server address
 func Targets(t ...string) ConfigFn {
 	return func(cfg *Config) {
-		cfg.Targets = append(cfg.Targets, t...)
+		cfg.Targets = t
 	}
 }
 
 // Target server address
 func Target(t string) ConfigFn {
 	return func(cfg *Config) {
-		cfg.Targets = append(cfg.Targets, t)
+		cfg.Targets[0] = t
 	}
 }
 
