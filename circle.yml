@@ -12,15 +12,15 @@ machine:
 
 dependencies:
   override:
-    - go get github.com/aukbit/pluto
-    - go get github.com/paulormart/assert
     - go get golang.org/x/net/context
-    - got get google.golang.org/grpc
+    - go get google.golang.org/grpc
     - go get github.com/golang/protobuf
     - go get github.com/uber-go/zap
     - go get google.golang.org/grpc/health/grpc_health_v1
     - go get github.com/gocql/gocql
     - go get github.com/google/uuid
+    - go get github.com/paulormart/assert
+    - go get github.com/aukbit/pluto
     # './...' is a relative pattern which means all subdirectories
     # - go get -t -d -v ./...
     - go build -v
