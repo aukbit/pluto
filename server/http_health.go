@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 

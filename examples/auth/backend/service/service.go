@@ -3,7 +3,7 @@ package backend
 import (
 	"flag"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/aukbit/pluto"
 	pba "github.com/aukbit/pluto/auth/proto"

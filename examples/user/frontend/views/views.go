@@ -8,7 +8,7 @@ import (
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
 var (

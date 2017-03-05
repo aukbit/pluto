@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
-var logger = zap.New(zap.NewJSONEncoder())
-
 func Json(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
-
+	logger, _ := zap.NewProduction()
 	d, err := json.Marshal(data)
 	if err != nil {
 		logger.Error("Marshal()",

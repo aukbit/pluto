@@ -1,15 +1,17 @@
 package discovery
 
-import "github.com/uber-go/zap"
+import "go.uber.org/zap"
 
 type consulDefault struct {
 	cfg    *Config
-	logger zap.Logger
+	logger *zap.Logger
 }
 
 func newConsulDefault(cfgs ...ConfigFunc) *consulDefault {
 	c := newConfig(cfgs...)
-	return &consulDefault{cfg: c, logger: zap.New(zap.NewJSONEncoder())}
+	d := &consulDefault{cfg: c}
+	d.logger, _ = zap.NewProduction()
+	return d
 }
 
 // IsAvailable

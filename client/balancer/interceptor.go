@@ -5,7 +5,7 @@ import (
 	"github.com/aukbit/pluto/common"
 	"golang.org/x/net/context"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 

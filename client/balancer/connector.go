@@ -3,7 +3,7 @@ package balancer
 import (
 	"context"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	g "github.com/aukbit/pluto/client/grpc"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ type connector struct {
 	stopCh     chan bool             // receive a stop call
 	doneCh     chan bool             // guarantees has beeen stopped correctly
 	health     healthpb.HealthClient // Client API for Health service
-	logger     zap.Logger
+	logger     *zap.Logger
 }
 
 // newConnector ...
@@ -51,7 +51,8 @@ func newConnector(cfgs ...ConfigFn) *connector {
 		requestsCh: make(chan Request),
 		stopCh:     make(chan bool),
 		doneCh:     make(chan bool),
-		logger:     zap.New(zap.NewJSONEncoder())}
+	}
+	conn.logger, _ = zap.NewProduction()
 
 	conn.initLogger()
 	return conn
@@ -130,9 +131,9 @@ func (c *connector) Health() bool {
 
 func (c *connector) initLogger() {
 	c.logger = c.logger.With(
-		zap.Nest("connector",
-			zap.String("id", c.cfg.ID),
-			zap.String("name", c.cfg.Name),
-			zap.String("target", c.cfg.Target),
-			zap.String("parent", c.cfg.ParentID)))
+		zap.String("type", "connector"),
+		zap.String("id", c.cfg.ID),
+		zap.String("name", c.cfg.Name),
+		zap.String("target", c.cfg.Target),
+		zap.String("parent", c.cfg.ParentID))
 }

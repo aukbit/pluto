@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
@@ -24,18 +24,20 @@ type service struct {
 	cfg    *Config
 	close  chan bool
 	wg     *sync.WaitGroup
-	logger zap.Logger
+	logger *zap.Logger
 	health *health.Server
 }
 
 func newService(cfgs ...ConfigFunc) *service {
 	c := newConfig(cfgs...)
-	return &service{
+	s := &service{
 		cfg:    c,
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
-		logger: zap.New(zap.NewJSONEncoder()),
-		health: health.NewServer()}
+		health: health.NewServer(),
+	}
+	s.logger, _ = zap.NewProduction()
+	return s
 }
 
 // Run starts service
@@ -100,17 +102,16 @@ func (s *service) Health() *healthpb.HealthCheckResponse {
 
 func (s *service) setLogger() {
 	s.logger = s.logger.With(
-		zap.Nest("service",
-			zap.String("id", s.cfg.ID),
-			zap.String("name", s.cfg.Name)))
+		zap.String("type", "service"),
+		zap.String("id", s.cfg.ID),
+		zap.String("name", s.cfg.Name))
 }
 
 func (s *service) start() error {
 	s.logger.Info("start",
 		zap.String("ip4", common.IPaddress()),
-		zap.Nest("content",
-			zap.Int("servers", len(s.cfg.Servers)),
-			zap.Int("clients", len(s.cfg.Clients))))
+		zap.Int("servers", len(s.cfg.Servers)),
+		zap.Int("clients", len(s.cfg.Clients)))
 
 	// connect to db
 	s.connectDB()

@@ -15,7 +15,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -24,7 +24,7 @@ type defaultServer struct {
 	cfg        *Config
 	close      chan bool
 	wg         *sync.WaitGroup
-	logger     zap.Logger
+	logger     *zap.Logger
 	httpServer *http.Server
 	grpcServer *grpc.Server
 	health     *health.Server
@@ -33,12 +33,14 @@ type defaultServer struct {
 // newServer will instantiate a new defaultServer with the given config
 func newServer(cfgs ...ConfigFunc) *defaultServer {
 	c := newConfig(cfgs...)
-	return &defaultServer{
+	d := &defaultServer{
 		cfg:    c,
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
-		logger: zap.New(zap.NewJSONEncoder()),
-		health: health.NewServer()}
+		health: health.NewServer(),
+	}
+	d.logger, _ = zap.NewProduction()
+	return d
 }
 
 // Run Server
@@ -96,12 +98,12 @@ func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {
 
 func (ds *defaultServer) setLogger() {
 	ds.logger = ds.logger.With(
-		zap.Nest("server",
-			zap.String("id", ds.cfg.ID),
-			zap.String("name", ds.cfg.Name),
-			zap.String("format", ds.cfg.Format),
-			zap.String("port", ds.cfg.Addr),
-			zap.String("parent", ds.cfg.ParentID)))
+		zap.String("type", "server"),
+		zap.String("id", ds.cfg.ID),
+		zap.String("name", ds.cfg.Name),
+		zap.String("format", ds.cfg.Format),
+		zap.String("port", ds.cfg.Addr),
+		zap.String("parent", ds.cfg.ParentID))
 }
 
 func (ds *defaultServer) setHTTPServer() {

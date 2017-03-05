@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aukbit/pluto/client/balancer"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -18,19 +18,21 @@ type defaultClient struct {
 	requestsCh chan balancer.Request //
 	connsCh    balancer.ConnsCh      //
 	health     *health.Server        // Server implements `service Health`.
-	logger     zap.Logger            // client logger
+	logger     *zap.Logger           // client logger
 }
 
 // newClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFn) *defaultClient {
 	c := newConfig(cfgs...)
-	return &defaultClient{
+	dc := &defaultClient{
 		cfg:        c,
 		balancer:   balancer.NewBalancer(),
 		requestsCh: make(chan balancer.Request),
 		connsCh:    make(balancer.ConnsCh),
 		health:     health.NewServer(),
-		logger:     zap.New(zap.NewJSONEncoder())}
+	}
+	dc.logger, _ = zap.NewProduction()
+	return dc
 }
 
 func (dc *defaultClient) Config() *Config {
@@ -163,9 +165,9 @@ func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
 
 func (dc *defaultClient) initLogger() {
 	dc.logger = dc.logger.With(
-		zap.Nest("client",
-			zap.String("id", dc.cfg.ID),
-			zap.String("name", dc.cfg.Name),
-			zap.String("format", dc.cfg.Format),
-			zap.String("parent", dc.cfg.ParentID)))
+		zap.String("type", "client"),
+		zap.String("id", dc.cfg.ID),
+		zap.String("name", dc.cfg.Name),
+		zap.String("format", dc.cfg.Format),
+		zap.String("parent", dc.cfg.ParentID))
 }

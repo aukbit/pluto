@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/gocql/gocql"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -17,16 +17,18 @@ type datastore struct {
 	cfg     *Config
 	cluster *gocql.ClusterConfig
 	session *gocql.Session
-	logger  zap.Logger
+	logger  *zap.Logger
 	health  *health.Server
 }
 
 // NewServer will instantiate a new Server with the given config
 func newDatastore(cfgs ...ConfigFunc) *datastore {
 	c := newConfig(cfgs...)
-	return &datastore{cfg: c,
-		logger: zap.New(zap.NewJSONEncoder()),
-		health: health.NewServer()}
+	d := &datastore{cfg: c,
+		health: health.NewServer(),
+	}
+	d.logger, _ = zap.NewProduction()
+	return d
 }
 
 func (ds *datastore) Connect(cfgs ...ConfigFunc) error {
@@ -103,9 +105,9 @@ func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) erro
 
 func (ds *datastore) setLogger() {
 	ds.logger = ds.logger.With(
-		zap.Nest("db",
-			zap.String("id", ds.cfg.ID),
-			zap.String("name", ds.cfg.Name),
-			zap.String("target", ds.cfg.Target),
-			zap.String("keyspace", ds.cfg.Keyspace)))
+		zap.String("type", "db"),
+		zap.String("id", ds.cfg.ID),
+		zap.String("name", ds.cfg.Name),
+		zap.String("target", ds.cfg.Target),
+		zap.String("keyspace", ds.cfg.Keyspace))
 }
