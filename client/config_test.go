@@ -13,7 +13,7 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, "client", c.Name)
 	assert.Equal(t, "grpc", c.Format)
 	assert.Equal(t, "v1.0.0", c.Version)
-	assert.Equal(t, "localhost:65060", c.Target)
+	assert.Equal(t, "localhost:65060", c.Target())
 }
 
 func TestConfigs(t *testing.T) {
@@ -21,5 +21,5 @@ func TestConfigs(t *testing.T) {
 	assert.Equal(t, "123456", c.ID)
 	// Note: lower case and prefix 'server_' in name
 	assert.Equal(t, "special_client", c.Name)
-	assert.Equal(t, "localhost:65062", c.Target)
+	assert.Equal(t, "localhost:65062", c.Target())
 }
