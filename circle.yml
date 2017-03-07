@@ -13,18 +13,9 @@ machine:
 
 dependencies:
   override:
-    # - go get -t -d -v golang.org/x/net/context
-    # - go get -t -d -v google.golang.org/grpc
-    # - go get -t -d -v github.com/golang/protobuf/proto
-    # - go get -t -d -v github.com/golang/protobuf/jsonpb
-    # - go get -t -d -v go.uber.org/zap
-    # - go get -t -d -v google.golang.org/grpc/health/grpc_health_v1
-    # - go get -t -d -v github.com/gocql/gocql
-    # - go get -t -d -v github.com/google/uuid
-    # - go get -t -d -v github.com/paulormart/assert
     # './...' is a relative pattern which means all subdirectories
     - go get -t -d -v ./...
-    # - go build -v
+    - go build -v
     # docker
     - docker info
     - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
