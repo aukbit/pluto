@@ -3,7 +3,7 @@
 This is an example of creating a json backend api using pluto services
 
 ## Prerequisites
-You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go) 
+You should already have a running Cassandra instance. You can follow instructions here [GoCql](https://academy.datastax.com/resources/getting-started-apache-cassandra-and-go)
 Also the keyspace **pluto_backend** and schema **users** still set up, as mention her [pluto/README-cassandra.md](../../README-cassandra.md)
 README-cassandra.md
 
@@ -11,7 +11,7 @@ You should already have a gRPC installed. You can follow instructions here [gRPC
 
 ### 1. Compile proto file from proto directory
 ```
-protoc ./user.proto --go_out=plugins=grpc:.
+protoc examples/user/proto/user.proto --go_out=plugins=grpc:.
 ```
 ### 2. Run Backend Service
 ```
@@ -23,7 +23,7 @@ $ go run examples/user/backend/main.go
 ```
 ### 3. Run Tests
 ```
-$ go test -v pluto/examples/user -run ^TestAll$
+$ go test -v ./examples/user -run ^TestAll$
 === RUN   TestAll
 2016/09/19 18:19:33 START pluto_frontend        012cd778-7a15-4250-a4dd-cbaef28568ef
 2016/09/19 18:19:33 DIAL  grpc client_user      d080697c-0692-4aa8-b8f6-9410e53f0ffc

@@ -1,3 +1,7 @@
+# Service
+
+This is an example of how to use pluto with https
+
 ### Generate private key  
 [reference](https://gist.github.com/denji/12b3a568f092ab951456)
 ```
@@ -32,7 +36,7 @@ subjectAltName = @alt_names
 DNS.1 = localhost:8443
 
 #### And then create the csr
-``` 
+```
  openssl req -new -sha256 -key private.key -out certificate.csr \
     -subj "/C=UK/ST=London/O=Pluto/CN=localhost:8443" \
     -config csr.cnf
