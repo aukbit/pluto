@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func TestAll(t *testing.T) {
+func TestExampleAuth(t *testing.T) {
 	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
 	r, err := http.NewRequest("POST", AUTH_URL+"/authenticate", strings.NewReader(`{}`))
