@@ -4,7 +4,7 @@ This is an example of how to use pluto over HTTPS/TLS
 
 ## Run Tests
 ```
-$ go test -v ./examples/https/web
+$ go test -v ./examples/https
 {"level":"info","ts":1488918079.8000302,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/service.go:114","msg":"start","type":"service","id":"plt_YL55RH","name":"web_pluto","ip4":"192.168.0.4","server
 s":2,"clients":0}
 {"level":"info","ts":1488918079.800154,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/server/default_server.go:137","msg":"start","type":"server","id":"srv_JIQTEM","name":"web_pluto_health_server","

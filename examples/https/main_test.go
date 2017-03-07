@@ -1,4 +1,4 @@
-package web_test
+package main
 
 import (
 	"crypto/tls"
@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aukbit/pluto/examples/https/web"
 	"github.com/paulormart/assert"
 )
 
@@ -22,7 +21,7 @@ func TestMain(m *testing.M) {
 	if !testing.Short() {
 		// Run Server
 		go func() {
-			if err := web.Run(); err != nil {
+			if err := run(); err != nil {
 				log.Fatal(err)
 			}
 		}()
@@ -36,16 +35,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestExampleHTTPS(t *testing.T) {
-
-	// Note: launch frontend service in a terminal rather than lunching a go routine here
-	// $ go run main.go
-	// default http://localhost:8080
-
-	//go func(){
-	//	if err := web.Run(); err != nil {
-	//		log.Fatal(err)
-	//	}
-	//}()
 
 	var tests = []struct {
 		Method       string
@@ -62,7 +51,7 @@ func TestExampleHTTPS(t *testing.T) {
 		},
 	}
 
-	message := &web.Message{}
+	message := &Message{}
 
 	for _, test := range tests {
 
