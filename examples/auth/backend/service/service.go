@@ -15,7 +15,6 @@ import (
 var (
 	userTarget = flag.String("user_target", "127.0.0.1:65080", "user backend address")
 	grpcPort   = flag.String("grpc_port", ":65081", "grpc listening port")
-	// logger     = zap.NewProduction()
 )
 
 // Run runs auth backend service

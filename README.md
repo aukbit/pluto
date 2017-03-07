@@ -1,6 +1,6 @@
 **Note**: This project is still a work in progress, no stable version has yet been released.
 
-# Pluto
+# Pluto [![Circle CI](https://circleci.com/gh/aukbit/pluto.svg?style=svg)](https://circleci.com/gh/aukbit/pluto)
 An implementation of microservices with golang to tackle some of the challenges in distributed systems.
 
 ### Inspiration

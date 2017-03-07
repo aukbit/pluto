@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto/client/balancer"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health"
@@ -17,21 +19,21 @@ type defaultClient struct {
 	requestsCh chan balancer.Request //
 	connsCh    balancer.ConnsCh      //
 	health     *health.Server        // Server implements `service Health`.
-	// logger     *zap.Logger           // client logger
+	logger     *zap.Logger           // client logger
 }
 
 // newClient will instantiate a new Client with the given config
 func newClient(cfgs ...ConfigFn) *defaultClient {
 	c := newConfig(cfgs...)
-	dc := &defaultClient{
+	d := &defaultClient{
 		cfg:        c,
 		balancer:   balancer.NewBalancer(),
 		requestsCh: make(chan balancer.Request),
 		connsCh:    make(balancer.ConnsCh),
 		health:     health.NewServer(),
 	}
-	// dc.logger, _ = zap.NewProduction()
-	return dc
+	d.logger, _ = zap.NewProduction()
+	return d
 }
 
 func (dc *defaultClient) Config() *Config {
@@ -79,7 +81,7 @@ func (dc *defaultClient) Dial(cfgs ...ConfigFn) error {
 	// init logger
 	dc.initLogger()
 	//
-	// dc.logger.Info("start")
+	dc.logger.Info("start")
 	// init connectors
 	if err := dc.initConnectors(); err != nil {
 		return err
@@ -125,7 +127,7 @@ func (dc *defaultClient) closeConnectors() {
 }
 
 func (dc *defaultClient) Close() {
-	// dc.logger.Info("close")
+	dc.logger.Info("close")
 	// set health as not serving
 	dc.health.SetServingStatus(dc.cfg.ID, 2)
 	// close connectors
@@ -156,17 +158,17 @@ func (dc *defaultClient) Health() *healthpb.HealthCheckResponse {
 	hcr, err := dc.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: dc.cfg.ID})
 	if err != nil {
-		// dc.logger.Error("Health", zap.String("err", err.Error()))
+		dc.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
 }
 
 func (dc *defaultClient) initLogger() {
-	// dc.logger = dc.logger.With(
-	// 	zap.String("type", "client"),
-	// 	zap.String("id", dc.cfg.ID),
-	// 	zap.String("name", dc.cfg.Name),
-	// 	zap.String("format", dc.cfg.Format),
-	// 	zap.String("parent", dc.cfg.ParentID))
+	dc.logger = dc.logger.With(
+		zap.String("type", "client"),
+		zap.String("id", dc.cfg.ID),
+		zap.String("name", dc.cfg.Name),
+		zap.String("format", dc.cfg.Format),
+		zap.String("parent", dc.cfg.ParentID))
 }
