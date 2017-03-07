@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gocql/gocql"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -17,8 +16,8 @@ type datastore struct {
 	cfg     *Config
 	cluster *gocql.ClusterConfig
 	session *gocql.Session
-	logger  *zap.Logger
-	health  *health.Server
+	// logger  *zap.Logger
+	health *health.Server
 }
 
 // NewServer will instantiate a new Server with the given config
@@ -27,7 +26,7 @@ func newDatastore(cfgs ...ConfigFunc) *datastore {
 	d := &datastore{cfg: c,
 		health: health.NewServer(),
 	}
-	d.logger, _ = zap.NewProduction()
+	// d.logger, _ = zap.NewProduction()
 	return d
 }
 
@@ -46,7 +45,7 @@ func (ds *datastore) Connect(cfgs ...ConfigFunc) error {
 	}
 	// set logger
 	ds.setLogger()
-	ds.logger.Info("connect")
+	// ds.logger.Info("connect")
 	ds.cluster = gocql.NewCluster(ds.cfg.Target)
 	ds.cluster.ProtoVersion = 3
 	ds.cluster.Keyspace = ds.cfg.Keyspace
@@ -56,7 +55,7 @@ func (ds *datastore) Connect(cfgs ...ConfigFunc) error {
 }
 
 func (ds *datastore) RefreshSession() error {
-	ds.logger.Info("session")
+	// ds.logger.Info("session")
 	s, err := ds.cluster.CreateSession()
 	if err != nil {
 		ds.health.SetServingStatus(ds.cfg.ID, 2)
@@ -72,7 +71,7 @@ func (ds *datastore) Config() *Config {
 }
 
 func (ds *datastore) Close() {
-	ds.logger.Info("close")
+	// ds.logger.Info("close")
 	// set health as not serving
 	ds.health.SetServingStatus(ds.cfg.ID, 2)
 	// unregister
@@ -89,7 +88,7 @@ func (ds *datastore) Health() *healthpb.HealthCheckResponse {
 	hcr, err := ds.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
-		ds.logger.Error("Health", zap.String("err", err.Error()))
+		// ds.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
@@ -104,10 +103,10 @@ func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) erro
 }
 
 func (ds *datastore) setLogger() {
-	ds.logger = ds.logger.With(
-		zap.String("type", "db"),
-		zap.String("id", ds.cfg.ID),
-		zap.String("name", ds.cfg.Name),
-		zap.String("target", ds.cfg.Target),
-		zap.String("keyspace", ds.cfg.Keyspace))
+	// ds.logger = ds.logger.With(
+	// 	zap.String("type", "db"),
+	// 	zap.String("id", ds.cfg.ID),
+	// 	zap.String("name", ds.cfg.Name),
+	// 	zap.String("target", ds.cfg.Target),
+	// 	zap.String("keyspace", ds.cfg.Keyspace))
 }
