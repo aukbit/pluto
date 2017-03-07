@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/reply"
@@ -16,7 +18,7 @@ var (
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	// log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(zap.Logger)
 	// get authentication from Authorization Header
 	u, p, ok := r.BasicAuth()
 	if !ok {

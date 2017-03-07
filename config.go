@@ -10,8 +10,6 @@ import (
 	"github.com/aukbit/pluto/server"
 )
 
-// var logger, _ = zap.NewProduction()
-
 // Config pluto service config
 type Config struct {
 	ID          string

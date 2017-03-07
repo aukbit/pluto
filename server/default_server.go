@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto/server/router"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health"
@@ -19,10 +21,10 @@ import (
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type defaultServer struct {
-	cfg   *Config
-	close chan bool
-	wg    *sync.WaitGroup
-	// logger     *zap.Logger
+	cfg        *Config
+	close      chan bool
+	wg         *sync.WaitGroup
+	logger     *zap.Logger
 	httpServer *http.Server
 	grpcServer *grpc.Server
 	health     *health.Server
@@ -37,7 +39,7 @@ func newServer(cfgs ...ConfigFunc) *defaultServer {
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
-	// d.logger, _ = zap.NewProduction()
+	d.logger, _ = zap.NewProduction()
 	return d
 }
 
@@ -61,13 +63,13 @@ func (ds *defaultServer) Run(cfgs ...ConfigFunc) error {
 	ds.health.SetServingStatus(ds.cfg.ID, 1)
 	// wait for go routines to finish
 	ds.wg.Wait()
-	// ds.logger.Info("exit")
+	ds.logger.Info("exit")
 	return nil
 }
 
 // Stop stops server by sending a message to close the listener via channel
 func (ds *defaultServer) Stop() {
-	// ds.logger.Info("stop")
+	ds.logger.Info("stop")
 	// set health as not serving
 	ds.health.SetServingStatus(ds.cfg.ID, 2)
 	// close listener
@@ -88,20 +90,20 @@ func (ds *defaultServer) Health() *healthpb.HealthCheckResponse {
 	hcr, err := ds.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
-		// ds.logger.Error("Health", zap.String("err", err.Error()))
+		ds.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
 }
 
 func (ds *defaultServer) setLogger() {
-	// ds.logger = ds.logger.With(
-	// 	zap.String("type", "server"),
-	// 	zap.String("id", ds.cfg.ID),
-	// 	zap.String("name", ds.cfg.Name),
-	// 	zap.String("format", ds.cfg.Format),
-	// 	zap.String("port", ds.cfg.Addr),
-	// 	zap.String("parent", ds.cfg.ParentID))
+	ds.logger = ds.logger.With(
+		zap.String("type", "server"),
+		zap.String("id", ds.cfg.ID),
+		zap.String("name", ds.cfg.Name),
+		zap.String("format", ds.cfg.Format),
+		zap.String("port", ds.cfg.Addr),
+		zap.String("parent", ds.cfg.ParentID))
 }
 
 func (ds *defaultServer) setHTTPServer() {
@@ -132,7 +134,7 @@ func (ds *defaultServer) setHTTPServer() {
 }
 
 func (ds *defaultServer) start() (err error) {
-	// ds.logger.Info("start")
+	ds.logger.Info("start")
 	var ln net.Listener
 
 	switch ds.cfg.Format {
@@ -221,7 +223,7 @@ func (ds *defaultServer) serve(ln net.Listener) error {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			// ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
+			ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
 			return
 		}
 	}(ds.httpServer)
@@ -248,12 +250,12 @@ outer:
 				ds.grpcServer.GracefulStop()
 			default:
 				if err := ln.Close(); err != nil {
-					// ds.logger.Error("Close()", zap.String("err", err.Error()))
+					ds.logger.Error("Close()", zap.String("err", err.Error()))
 				}
 			}
 			break outer
 		default:
-			// ds.logger.Debug("pulse")
+			ds.logger.Debug("pulse")
 			time.Sleep(time.Second * 1)
 			continue
 		}
