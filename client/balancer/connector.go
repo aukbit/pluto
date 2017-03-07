@@ -4,6 +4,7 @@ import (
 	"context"
 
 	g "github.com/aukbit/pluto/client/grpc"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -38,7 +39,7 @@ type connector struct {
 	stopCh     chan bool             // receive a stop call
 	doneCh     chan bool             // guarantees has beeen stopped correctly
 	health     healthpb.HealthClient // Client API for Health service
-	// logger     *zap.Logger
+	logger     *zap.Logger
 }
 
 // newConnector ...
@@ -50,15 +51,14 @@ func newConnector(cfgs ...ConfigFn) *connector {
 		stopCh:     make(chan bool),
 		doneCh:     make(chan bool),
 	}
-	// conn.logger, _ = zap.NewProduction()
-
+	conn.logger, _ = zap.NewProduction()
 	conn.initLogger()
 	return conn
 }
 
 // dial establish grpc client connection with the grpc server
 func (c *connector) dial() error {
-	// c.logger.Info("dial")
+	c.logger.Info("dial")
 	// append logger
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, loggerUnaryClientInterceptor(c))
 	// dial
@@ -81,7 +81,7 @@ func (c *connector) dial() error {
 
 // watch waits for any call from balancer
 func (c *connector) watch() {
-	// c.logger.Info("watch")
+	c.logger.Info("watch")
 	for {
 		select {
 		case req := <-c.requestsCh: // get request from balancer
@@ -111,7 +111,7 @@ func (c *connector) Connector() *connector {
 
 // Close stops connector and close grpc connection
 func (c *connector) Close() {
-	// c.logger.Info("close")
+	c.logger.Info("close")
 	c.conn.Close()
 	c.stopCh <- true
 	<-c.doneCh
@@ -128,10 +128,11 @@ func (c *connector) Health() bool {
 }
 
 func (c *connector) initLogger() {
-	// c.logger = c.logger.With(
-	// zap.String("type", "connector"),
-	// zap.String("id", c.cfg.ID),
-	// zap.String("name", c.cfg.Name),
-	// zap.String("target", c.cfg.Target),
-	// zap.String("parent", c.cfg.ParentID))
+	c.logger = c.logger.With(
+		zap.String("type", "connector"),
+		zap.String("id", c.cfg.ID),
+		zap.String("name", c.cfg.Name),
+		zap.String("target", c.cfg.Target),
+		zap.String("parent", c.cfg.ParentID),
+	)
 }
