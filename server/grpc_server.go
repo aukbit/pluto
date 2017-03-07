@@ -5,7 +5,6 @@ import (
 
 	"google.golang.org/grpc"
 
-	"go.uber.org/zap"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -31,7 +30,7 @@ func (ds *defaultServer) serveGRPC(ln net.Listener) (err error) {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
+			// ds.logger.Error("Serve(ln)", zap.String("err", err.Error()))
 			return
 		}
 	}(ds.grpcServer)

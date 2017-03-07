@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/aukbit/pluto/common"
-	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -32,14 +31,14 @@ func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc
 func loggerUnaryServerInterceptor(srv *defaultServer) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// get or create unique event id for every request
-		e, ctx := common.GetOrCreateEventID(ctx)
+		_, ctx = common.GetOrCreateEventID(ctx)
 		// create new log instance with eventID
-		l := srv.logger.With(
-			zap.String("event", e))
-		l.Info("request",
-			zap.String("method", info.FullMethod))
+		// l := srv.logger.With(
+		// 	zap.String("event", e))
+		// l.Info("request",
+		// 	zap.String("method", info.FullMethod))
 		// also nice to have a logger available in context
-		ctx = context.WithValue(ctx, "logger", l)
+		// ctx = context.WithValue(ctx, "logger", l)
 		return handler(ctx, req)
 	}
 }
