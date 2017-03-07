@@ -3,8 +3,6 @@ package backend
 import (
 	"flag"
 
-	"github.com/uber-go/zap"
-
 	"github.com/aukbit/pluto"
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/client"
@@ -17,7 +15,7 @@ import (
 var (
 	userTarget = flag.String("user_target", "127.0.0.1:65080", "user backend address")
 	grpcPort   = flag.String("grpc_port", ":65081", "grpc listening port")
-	logger     = zap.New(zap.NewJSONEncoder())
+	// logger     = zap.NewProduction()
 )
 
 // Run runs auth backend service

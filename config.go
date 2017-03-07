@@ -8,10 +8,9 @@ import (
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server"
-	"github.com/uber-go/zap"
 )
 
-var logger = zap.New(zap.NewJSONEncoder())
+// var logger, _ = zap.NewProduction()
 
 // Config pluto service config
 type Config struct {
