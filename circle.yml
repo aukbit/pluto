@@ -4,6 +4,7 @@ machine:
   environment:
     GODIST: "go1.8.linux-amd64.tar.gz"
   post:
+    # install latest version of go
     - mkdir -p download
     - test -e download/${GODIST} || curl -o download/${GODIST} https://storage.googleapis.com/golang/${GODIST}
     - sudo rm -rf /usr/local/go
