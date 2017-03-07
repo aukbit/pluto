@@ -12,18 +12,17 @@ machine:
     - go version
 
 dependencies:
+  pre:
+    - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
   override:
     # './...' is a relative pattern which means all subdirectories
     - go get -t -d -v ./...
     - go build -v
-    # docker
-    - docker info
-    - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
-  post:
-    - docker run --link cassandra:cassandra -v $PWD/test/config/cassandra:/config cassandra:3.7 /config/wait-for-cassandra.sh cassandra cqlsh -f /config/commands.cql cassandra
-
+  
 test:
   pre:
     - go vet ./...
+    # connect to docker cassandra instance to install test scripts
+    - docker run --link cassandra:cassandra -v $PWD/test/config/cassandra:/config cassandra:3.7 /config/wait-for-cassandra.sh cassandra cqlsh -f /config/commands.cql cassandra
   override:
     - go test -v .
