@@ -20,7 +20,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// new user
 	newUser := &pb.NewUser{}
 	if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
@@ -52,7 +52,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
@@ -81,7 +81,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
@@ -116,7 +116,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
@@ -145,7 +145,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get parameters
 	n := r.URL.Query().Get("name")
 	// set proto filter
