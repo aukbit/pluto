@@ -2,6 +2,12 @@
 
 This is an example of creating a distributed deployment of pluto services using Docker (4 nodes), Consul as service discovery
 
+### 1. Compile proto file from proto directory
+```
+protoc examples/dist/user_backend/proto/user.proto --go_out=plugins=grpc:.
+protoc examples/dist/user_bff/proto/user.proto --go_out=plugins=grpc:.
+```
+
 ### Create a docker image for service user_backend on node1
 ```
 $ docker run golang go get -v github.com/aukbit/pluto/examples/dist/...

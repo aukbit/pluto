@@ -11,7 +11,6 @@ import (
 
 func TestNewConsulDefault(t *testing.T) {
 	cd := newConsulDefault()
-	assert.Equal(t, "info", cd.logger.Level().String())
 	assert.Equal(t, "localhost:8500", cd.cfg.Addr)
 	assert.Equal(t, "http://localhost:8500", cd.cfg.URL())
 	assert.Equal(t, Services{}, cd.cfg.Services)

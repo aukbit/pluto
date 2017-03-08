@@ -1,54 +1,63 @@
-package web_test
+package main
 
 import (
-	"github.com/paulormart/assert"
-	"github.com/aukbit/pluto/examples/https/web"
-	"testing"
-	"log"
-	"io"
-	"net/http"
 	"crypto/tls"
-	"io/ioutil"
 	"encoding/json"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/paulormart/assert"
 )
 
 const URL = "https://localhost:8443"
 
-func TestAll(t *testing.T){
+func TestMain(m *testing.M) {
 
-	// Note: launch frontend service in a terminal rather than lunching a go routine here
-	// $ go run main.go
-	// default http://localhost:8080
+	if !testing.Short() {
+		// Run Server
+		go func() {
+			if err := run(); err != nil {
+				log.Fatal(err)
+			}
+		}()
+		time.Sleep(time.Second)
+	}
+	result := m.Run()
+	if !testing.Short() {
+		// Stop Server
+	}
+	os.Exit(result)
+}
 
-	//go func(){
-	//	if err := web.Run(); err != nil {
-	//		log.Fatal(err)
-	//	}
-	//}()
+func TestExampleHTTPS(t *testing.T) {
 
 	var tests = []struct {
 		Method       string
-		Path         func()string
+		Path         func() string
 		Body         io.Reader
-		BodyContains func()string
+		BodyContains func() string
 		Status       int
 	}{
 		{
-		Method:       "GET",
-		Path:         func() string { return URL + "/" },
-		BodyContains: func() string { return `{"message":"Hello Gopher"}` },
-		Status:       http.StatusOK,
-	},
-
+			Method:       "GET",
+			Path:         func() string { return URL + "/" },
+			BodyContains: func() string { return `{"message":"Hello Gopher"}` },
+			Status:       http.StatusOK,
+		},
 	}
 
-	message := &web.Message{}
+	message := &Message{}
 
 	for _, test := range tests {
 
 		// skip certificate verification
 		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		client := &http.Client{Transport: tr}
 		response, err := client.Get(test.Path())

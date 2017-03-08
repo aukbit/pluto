@@ -1,14 +1,56 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"github.com/aukbit/pluto/examples/https/web"
+	"net/http"
+
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 )
 
-func main(){
+var httpsPort = flag.String("https_port", ":8443", "https port")
+
+func main() {
 	// run frontend service
-	if err := web.Run(); err != nil {
+	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
 
+func run() error {
+
+	// Set server handlers
+	mux := router.NewMux()
+	mux.GET("/", GetHandler)
+
+	// Create new http server
+	srv := server.NewServer(server.Name("api"),
+		server.TLSConfig("server.crt", "private.key"),
+		server.Addr(*httpsPort),
+		server.Mux(mux))
+
+	// Init service
+	s := pluto.NewService(
+		pluto.Name("web"),
+		pluto.Description("web server serving handlers with https/tls"),
+		pluto.Servers(srv),
+	)
+
+	// Run service
+	if err := s.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+type Message struct {
+	Message string `json:"message"`
+}
+
+func GetHandler(w http.ResponseWriter, r *http.Request) {
+	m := &Message{"Hello Gopher"}
+	reply.Json(w, r, http.StatusOK, m)
 }
