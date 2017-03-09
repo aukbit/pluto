@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var db_addr = flag.String("db_addr", "192.168.99.100", "cassandra address")
+var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
 var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
 
 func Run() error {
@@ -26,13 +26,14 @@ func Run() error {
 	// db connection
 	db := datastore.NewDatastore(
 		datastore.Target(*db_addr),
-		datastore.Keyspace("pluto_backend"))
+		datastore.Keyspace("examples_user_backend"))
 	// Define Pluto Service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
-		pluto.Servers(srv))
+		pluto.Servers(srv),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {

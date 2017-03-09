@@ -136,7 +136,7 @@ func MockUserBackend() {
 			pbu.RegisterUserServiceServer(g, &MockUser{})
 		}))
 	// Define Pluto Service
-	s := pluto.NewService(pluto.Name("MockUserBackend"), pluto.Servers(grpcSrv))
+	s := pluto.New(pluto.Name("MockUserBackend"), pluto.Servers(grpcSrv))
 	// Run service
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
@@ -157,7 +157,7 @@ func MockUserFrontend() {
 	// define authentication client
 	clt := auth.NewClientAuth("127.0.0.1:65081")
 	// Define Pluto service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name("MockUserFrontend"),
 		pluto.Servers(srv),
 		pluto.Clients(clt))

@@ -15,7 +15,7 @@ import (
 
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
-	pb "github.com/aukbit/pluto/server/proto"
+	pb "github.com/aukbit/pluto/test/proto"
 	"github.com/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"

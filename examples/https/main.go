@@ -33,7 +33,8 @@ func run() error {
 		server.Mux(mux))
 
 	// Init service
-	s := pluto.NewService(
+	s := pluto.New(
+		pluto.Development(),
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
 		pluto.Servers(srv),

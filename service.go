@@ -19,29 +19,58 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+const (
+	// defaultName prefix on pluto service name
+	defaultName    = "pluto"
+	defaultVersion = "v1.0.0"
+)
+
 // Service
-type service struct {
-	cfg    *Config
+type Service struct {
+	cfg    Config
 	close  chan bool
 	wg     *sync.WaitGroup
-	logger *zap.Logger
 	health *health.Server
+	logger *zap.Logger
 }
 
-func newService(cfgs ...ConfigFunc) *service {
-	c := newConfig(cfgs...)
-	s := &service{
-		cfg:    c,
+// New returns a new pluto service with Options passed in
+func New(opts ...Option) *Service {
+	return newService(opts...)
+}
+
+func newService(opts ...Option) *Service {
+	s := &Service{
+		cfg:    newConfig(),
 		close:  make(chan bool),
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
 	s.logger, _ = zap.NewProduction()
+	if len(opts) > 0 {
+		s = s.WithOptions(opts...)
+	}
 	return s
 }
 
+// WithOptions clones the current Service, applies the supplied Options, and
+// returns the resulting Service. It's safe to use concurrently.
+func (s *Service) WithOptions(opts ...Option) *Service {
+	c := s.clone()
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+	return c
+}
+
+// clone creates a shallow copy service
+func (s *Service) clone() *Service {
+	copy := *s
+	return &copy
+}
+
 // Run starts service
-func (s *service) Run() error {
+func (s *Service) Run() error {
 	// set logger
 	s.setLogger()
 	// set health server
@@ -63,18 +92,18 @@ func (s *service) Run() error {
 }
 
 // Stop stops service
-func (s *service) Stop() {
+func (s *Service) Stop() {
 	s.logger.Info("stop")
 	s.close <- true
 }
 
 // Config service configration options
-func (s *service) Config() *Config {
+func (s *Service) Config() Config {
 	return s.cfg
 }
 
 // Server returns a server instance by name if initialized in service
-func (s *service) Server(name string) (srv server.Server, ok bool) {
+func (s *Service) Server(name string) (srv server.Server, ok bool) {
 	name = common.SafeName(name, server.DefaultName)
 	if srv, ok = s.cfg.Servers[name]; !ok {
 		return
@@ -83,7 +112,7 @@ func (s *service) Server(name string) (srv server.Server, ok bool) {
 }
 
 // Client returns a client instance by name if initialized in service
-func (s *service) Client(name string) (clt client.Client, ok bool) {
+func (s *Service) Client(name string) (clt client.Client, ok bool) {
 	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
@@ -91,7 +120,7 @@ func (s *service) Client(name string) (clt client.Client, ok bool) {
 	return clt, true
 }
 
-func (s *service) Health() *healthpb.HealthCheckResponse {
+func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
@@ -100,14 +129,14 @@ func (s *service) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
-func (s *service) setLogger() {
+func (s *Service) setLogger() {
 	s.logger = s.logger.With(
 		zap.String("type", "service"),
 		zap.String("id", s.cfg.ID),
 		zap.String("name", s.cfg.Name))
 }
 
-func (s *service) start() error {
+func (s *Service) start() error {
 	s.logger.Info("start",
 		zap.String("ip4", common.IPaddress()),
 		zap.Int("servers", len(s.cfg.Servers)),
@@ -125,7 +154,7 @@ func (s *service) start() error {
 	return nil
 }
 
-func (s *service) hookAfterStart() {
+func (s *Service) hookAfterStart() {
 	hooks, ok := s.cfg.Hooks["after_start"]
 	if !ok {
 		return
@@ -138,7 +167,7 @@ func (s *service) hookAfterStart() {
 	}
 }
 
-func (s *service) connectDB() {
+func (s *Service) connectDB() {
 	// connect datastore
 	if _, ok := s.cfg.Datastore.(datastore.Datastore); ok {
 		s.cfg.Datastore.Connect(datastore.Discovery(s.Config().Discovery))
@@ -148,7 +177,7 @@ func (s *service) connectDB() {
 	}
 }
 
-func (s *service) startServers() {
+func (s *Service) startServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
@@ -171,7 +200,7 @@ func (s *service) startServers() {
 	}
 }
 
-func (s *service) startClients() {
+func (s *Service) startClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
@@ -192,7 +221,7 @@ func (s *service) startClients() {
 }
 
 // waitUntilStopOrSig waits for close channel or syscall Signal
-func (s *service) waitUntilStopOrSig() {
+func (s *Service) waitUntilStopOrSig() {
 	defer s.wg.Done()
 	//  Stop also in case of any host signal
 	sigch := make(chan os.Signal, 1)
@@ -225,7 +254,7 @@ outer:
 	}
 }
 
-func (s *service) closeClients() {
+func (s *Service) closeClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
@@ -236,7 +265,7 @@ func (s *service) closeClients() {
 	}
 }
 
-func (s *service) stopServers() {
+func (s *Service) stopServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)

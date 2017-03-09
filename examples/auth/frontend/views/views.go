@@ -18,7 +18,7 @@ var (
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get authentication from Authorization Header
 	u, p, ok := r.BasicAuth()
 	if !ok {
@@ -30,7 +30,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	cred := &pba.Credentials{Email: u, Password: p}
 	// get pluto service from context
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("auth")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("auth")
 	if !ok {
 		log.Error(errClientAuthNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientAuthNotAvailable)

@@ -9,7 +9,7 @@ import (
 
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/server"
-	pb "github.com/aukbit/pluto/server/proto"
+	pb "github.com/aukbit/pluto/test/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

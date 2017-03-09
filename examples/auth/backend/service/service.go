@@ -27,21 +27,24 @@ func Run() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pbu.NewUserServiceClient(cc)
 		}),
-		client.Target(*userTarget))
+		client.Target(*userTarget),
+	)
 
 	// Define Pluto Server
 	srv := server.NewServer(
 		server.Addr(*grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pba.RegisterAuthServiceServer(g, &backend.AuthViews{})
-		}))
+		}),
+	)
 
 	// Define Pluto Service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name("auth_backend"),
 		pluto.Description("Backend service issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization"),
 		pluto.Servers(srv),
-		pluto.Clients(clt))
+		pluto.Clients(clt),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {

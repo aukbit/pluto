@@ -9,7 +9,7 @@ import (
 
 // serviceContextMiddleware Middleware that adds service instance
 // available in handlers context
-func serviceContextMiddleware(s *service) router.Middleware {
+func serviceContextMiddleware(s *Service) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get context

@@ -12,7 +12,7 @@ import (
 	"github.com/paulormart/assert"
 
 	"github.com/aukbit/pluto/server"
-	pb "github.com/aukbit/pluto/server/proto"
+	pb "github.com/aukbit/pluto/test/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

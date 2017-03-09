@@ -3,6 +3,8 @@ machine:
     - docker
   environment:
     GODIST: "go1.8.linux-amd64.tar.gz"
+  pre:
+    - go version
   post:
     # install latest version of go
     - mkdir -p download

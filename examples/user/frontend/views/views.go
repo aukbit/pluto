@@ -20,7 +20,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// new user
 	newUser := &pb.NewUser{}
 	if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
@@ -29,7 +29,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("user")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -52,13 +52,13 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("user")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -81,7 +81,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
@@ -93,7 +93,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("user")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())
@@ -116,13 +116,13 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("user")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -145,13 +145,13 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
 	// get logger from context
-	log := ctx.Value("logger").(zap.Logger)
+	log := ctx.Value("logger").(*zap.Logger)
 	// get parameters
 	n := r.URL.Query().Get("name")
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(pluto.Service).Client("user")
+	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())

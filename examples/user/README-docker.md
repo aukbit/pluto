@@ -43,8 +43,8 @@ $ docker exec -ti cassandra cqlsh 192.168.99.100
 ```
 cqlsh>
     DESCRIBE keyspaces;
-    CREATE KEYSPACE pluto_backend WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
-    USE pluto_backend;
+    CREATE KEYSPACE examples_user_backend WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};
+    USE examples_user_backend;
     CREATE TABLE users (id uuid, name text, email text, password text, PRIMARY KEY (id));
     DESCRIBE tables;
 ```
