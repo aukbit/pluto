@@ -83,3 +83,10 @@ func Development() Option {
 		s.logger, _ = zap.NewDevelopment()
 	})
 }
+
+// HealthAddr health server address
+func HealthAddr(a string) Option {
+	return optionFunc(func(s *Service) {
+		s.cfg.HealthAddr = a
+	})
+}

@@ -26,7 +26,7 @@ import (
 )
 
 const serviceURL = "http://localhost:8080"
-const healthURL = "http://localhost:9090/_health"
+const healthURL = "http://localhost:9091/_health"
 
 var serviceName = "gopher"
 
@@ -95,6 +95,7 @@ func TestMain(m *testing.M) {
 		Clients(cltGRPC),
 		HookAfterStart(fn1, fn2),
 		Datastore(db),
+		HealthAddr(":9091"),
 		// Discovery(d),
 	)
 
