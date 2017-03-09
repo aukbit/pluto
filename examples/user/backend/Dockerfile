@@ -35,7 +35,7 @@ ADD . /go/src/github.com/aukbit/pluto/examples/user/backend
 RUN go install github.com/aukbit/pluto/examples/user/backend
 
 # Run the pluto-sample-frontend command by default when the container starts.
-ENTRYPOINT /go/bin/backend -db_addr=192.168.99.100 -grpc_port=:65060
+ENTRYPOINT /go/bin/backend -db_addr=192.168.99.100 -grpc_port=:65065
 
 # Document that the service listens on port 65060.
-EXPOSE 65060
+EXPOSE 65065

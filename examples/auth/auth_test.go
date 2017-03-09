@@ -34,8 +34,8 @@ type Error struct {
 }
 
 const (
-	USER_URL = "http://localhost:8080"
-	AUTH_URL = "http://localhost:8081"
+	USER_URL = "http://localhost:8088"
+	AUTH_URL = "http://localhost:8089"
 )
 
 var wg sync.WaitGroup
@@ -157,7 +157,7 @@ func MockUserFrontend() {
 	// define http server
 	srv := server.NewServer(
 		server.Name("user_api"),
-		server.Addr(":8080"),
+		server.Addr(":8088"),
 		server.Mux(mux),
 		server.Middlewares(auth.MiddlewareBearerAuth()),
 	)

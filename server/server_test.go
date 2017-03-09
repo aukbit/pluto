@@ -15,12 +15,14 @@ import (
 
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
-	pb "github.com/aukbit/pluto/test/proto"
 	"github.com/aukbit/pluto/server/router"
+	pb "github.com/aukbit/pluto/test/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
+
+const URL = "http://localhost:8085"
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
@@ -48,7 +50,7 @@ func TestMain(m *testing.M) {
 	s := server.NewServer(
 		server.Name("http"),
 		server.Description("gopher super server"),
-		server.Addr(":8080"),
+		server.Addr(":8085"),
 		server.Mux(mux),
 	)
 	// Create grpc pluto server
@@ -89,8 +91,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHttpHealthCheck(t *testing.T) {
-	const URL = "http://localhost:8080/_health"
-	r, err := http.Get(URL)
+	r, err := http.Get(URL + "/_health")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,7 +111,6 @@ func TestHttpHealthCheck(t *testing.T) {
 
 func TestHttpServer(t *testing.T) {
 	// Test
-	const URL = "http://localhost:8080"
 	var tests = []struct {
 		Path         string
 		Body         io.Reader

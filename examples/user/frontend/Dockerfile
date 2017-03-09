@@ -35,7 +35,7 @@ ADD . /go/src/github.com/aukbit/pluto/examples/user/frontend
 RUN go install github.com/aukbit/pluto/examples/user/frontend
 
 # Run the pluto-sample-frontend command by default when the container starts.
-ENTRYPOINT /go/bin/frontend -target=192.168.99.100:65060 -http_port=:8080
+ENTRYPOINT /go/bin/frontend -target=192.168.99.100:65065 -http_port=:8087
 
 # Document that the service listens on port 8080.
-EXPOSE 8080
+EXPOSE 8087

@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	privKeyPath = "./auth.rsa"
-	pubKeyPath  = "./auth.rsa.pub"
+	privKeyPath = "./keys/auth.rsa"
+	pubKeyPath  = "./keys/auth.rsa.pub"
 )
 
 // LoadPublicKey loads a public key from PEM encoded data.
