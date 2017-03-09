@@ -16,7 +16,7 @@ type UserViews struct{}
 // CreateUser implements UserServiceServer
 func (uv *UserViews) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return &pb.User{}, err
@@ -37,7 +37,7 @@ func (uv *UserViews) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, 
 // ReadUser implements UserServiceServer
 func (uv *UserViews) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return nu, err
@@ -55,7 +55,7 @@ func (uv *UserViews) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error
 // UpdateUser implements UserServiceServer
 func (uv *UserViews) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return nu, err
@@ -71,7 +71,7 @@ func (uv *UserViews) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, err
 // DeleteUser implements UserServiceServer
 func (uv *UserViews) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return nu, err
@@ -87,7 +87,7 @@ func (uv *UserViews) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, err
 // FilterUsers implements UserServiceServer
 func (uv *UserViews) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return &pb.Users{}, err
@@ -111,7 +111,7 @@ func (uv *UserViews) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, 
 // VerifyUser implements UserServiceServer
 func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.Verification, error) {
 	// get datastore from pluto service from context
-	db := ctx.Value("pluto").(pluto.Service).Config().Datastore
+	db := ctx.Value("pluto").(*pluto.Service).Config().Datastore
 	// refresh session
 	if err := db.RefreshSession(); err != nil {
 		return &pb.Verification{IsValid: false}, err

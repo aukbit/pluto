@@ -17,7 +17,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	m := ctx.Value("module").(string)
 	n := ctx.Value("name").(string)
-	s := ctx.Value("pluto").(Service)
+	s := ctx.Value("pluto").(*Service)
 
 	switch m {
 	case "server":
@@ -72,7 +72,7 @@ func newHealthServer(name string) server.Server {
 		server.Mux(mux))
 }
 
-func (s *service) setHealthServer() {
+func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	srv := newHealthServer(s.cfg.Name)
 	s.cfg.Servers[srv.Config().Name] = srv

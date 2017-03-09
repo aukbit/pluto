@@ -56,12 +56,13 @@ func service() error {
 	dis := discovery.NewDiscovery(discovery.Addr(*consulAddr))
 
 	// Define Pluto service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name(*name),
 		pluto.Description("User backend for frontend service is responsible to parse all json data from http requests"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Discovery(dis))
+		pluto.Discovery(dis),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {

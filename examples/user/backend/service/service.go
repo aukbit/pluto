@@ -28,11 +28,12 @@ func Run() error {
 		datastore.Target(*db_addr),
 		datastore.Keyspace("examples_user_backend"))
 	// Define Pluto Service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
-		pluto.Servers(srv))
+		pluto.Servers(srv),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {

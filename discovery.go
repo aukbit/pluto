@@ -8,7 +8,7 @@ import (
 )
 
 // register Pluto Service within the service discovery system
-func (s *service) register() error {
+func (s *Service) register() error {
 	if _, ok := s.cfg.Discovery.(discovery.Discovery); ok {
 		// define service
 		dse := discovery.Service{
@@ -33,7 +33,7 @@ func (s *service) register() error {
 }
 
 // unregister Server from the service discovery system
-func (s *service) unregister() error {
+func (s *Service) unregister() error {
 	if _, ok := s.cfg.Discovery.(discovery.Discovery); ok {
 		if err := s.cfg.Discovery.Unregister(); err != nil {
 			return err

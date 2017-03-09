@@ -47,12 +47,13 @@ func service() error {
 	dis := discovery.NewDiscovery(discovery.Addr(*consulAddr))
 
 	// Define Pluto Service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name(*name),
 		pluto.Description("User backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
-		pluto.Discovery(dis))
+		pluto.Discovery(dis),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {

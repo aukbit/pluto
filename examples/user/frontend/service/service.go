@@ -30,7 +30,8 @@ func Run() error {
 	srv := server.NewServer(
 		server.Name("api"),
 		server.Addr(*http_port),
-		server.Mux(mux))
+		server.Mux(mux),
+	)
 
 	// Define grpc Client
 	clt := client.NewClient(
@@ -41,11 +42,12 @@ func Run() error {
 		client.Target(*target),
 	)
 	// Define Pluto service
-	s := pluto.NewService(
+	s := pluto.New(
 		pluto.Name("frontend"),
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
-		pluto.Clients(clt))
+		pluto.Clients(clt),
+	)
 
 	// Run service
 	if err := s.Run(); err != nil {
