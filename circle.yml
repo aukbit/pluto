@@ -27,4 +27,4 @@ test:
     # connect to docker cassandra instance to install test scripts
     - docker run --link cassandra:cassandra -v $PWD/test/config/cassandra:/config cassandra:3.7 /config/wait-for-cassandra.sh cassandra cqlsh -f /config/commands.cql cassandra
   override:
-    - go test -v .
+    - go test -v ./...

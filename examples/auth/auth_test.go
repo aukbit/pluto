@@ -34,8 +34,8 @@ type Error struct {
 }
 
 const (
-	USER_URL = "http://localhost:8080"
-	AUTH_URL = "http://localhost:8081"
+	USER_URL = "http://localhost:8088"
+	AUTH_URL = "http://localhost:8089"
 )
 
 var wg sync.WaitGroup
@@ -134,9 +134,15 @@ func MockUserBackend() {
 		server.Addr(":65080"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pbu.RegisterUserServiceServer(g, &MockUser{})
-		}))
+		}),
+	)
 	// Define Pluto Service
-	s := pluto.New(pluto.Name("MockUserBackend"), pluto.Servers(grpcSrv))
+	s := pluto.New(
+		pluto.Name("MockUserBackend"),
+		pluto.Servers(grpcSrv),
+		pluto.Development(),
+		pluto.HealthAddr(":9094"),
+	)
 	// Run service
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
@@ -151,16 +157,20 @@ func MockUserFrontend() {
 	// define http server
 	srv := server.NewServer(
 		server.Name("user_api"),
-		server.Addr(":8080"),
+		server.Addr(":8088"),
 		server.Mux(mux),
-		server.Middlewares(auth.MiddlewareBearerAuth()))
+		server.Middlewares(auth.MiddlewareBearerAuth()),
+	)
 	// define authentication client
 	clt := auth.NewClientAuth("127.0.0.1:65081")
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("MockUserFrontend"),
 		pluto.Servers(srv),
-		pluto.Clients(clt))
+		pluto.Clients(clt),
+		pluto.Development(),
+		pluto.HealthAddr(":9095"),
+	)
 	// Run service
 	if err := s.Run(); err != nil {
 		log.Fatal(err)

@@ -44,6 +44,8 @@ func Run() error {
 		pluto.Description("Backend service issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
+		pluto.Development(),
+		pluto.HealthAddr(":9092"),
 	)
 
 	// Run service

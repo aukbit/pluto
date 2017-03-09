@@ -26,7 +26,7 @@ func MiddlewareBearerAuth() router.Middleware {
 			// verify if token is valid with Auth backend service
 			ctx := r.Context()
 			// get gRPC Auth Client from pluto service context
-			c, ok := ctx.Value("pluto").(*pluto.Service).Client("client_auth")
+			c, ok := ctx.Value("pluto").(*pluto.Service).Client("auth")
 			if !ok {
 				err := errors.New("Authorization service not available")
 				reply.Json(w, r, http.StatusInternalServerError, err.Error())

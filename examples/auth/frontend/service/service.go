@@ -11,7 +11,7 @@ import (
 )
 
 var target = flag.String("target", "127.0.0.1:65081", "auth backend address")
-var httpPort = flag.String("http_port", ":8081", "auth frontend http port")
+var httpPort = flag.String("http_port", ":8089", "auth frontend http port")
 
 // Run runs auth frontend service
 func Run() error {
@@ -37,6 +37,8 @@ func Run() error {
 		pluto.Description("Authentication service is responsible to parse all json data to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
+		pluto.Development(),
+		pluto.HealthAddr(":9093"),
 	)
 
 	// Run service

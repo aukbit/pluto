@@ -15,14 +15,15 @@ import (
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 const (
-	// defaultName prefix on pluto service name
-	defaultName    = "pluto"
-	defaultVersion = "v1.0.0"
+	defaultName       = "pluto"
+	defaultVersion    = "v1.0.0"
+	defaultHealthAddr = ":9090"
 )
 
 // Service
@@ -127,6 +128,20 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 		s.logger.Error("Health", zap.String("err", err.Error()))
 	}
 	return hcr
+}
+
+func (s *Service) setHealthServer() {
+	s.health.SetServingStatus(s.cfg.ID, 1)
+	// Define Router
+	mux := router.NewMux()
+	mux.GET("/_health/:module/:name", healthHandler)
+	// Define server
+	srv := server.NewServer(
+		server.Name(s.cfg.Name+"_health"),
+		server.Addr(s.cfg.HealthAddr),
+		server.Mux(mux),
+	)
+	s.cfg.Servers[srv.Config().Name] = srv
 }
 
 func (s *Service) setLogger() {

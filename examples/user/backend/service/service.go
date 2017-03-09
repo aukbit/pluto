@@ -12,7 +12,7 @@ import (
 )
 
 var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
-var grpc_port = flag.String("grpc_port", ":65060", "grpc listening port")
+var grpc_port = flag.String("grpc_port", ":65065", "grpc listening port")
 
 func Run() error {
 	flag.Parse()
@@ -33,6 +33,8 @@ func Run() error {
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
+		pluto.Development(),
+		pluto.HealthAddr(":9096"),
 	)
 
 	// Run service
