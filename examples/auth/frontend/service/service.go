@@ -37,6 +37,8 @@ func Run() error {
 		pluto.Description("Authentication service is responsible to parse all json data to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
+		pluto.Development(),
+		pluto.HealthAddr(":9093"),
 	)
 
 	// Run service

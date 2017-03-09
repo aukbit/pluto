@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -10,6 +11,7 @@ import (
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/google/uuid"
 )
 
 var (
@@ -55,8 +57,14 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
+	validID, err := uuid.Parse(id)
+	if err != nil {
+		log.Warn(fmt.Sprintf("Id %v not found", id))
+		reply.Json(w, r, http.StatusNotFound, `{}`)
+		return
+	}
 	// set proto user
-	user := &pb.User{Id: id}
+	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
 	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
@@ -68,7 +76,8 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	conn := c.Request()
 	defer c.Done(conn)
 	// make a call the backend service
-	user, err := conn.Client().(pb.UserServiceClient).ReadUser(ctx, user)
+	user, err = conn.Client().(pb.UserServiceClient).ReadUser(ctx, user)
+
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -84,8 +93,14 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
+	validID, err := uuid.Parse(id)
+	if err != nil {
+		log.Warn(fmt.Sprintf("Id %v not found", id))
+		reply.Json(w, r, http.StatusNotFound, `{}`)
+		return
+	}
 	// set proto user
-	user := &pb.User{Id: id}
+	user := &pb.User{Id: validID.String()}
 	// unmarshal body
 	if err := jsonpb.Unmarshal(r.Body, user); err != nil {
 		log.Error(err.Error())
@@ -103,7 +118,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	conn := c.Request()
 	defer c.Done(conn)
 	// make a call the backend service
-	user, err := conn.Client().(pb.UserServiceClient).UpdateUser(ctx, user)
+	user, err = conn.Client().(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -119,8 +134,14 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	log := ctx.Value("logger").(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
+	validID, err := uuid.Parse(id)
+	if err != nil {
+		log.Warn(fmt.Sprintf("Id %v not found", id))
+		reply.Json(w, r, http.StatusNotFound, `{}`)
+		return
+	}
 	// set proto user
-	user := &pb.User{Id: id}
+	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
 	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
 	if !ok {
@@ -132,7 +153,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	conn := c.Request()
 	defer c.Done(conn)
 	// make a call the backend service
-	user, err := conn.Client().(pb.UserServiceClient).DeleteUser(ctx, user)
+	user, err = conn.Client().(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())

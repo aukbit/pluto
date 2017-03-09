@@ -33,6 +33,8 @@ func Run() error {
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
+		pluto.Development(),
+		pluto.HealthAddr(":9096"),
 	)
 
 	// Run service

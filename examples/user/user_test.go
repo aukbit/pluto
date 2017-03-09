@@ -85,7 +85,7 @@ func TestExampleUser(t *testing.T) {
 			Method:       "GET",
 			Path:         func(id string) string { return URL + "/user/abc" },
 			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Gopher","email":"gopher@email.com"}` },
-			Status:       http.StatusInternalServerError,
+			Status:       http.StatusNotFound,
 		},
 		{
 			Method:       "PUT",
@@ -99,20 +99,20 @@ func TestExampleUser(t *testing.T) {
 			Path:         func(id string) string { return URL + "/user/abc" },
 			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
 			BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Super Gopher house"}` },
-			Status:       http.StatusInternalServerError,
+			Status:       http.StatusNotFound,
 		},
-		// {
-		// 	Method:       "DELETE",
-		// 	Path:         func(id string) string { return URL + "/user/" + id },
-		// 	BodyContains: func(id string) string { return `{}` },
-		// 	Status:       http.StatusOK,
-		// },
-		// {
-		// 	Method:       "DELETE",
-		// 	Path:         func(id string) string { return URL + "/user/abc" },
-		// 	BodyContains: func(id string) string { return `{}` },
-		// 	Status:       http.StatusInternalServerError,
-		// },
+		{
+			Method:       "DELETE",
+			Path:         func(id string) string { return URL + "/user/" + id },
+			BodyContains: func(id string) string { return `{}` },
+			Status:       http.StatusOK,
+		},
+		{
+			Method:       "DELETE",
+			Path:         func(id string) string { return URL + "/user/abc" },
+			BodyContains: func(id string) string { return `{}` },
+			Status:       http.StatusNotFound,
+		},
 	}
 
 	for _, test := range tests {

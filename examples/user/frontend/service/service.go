@@ -47,6 +47,8 @@ func Run() error {
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
+		pluto.Development(),
+		pluto.HealthAddr(":9097"),
 	)
 
 	// Run service

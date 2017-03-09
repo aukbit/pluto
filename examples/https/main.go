@@ -38,6 +38,8 @@ func run() error {
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
 		pluto.Servers(srv),
+		pluto.Development(),
+		pluto.HealthAddr(":9098"),
 	)
 
 	// Run service
