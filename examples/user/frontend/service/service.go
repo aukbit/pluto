@@ -3,6 +3,8 @@ package frontend
 import (
 	"flag"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/examples/user/frontend/views"
@@ -41,13 +43,15 @@ func Run() error {
 		}),
 		client.Target(*target),
 	)
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("frontend"),
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9097"),
 	)
 

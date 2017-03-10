@@ -146,7 +146,6 @@ func (s *Service) setHealthServer() {
 
 func (s *Service) setLogger() {
 	s.logger = s.logger.With(
-		zap.String("type", "service"),
 		zap.String("id", s.cfg.ID),
 		zap.String("name", s.cfg.Name))
 }
@@ -223,8 +222,9 @@ func (s *Service) startClients() {
 			defer s.wg.Done()
 			for {
 				err := clt.Dial(
-					client.ParentID(s.cfg.ID),
-					client.Discovery(s.Config().Discovery))
+					client.Logger(s.logger),
+					client.Discovery(s.Config().Discovery),
+				)
 				if err == nil {
 					return
 				}

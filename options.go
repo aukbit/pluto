@@ -77,10 +77,11 @@ func HookAfterStart(fn ...HookFunc) Option {
 	})
 }
 
-// Development sets development logger
-func Development() Option {
+// Logger sets a shallow copy from an input logger
+func Logger(l *zap.Logger) Option {
 	return optionFunc(func(s *Service) {
-		s.logger, _ = zap.NewDevelopment()
+		copy := *l
+		s.logger = &copy
 	})
 }
 

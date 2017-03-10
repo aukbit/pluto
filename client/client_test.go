@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/server"
 	pb "github.com/aukbit/pluto/test/proto"
@@ -51,9 +53,10 @@ func TestMain(m *testing.M) {
 
 func TestClient(t *testing.T) {
 
+	logger, _ := zap.NewDevelopment()
 	// Create a grpc client
 	c := client.New(
-		client.Development(),
+		client.Logger(logger),
 		client.Name("client_test_gopher"),
 		client.Description("gopher super client"),
 		client.Targets("localhost:65061"),
@@ -95,8 +98,9 @@ func TestClient(t *testing.T) {
 }
 
 func TestHealth(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 	c := client.New(
-		client.Development(),
+		client.Logger(logger),
 		client.Targets("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)

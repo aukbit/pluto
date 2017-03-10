@@ -3,6 +3,8 @@ package backend
 import (
 	"flag"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/examples/user/backend/views"
@@ -27,13 +29,14 @@ func Run() error {
 	db := datastore.NewDatastore(
 		datastore.Target(*db_addr),
 		datastore.Keyspace("examples_user_backend"))
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9096"),
 	)
 

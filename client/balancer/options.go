@@ -38,18 +38,10 @@ func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	})
 }
 
-// Development sets development logger
-func Development() Option {
-	return optionFunc(func(c *Connector) {
-		c.logger, _ = zap.NewDevelopment()
-	})
-}
-
 // Logger sets a shallow copy from an input logger
 func Logger(l *zap.Logger) Option {
 	return optionFunc(func(c *Connector) {
 		copy := *l
 		c.logger = &copy
-		c.initLogger()
 	})
 }

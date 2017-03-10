@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
@@ -32,13 +34,14 @@ func run() error {
 		server.Addr(*httpsPort),
 		server.Mux(mux))
 
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Init service
 	s := pluto.New(
-		pluto.Development(),
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
 		pluto.Servers(srv),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9098"),
 	)
 

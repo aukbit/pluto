@@ -3,6 +3,8 @@ package frontend
 import (
 	"flag"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/auth"
 	"github.com/aukbit/pluto/examples/auth/frontend/views"
@@ -31,13 +33,15 @@ func Run() error {
 	// Define grpc Client
 	clt := auth.NewClientAuth(*target)
 
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("auth_frontend"),
 		pluto.Description("Authentication service is responsible to parse all json data to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9093"),
 	)
 

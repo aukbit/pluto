@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/paulormart/assert"
 
 	context "golang.org/x/net/context"
@@ -86,9 +88,10 @@ func TestMain(m *testing.M) {
 	fn2 := func(ctx context.Context) {
 		log.Print("second run after service starts")
 	}
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := New(
-		Development(),
 		Name(serviceName),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
@@ -97,6 +100,7 @@ func TestMain(m *testing.M) {
 		Datastore(db),
 		HealthAddr(":9091"),
 		// Discovery(d),
+		Logger(logger),
 	)
 
 	if !testing.Short() {

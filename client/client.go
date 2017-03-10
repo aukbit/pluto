@@ -121,8 +121,10 @@ func (c *Client) Dial(opts ...Option) error {
 		return err
 	}
 	// init logger
-	c.initLogger()
-	//
+	c.logger = c.logger.With(
+		zap.String("id", c.cfg.ID),
+		zap.String("name", c.cfg.Name),
+	)
 	c.logger.Info("start",
 		zap.String("name", c.cfg.Name),
 		zap.String("format", c.cfg.Format),
@@ -208,12 +210,6 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
-}
-
-func (c *Client) initLogger() {
-	c.logger = c.logger.With(
-		zap.String("id", c.cfg.ID),
-		zap.String("parent", c.cfg.ParentID))
 }
 
 // target get target IP:Port from service discovery system

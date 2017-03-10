@@ -111,6 +111,9 @@ func (c *Connector) watch() {
 }
 
 func (c *Connector) Init() error {
+	c.logger = c.logger.With(
+		zap.String("target", c.cfg.Target),
+	)
 	if err := c.dial(); err != nil {
 		return err
 	}
@@ -142,10 +145,4 @@ func (c *Connector) Health() bool {
 		return false
 	}
 	return hcr.Status.String() == "SERVING"
-}
-
-func (c *Connector) initLogger() {
-	c.logger = c.logger.With(
-		zap.String("target", c.cfg.Target),
-	)
 }
