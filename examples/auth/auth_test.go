@@ -1,4 +1,4 @@
-package frontend_test
+package auth
 
 import (
 	"encoding/json"
