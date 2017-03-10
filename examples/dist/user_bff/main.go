@@ -45,7 +45,7 @@ func service() error {
 		server.Mux(mux))
 
 	// Define grpc Client
-	clt := client.NewClient(
+	clt := client.New(
 		client.Name(*name),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)

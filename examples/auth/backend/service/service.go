@@ -22,7 +22,7 @@ func Run() error {
 	flag.Parse()
 
 	// Define user Client
-	clt := client.NewClient(
+	clt := client.New(
 		client.Name("user"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pbu.NewUserServiceClient(cc)

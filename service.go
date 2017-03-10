@@ -113,7 +113,7 @@ func (s *Service) Server(name string) (srv server.Server, ok bool) {
 }
 
 // Client returns a client instance by name if initialized in service
-func (s *Service) Client(name string) (clt client.Client, ok bool) {
+func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
@@ -219,7 +219,7 @@ func (s *Service) startClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(clt client.Client) {
+		go func(clt *client.Client) {
 			defer s.wg.Done()
 			for {
 				err := clt.Dial(
@@ -273,7 +273,7 @@ func (s *Service) closeClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(clt client.Client) {
+		go func(clt *client.Client) {
 			defer s.wg.Done()
 			clt.Close()
 		}(clt)

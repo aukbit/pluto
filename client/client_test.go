@@ -52,7 +52,8 @@ func TestMain(m *testing.M) {
 func TestClient(t *testing.T) {
 
 	// Create a grpc client
-	c := client.NewClient(
+	c := client.New(
+		client.Development(),
 		client.Name("client_test_gopher"),
 		client.Description("gopher super client"),
 		client.Targets("localhost:65061"),
@@ -94,7 +95,8 @@ func TestClient(t *testing.T) {
 }
 
 func TestHealth(t *testing.T) {
-	c := client.NewClient(
+	c := client.New(
+		client.Development(),
 		client.Targets("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)

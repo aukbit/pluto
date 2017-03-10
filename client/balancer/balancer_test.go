@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func InitConnectors() (cons []*connector) {
+func InitConnectors() (cons []*Connector) {
 	for i := 0; i < numServers; i++ {
 		p := PORT + i
 		c := newConnector(
@@ -77,7 +77,7 @@ func InitConnectors() (cons []*connector) {
 }
 
 func InitBalancer(inCh <-chan Request) *Balancer {
-	b := NewBalancer()
+	b := New()
 	go b.Balance(inCh)
 	return b
 }
@@ -94,7 +94,7 @@ func TestBalancer(t *testing.T) {
 	}
 	t.Logf("Balancer %v", b)
 
-	connsCh := make(chan *connector)
+	connsCh := make(chan *Connector)
 	// fake some requests
 	wg.Add(numRequests)
 	for i := 0; i < numRequests; i++ {

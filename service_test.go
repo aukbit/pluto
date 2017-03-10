@@ -63,7 +63,7 @@ func TestMain(m *testing.M) {
 		}),
 	)
 	// Create grpc pluto client
-	cltGRPC := client.NewClient(
+	cltGRPC := client.New(
 		client.Name(serviceName),
 		client.Targets("localhost:65060"),
 		// client.TargetName("grpc"),

@@ -34,7 +34,7 @@ func Run() error {
 	)
 
 	// Define grpc Client
-	clt := client.NewClient(
+	clt := client.New(
 		client.Name("user"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)

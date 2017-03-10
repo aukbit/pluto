@@ -9,27 +9,22 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-type Connector interface {
-	Client() interface{}
-	Connector() *connector
-	Health() bool
-}
+// type Connector interface {
+// 	Client() interface{}
+// 	Connector() *Connector
+// 	Health() bool
+// }
 
 const (
 	// DefaultName prefix connector name
-	DefaultName    = "connector"
+	defaultName    = "connector"
 	defaultVersion = "v1.0.0"
 )
 
-// NewConnector returns a new connector with cfg passed in
-func NewConnector(cfgs ...ConfigFn) *connector {
-	return newConnector(cfgs...)
-}
+type ConnsCh chan *Connector
 
-type ConnsCh chan *connector
-
-// connector struct
-type connector struct {
+// Connector struct
+type Connector struct {
 	cfg        *Config
 	requestsCh chan Request          // requests channel to receive requests from balancer
 	pending    int                   // count pending tasks
@@ -42,22 +37,44 @@ type connector struct {
 	logger     *zap.Logger
 }
 
+// NewConnector returns a new connector with options passed in
+func NewConnector(opts ...Option) *Connector {
+	return newConnector(opts...)
+}
+
 // newConnector ...
-func newConnector(cfgs ...ConfigFn) *connector {
-	c := newConfig(cfgs...)
-	conn := &connector{
-		cfg:        c,
+func newConnector(opts ...Option) *Connector {
+	c := &Connector{
+		cfg:        newConfig(),
 		requestsCh: make(chan Request),
 		stopCh:     make(chan bool),
 		doneCh:     make(chan bool),
 	}
-	conn.logger, _ = zap.NewProduction()
-	conn.initLogger()
-	return conn
+	c.logger, _ = zap.NewProduction()
+	if len(opts) > 0 {
+		c = c.WithOptions(opts...)
+	}
+	return c
+}
+
+// WithOptions clones the current Client, applies the supplied Options, and
+// returns the resulting Client. It's safe to use concurrently.
+func (c *Connector) WithOptions(opts ...Option) *Connector {
+	d := c.clone()
+	for _, opt := range opts {
+		opt.apply(d)
+	}
+	return d
+}
+
+// clone creates a shallow copy client
+func (c *Connector) clone() *Connector {
+	copy := *c
+	return &copy
 }
 
 // dial establish grpc client connection with the grpc server
-func (c *connector) dial() error {
+func (c *Connector) dial() error {
 	c.logger.Info("dial")
 	// append logger
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, loggerUnaryClientInterceptor(c))
@@ -80,7 +97,7 @@ func (c *connector) dial() error {
 }
 
 // watch waits for any call from balancer
-func (c *connector) watch() {
+func (c *Connector) watch() {
 	c.logger.Info("watch")
 	for {
 		select {
@@ -93,7 +110,7 @@ func (c *connector) watch() {
 	}
 }
 
-func (c *connector) Init() error {
+func (c *Connector) Init() error {
 	if err := c.dial(); err != nil {
 		return err
 	}
@@ -101,24 +118,24 @@ func (c *connector) Init() error {
 	return nil
 }
 
-func (c *connector) Client() interface{} {
+func (c *Connector) Client() interface{} {
 	return c.client
 }
 
-func (c *connector) Connector() *connector {
+func (c *Connector) Connector() *Connector {
 	return c
 }
 
 // Close stops connector and close grpc connection
-func (c *connector) Close() {
-	c.logger.Info("close")
+func (c *Connector) Close() {
 	c.conn.Close()
 	c.stopCh <- true
 	<-c.doneCh
+	c.logger.Info("closed")
 }
 
 // Health check if a round trip with server is valid or not
-func (c *connector) Health() bool {
+func (c *Connector) Health() bool {
 	hcr, err := c.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
@@ -127,12 +144,8 @@ func (c *connector) Health() bool {
 	return hcr.Status.String() == "SERVING"
 }
 
-func (c *connector) initLogger() {
+func (c *Connector) initLogger() {
 	c.logger = c.logger.With(
-		zap.String("type", "connector"),
-		zap.String("id", c.cfg.ID),
-		zap.String("name", c.cfg.Name),
 		zap.String("target", c.cfg.Target),
-		zap.String("parent", c.cfg.ParentID),
 	)
 }
