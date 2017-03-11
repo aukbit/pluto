@@ -27,9 +27,10 @@ func Run() error {
 		}),
 	)
 	// db connection
-	db := datastore.NewDatastore(
+	db := datastore.New(
 		datastore.Target(*db_addr),
 		datastore.Keyspace("examples_user_backend"))
+	// logger
 	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(

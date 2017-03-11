@@ -13,3 +13,57 @@ Books
 
 Articles
 - [nginx - Introduction to Microservices](https://www.nginx.com/blog/introduction-to-microservices/?utm_source=event-driven-data-management-microservices&utm_medium=blog&utm_campaign=Microservices)
+
+### Examples
+- [User](https://github.com/aukbit/pluto/tree/master/examples/user)
+- [Authentication](https://github.com/aukbit/pluto/tree/master/examples/auth)
+- [Distributed deployment](https://github.com/aukbit/pluto/tree/master/examples/dist)
+- [HTTPS/TLS](https://github.com/aukbit/pluto/tree/master/examples/https)
+
+### Pluto - Hello World
+
+```
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
+)
+
+func main() {
+	// Define router
+	mux := router.NewMux()
+	mux.GET("/", func(w http.ResponseWriter, r *http.Request) {
+		reply.Json(w, r, http.StatusOK, "Hello World")
+	})
+
+	// Define http server
+	srv := server.New(
+		server.Mux(mux),
+	)
+
+	// Define Pluto service
+	s := pluto.New(
+		pluto.Servers(srv),
+	)
+
+	// Run Pluto service
+	if err := s.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+```
+
+```
+go run ./examples/hello/main.go
+{"level":"info","ts":1489193908.1746852,"caller":"/github.com/aukbit/pluto/service.go:155","msg":"start","id":"plt_5QPRA9","name":"pluto","ip4":"192.168.0.4","servers":2,"clients":0}
+{"level":"info","ts":1489193908.1748319,"caller":"/github.com/aukbit/pluto/server/server.go:165","msg":"start","id":"plt_5QPRA9","name":"pluto","id":"srv_R3E4TJ","name":"server","format":"http","port":":8080"}
+{"level":"info","ts":1489193908.1748629,"caller":"/github.com/aukbit/pluto/server/server.go:165","msg":"start","id":"plt_5QPRA9","name":"pluto","id":"srv_0XJJCD","name":"pluto_health_server","format":"http","port":":9090"}
+{"level":"info","ts":1489193919.5190237,"caller":"/github.com/aukbit/pluto/server/http_middleware.go:25","msg":"request","id":"plt_5QPRA9","name":"pluto","id":"srv_R3E4TJ","name":"server","format":"http","port":":8080","event":"evt_TLPT9N9D69MF","method":"GET","url":"/"}
+```

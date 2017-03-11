@@ -18,7 +18,7 @@ type Config struct {
 	Version     string
 	Servers     map[string]*server.Server
 	Clients     map[string]*client.Client
-	Datastore   datastore.Datastore
+	Datastore   *datastore.Datastore
 	Discovery   discovery.Discovery
 	Hooks       map[string][]HookFunc
 	HealthAddr  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty

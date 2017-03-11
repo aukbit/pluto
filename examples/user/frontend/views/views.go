@@ -59,7 +59,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	id := ctx.Value("id").(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
-		log.Warn(fmt.Sprintf("Id %v not found", id))
+		log.Info(fmt.Sprintf("Id %v not found", id))
 		reply.Json(w, r, http.StatusNotFound, `{}`)
 		return
 	}
@@ -95,7 +95,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	id := ctx.Value("id").(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
-		log.Warn(fmt.Sprintf("Id %v not found", id))
+		log.Info(fmt.Sprintf("Id %v not found", id))
 		reply.Json(w, r, http.StatusNotFound, `{}`)
 		return
 	}
@@ -136,7 +136,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	id := ctx.Value("id").(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
-		log.Warn(fmt.Sprintf("Id %v not found", id))
+		log.Info(fmt.Sprintf("Id %v not found", id))
 		reply.Json(w, r, http.StatusNotFound, `{}`)
 		return
 	}

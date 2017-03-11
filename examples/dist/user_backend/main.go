@@ -38,10 +38,11 @@ func service() error {
 		}))
 
 	// Define db connection
-	db := datastore.NewDatastore(
+	db := datastore.New(
 		datastore.Name(*name),
 		datastore.TargetName(*db),
-		datastore.Keyspace(*keyspace))
+		datastore.Keyspace(*keyspace),
+	)
 
 	// Define consul
 	dis := discovery.NewDiscovery(discovery.Addr(*consulAddr))

@@ -80,7 +80,9 @@ func (s *Server) clone() *Server {
 func (s *Server) Run(opts ...Option) error {
 	// set last configs
 	if len(opts) > 0 {
-		s = s.WithOptions(opts...)
+		for _, opt := range opts {
+			opt.apply(s)
+		}
 	}
 	// register at service discovery
 	if err := s.register(); err != nil {

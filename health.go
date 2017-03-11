@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -36,8 +35,8 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = clt.Health()
 	case "db":
-		db, ok := s.Config().Datastore.(datastore.Datastore)
-		if !ok {
+		db := s.Config().Datastore
+		if db == nil {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}

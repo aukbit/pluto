@@ -9,7 +9,7 @@ import (
 	"github.com/paulormart/assert"
 )
 
-func TestAll(t *testing.T) {
+func TestReply(t *testing.T) {
 
 	// Table tests
 	var tests = []struct {
