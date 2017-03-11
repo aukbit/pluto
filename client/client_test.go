@@ -25,13 +25,16 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
+	logger, _ := zap.NewDevelopment()
 	// Create pluto server
-	s := server.NewServer(
+	s := server.New(
 		server.Name("client_test_gopher"),
 		server.Addr(":65061"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
-		}))
+		}),
+		server.Logger(logger),
+	)
 
 	if !testing.Short() {
 		// Run Server

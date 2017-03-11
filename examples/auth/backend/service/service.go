@@ -33,7 +33,7 @@ func Run() error {
 	)
 
 	// Define Pluto Server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Addr(*grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pba.RegisterAuthServiceServer(g, &backend.AuthViews{})

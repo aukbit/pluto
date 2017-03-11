@@ -62,13 +62,6 @@ func TargetName(name string) Option {
 	})
 }
 
-// ParentID sets id of parent service that starts the server
-func ParentID(id string) Option {
-	return optionFunc(func(c *Client) {
-		c.cfg.ParentID = id
-	})
-}
-
 // GRPCRegister register client gRPC function
 func GRPCRegister(fn func(*grpc.ClientConn) interface{}) Option {
 	return optionFunc(func(c *Client) {

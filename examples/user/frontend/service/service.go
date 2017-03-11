@@ -29,7 +29,7 @@ func Run() error {
 	mux.DELETE("/user/:id", frontend.DeleteHandler)
 
 	// define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name("api"),
 		server.Addr(*http_port),
 		server.Mux(mux),

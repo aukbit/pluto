@@ -29,10 +29,11 @@ func run() error {
 	mux.GET("/", GetHandler)
 
 	// Create new http server
-	srv := server.NewServer(server.Name("api"),
+	srv := server.New(server.Name("api"),
 		server.TLSConfig("server.crt", "private.key"),
 		server.Addr(*httpsPort),
-		server.Mux(mux))
+		server.Mux(mux),
+	)
 
 	// Logger
 	logger, _ := zap.NewDevelopment()

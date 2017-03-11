@@ -132,7 +132,7 @@ func RunAuthFrontend() {
 func MockUserBackend() {
 	defer wg.Done()
 	// Define Pluto Server
-	grpcSrv := server.NewServer(
+	grpcSrv := server.New(
 		server.Addr(":65080"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pbu.RegisterUserServiceServer(g, &MockUser{})
@@ -159,7 +159,7 @@ func MockUserFrontend() {
 	mux := router.NewMux()
 	mux.POST("/user", PostHandler)
 	// define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name("user_api"),
 		server.Addr(":8088"),
 		server.Mux(mux),

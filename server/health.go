@@ -11,7 +11,7 @@ import (
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ds := ctx.Value("server").(*defaultServer)
+	ds := ctx.Value("server").(*Server)
 	hcr, err := ds.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
@@ -21,7 +21,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, hcr)
 }
 
-func serverMiddleware(srv *defaultServer) router.Middleware {
+func serverMiddleware(srv *Server) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()

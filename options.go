@@ -43,7 +43,7 @@ func Description(d string) Option {
 }
 
 // Servers slice of service servers
-func Servers(srv server.Server) Option {
+func Servers(srv *server.Server) Option {
 	return optionFunc(func(s *Service) {
 		s.cfg.Servers[srv.Config().Name] = srv
 	})

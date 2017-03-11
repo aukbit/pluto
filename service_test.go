@@ -49,14 +49,14 @@ func TestMain(m *testing.M) {
 	mux := router.NewMux()
 	mux.GET("/", Index)
 	// Create pluto server
-	srvHTTP := server.NewServer(
+	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
 		server.Description("gopher super server"),
 		server.Addr(":8080"),
 		server.Mux(mux),
 	)
 	// Create grpc pluto server
-	srvGRPC := server.NewServer(
+	srvGRPC := server.New(
 		server.Name(serviceName+"_grpc"),
 		server.Description("grpc super server"),
 		server.Addr(":65060"),

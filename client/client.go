@@ -108,9 +108,9 @@ func (c *Client) startBalancer() {
 }
 
 func (c *Client) Dial(opts ...Option) error {
-	// set last options
-	for _, o := range opts {
-		o.apply(c)
+	// set last configs
+	if len(opts) > 0 {
+		c = c.WithOptions(opts...)
 	}
 	// register at service discovery
 	if err := c.register(); err != nil {
@@ -120,12 +120,9 @@ func (c *Client) Dial(opts ...Option) error {
 	if err := c.targets(); err != nil {
 		return err
 	}
-	// init logger
+	// set logger
 	c.logger = c.logger.With(
 		zap.String("id", c.cfg.ID),
-		zap.String("name", c.cfg.Name),
-	)
-	c.logger.Info("start",
 		zap.String("name", c.cfg.Name),
 		zap.String("format", c.cfg.Format),
 	)

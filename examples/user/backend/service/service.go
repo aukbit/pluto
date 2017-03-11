@@ -20,11 +20,12 @@ func Run() error {
 	flag.Parse()
 
 	// Define Pluto Server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Addr(*grpc_port),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &backend.UserViews{})
-		}))
+		}),
+	)
 	// db connection
 	db := datastore.NewDatastore(
 		datastore.Target(*db_addr),

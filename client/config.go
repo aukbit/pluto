@@ -17,7 +17,6 @@ type Config struct {
 	// Target                  string   // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	TargetName              string // service name on service discovery
 	Format                  string
-	ParentID                string // sets parent ID
 	GRPCRegister            func(*grpc.ClientConn) interface{}
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
 	Discovery               discovery.Discovery

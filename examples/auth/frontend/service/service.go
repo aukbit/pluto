@@ -24,7 +24,7 @@ func Run() error {
 	mux.POST("/authenticate", frontend.PostHandler)
 
 	// define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name("api"),
 		server.Addr(*httpPort),
 		server.Mux(mux),
