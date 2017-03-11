@@ -5,20 +5,21 @@ This is an example of how to use pluto over HTTPS/TLS
 ## Run Tests
 ```
 $ go test -v ./examples/https
-{"level":"info","ts":1488918079.8000302,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/service.go:114","msg":"start","type":"service","id":"plt_YL55RH","name":"web_pluto","ip4":"192.168.0.4","server
-s":2,"clients":0}
-{"level":"info","ts":1488918079.800154,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/server/default_server.go:137","msg":"start","type":"server","id":"srv_JIQTEM","name":"web_pluto_health_server","
-format":"http","port":":9090","parent":"plt_YL55RH"}
-{"level":"info","ts":1488918079.8001587,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/server/default_server.go:137","msg":"start","type":"server","id":"srv_8UP3SK","name":"api_server","format":"htt
-ps","port":":8443","parent":"plt_YL55RH"}
+2017-03-11T00:31:23.945Z	INFO	/github.com/aukbit/pluto/service.go:155	start	{"id": "plt_0GKPUI", "name": "web_pluto", "ip4": "192.168.0.4", "servers": 2, "clients": 0}
+2017-03-11T00:31:23.947Z	DEBUG	/github.com/aukbit/pluto/service.go:263	pulse	{"id": "plt_0GKPUI", "name": "web_pluto"}
+2017-03-11T00:31:23.947Z	INFO	/github.com/aukbit/pluto/server/server.go:165	start	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
+2017-03-11T00:31:23.947Z	INFO	/github.com/aukbit/pluto/server/server.go:165	start	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T00:31:23.947Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T00:31:23.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
 === RUN   TestExampleHTTPS
-{"level":"info","ts":1488918080.84765,"caller":"/Users/paulo/Development/go/src/github.com/aukbit/pluto/server/http_middleware.go:25","msg":"request","type":"server","id":"srv_8UP3SK","name":"api_server","format":"htt
-ps","port":":8443","parent":"plt_YL55RH","event":"evt_GM4JQE7H2DEM","method":"GET","url":"/"}
---- PASS: TestExampleHTTPS (0.05s)
+2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
+2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/service.go:263	pulse	{"id": "plt_0GKPUI", "name": "web_pluto"}
+2017-03-11T00:31:25.001Z	INFO	/github.com/aukbit/pluto/server/http_middleware.go:25	request	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443", "event": "evt_Z4UZB0GTJCJR", "method": "GET", "url": "/"}
+--- PASS: TestExampleHTTPS (0.06s)
 PASS
-ok      github.com/aukbit/pluto/examples/https/web      1.065s
+ok  	github.com/aukbit/pluto/examples/https	1.079s
 ```
-
 
 ## Generate private key  
 [reference](https://gist.github.com/denji/12b3a568f092ab951456)
