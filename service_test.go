@@ -74,8 +74,8 @@ func TestMain(m *testing.M) {
 		}),
 	)
 	// Create db client
-	// db := datastore.NewDatastore(datastore.TargetName("cassandra"))
-	db := datastore.NewDatastore(
+	// db := datastore.New(datastore.TargetName("cassandra"))
+	db := datastore.New(
 		datastore.Name(serviceName),
 		datastore.Target("localhost"),
 	)

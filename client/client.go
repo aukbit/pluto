@@ -19,17 +19,6 @@ const (
 	defaultVersion = "v1.0.0"
 )
 
-// // Client is an interface to make calls to services
-// type Client interface {
-// 	Dial(...ConfigFn) error
-// 	Request() balancer.Connector
-// 	Done(balancer.Connector)
-// 	Call() interface{}
-// 	Close()
-// 	Config() *Config
-// 	Health() *healthpb.HealthCheckResponse
-// }
-
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type Client struct {
@@ -41,6 +30,7 @@ type Client struct {
 	logger     *zap.Logger           // client logger
 }
 
+// New create a new client
 func New(opts ...Option) *Client {
 	return newClient(opts...)
 }
@@ -110,7 +100,9 @@ func (c *Client) startBalancer() {
 func (c *Client) Dial(opts ...Option) error {
 	// set last configs
 	if len(opts) > 0 {
-		c = c.WithOptions(opts...)
+		for _, opt := range opts {
+			opt.apply(c)
+		}
 	}
 	// register at service discovery
 	if err := c.register(); err != nil {

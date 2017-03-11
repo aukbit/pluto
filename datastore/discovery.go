@@ -8,7 +8,7 @@ import (
 )
 
 // target get target IP:Port from service discovery system
-func (ds *datastore) target() error {
+func (ds *Datastore) target() error {
 	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
 		targets, err := ds.cfg.Discovery.Service(ds.cfg.TargetName)
 		if err != nil {
@@ -20,7 +20,7 @@ func (ds *datastore) target() error {
 }
 
 // register datastore client within the service discovery system
-func (ds *datastore) register() error {
+func (ds *Datastore) register() error {
 	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
 		// define service
 		dse := discovery.Service{
@@ -45,7 +45,7 @@ func (ds *datastore) register() error {
 }
 
 // unregister datastore client from the service discovery system
-func (ds *datastore) unregister() error {
+func (ds *Datastore) unregister() error {
 	if _, ok := ds.cfg.Discovery.(discovery.Discovery); ok {
 		if err := ds.cfg.Discovery.Unregister(); err != nil {
 			return err

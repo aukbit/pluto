@@ -57,7 +57,7 @@ func Clients(clt *client.Client) Option {
 }
 
 // Datastore to persist data
-func Datastore(d datastore.Datastore) Option {
+func Datastore(d *datastore.Datastore) Option {
 	return optionFunc(func(s *Service) {
 		s.cfg.Datastore = d
 	})

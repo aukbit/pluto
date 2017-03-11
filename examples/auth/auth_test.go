@@ -46,11 +46,11 @@ func TestMain(m *testing.M) {
 	if !testing.Short() {
 		wg.Add(4)
 		go MockUserBackend()
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 500)
 		go MockUserFrontend()
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 500)
 		go RunAuthBackend()
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 500)
 		go RunAuthFrontend()
 		time.Sleep(time.Millisecond * 1000)
 	}

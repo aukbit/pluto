@@ -181,8 +181,11 @@ func (s *Service) hookAfterStart() {
 
 func (s *Service) connectDB() {
 	// connect datastore
-	if _, ok := s.cfg.Datastore.(datastore.Datastore); ok {
-		s.cfg.Datastore.Connect(datastore.Discovery(s.Config().Discovery))
+	if s.cfg.Datastore != nil {
+		s.cfg.Datastore.Connect(
+			datastore.Discovery(s.Config().Discovery),
+			datastore.Logger(s.logger),
+		)
 		if err := s.cfg.Datastore.RefreshSession(); err != nil {
 			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
 		}

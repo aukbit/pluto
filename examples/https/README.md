@@ -5,20 +5,20 @@ This is an example of how to use pluto over HTTPS/TLS
 ## Run Tests
 ```
 $ go test -v ./examples/https
-2017-03-11T00:31:23.945Z	INFO	/github.com/aukbit/pluto/service.go:155	start	{"id": "plt_0GKPUI", "name": "web_pluto", "ip4": "192.168.0.4", "servers": 2, "clients": 0}
-2017-03-11T00:31:23.947Z	DEBUG	/github.com/aukbit/pluto/service.go:263	pulse	{"id": "plt_0GKPUI", "name": "web_pluto"}
-2017-03-11T00:31:23.947Z	INFO	/github.com/aukbit/pluto/server/server.go:165	start	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
-2017-03-11T00:31:23.947Z	INFO	/github.com/aukbit/pluto/server/server.go:165	start	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
-2017-03-11T00:31:23.947Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
-2017-03-11T00:31:23.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
+2017-03-11T01:54:01.382Z	INFO	/github.com/aukbit/pluto/service.go:155	start	{"id": "plt_F4VDA9", "name": "web_pluto", "ip4": "192.168.0.4", "servers": 2, "clients": 0}
+2017-03-11T01:54:01.382Z	INFO	/github.com/aukbit/pluto/server/server.go:167	start	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_P51CFA", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T01:54:01.382Z	INFO	/github.com/aukbit/pluto/server/server.go:167	start	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_SY2DZ4", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
+2017-03-11T01:54:01.382Z	DEBUG	/github.com/aukbit/pluto/service.go:266	pulse	{"id": "plt_F4VDA9", "name": "web_pluto"}
+2017-03-11T01:54:01.383Z	DEBUG	/github.com/aukbit/pluto/server/server.go:288	pulse	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_P51CFA", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T01:54:01.383Z	DEBUG	/github.com/aukbit/pluto/server/server.go:288	pulse	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_SY2DZ4", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
 === RUN   TestExampleHTTPS
-2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_5KYVUT", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
-2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/server/server.go:286	pulse	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443"}
-2017-03-11T00:31:24.948Z	DEBUG	/github.com/aukbit/pluto/service.go:263	pulse	{"id": "plt_0GKPUI", "name": "web_pluto"}
-2017-03-11T00:31:25.001Z	INFO	/github.com/aukbit/pluto/server/http_middleware.go:25	request	{"id": "plt_0GKPUI", "name": "web_pluto", "id": "srv_PZD84V", "name": "api_server", "format": "https", "port": ":8443", "event": "evt_Z4UZB0GTJCJR", "method": "GET", "url": "/"}
---- PASS: TestExampleHTTPS (0.06s)
+2017-03-11T01:54:02.382Z	DEBUG	/github.com/aukbit/pluto/service.go:266	pulse	{"id": "plt_F4VDA9", "name": "web_pluto"}
+2017-03-11T01:54:02.383Z	DEBUG	/github.com/aukbit/pluto/server/server.go:288	pulse	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_P51CFA", "name": "api_server", "format": "https", "port": ":8443"}
+2017-03-11T01:54:02.383Z	DEBUG	/github.com/aukbit/pluto/server/server.go:288	pulse	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_SY2DZ4", "name": "web_pluto_health_server", "format": "http", "port": ":9098"}
+2017-03-11T01:54:02.433Z	INFO	/github.com/aukbit/pluto/server/http_middleware.go:25	request	{"id": "plt_F4VDA9", "name": "web_pluto", "id": "srv_P51CFA", "name": "api_server", "format": "https", "port": ":8443", "event": "evt_R3FQGBKMAU8F", "method": "GET", "url": "/"}
+--- PASS: TestExampleHTTPS (0.05s)
 PASS
-ok  	github.com/aukbit/pluto/examples/https	1.079s
+ok  	github.com/aukbit/pluto/examples/https	1.068s
 ```
 
 ## Generate private key  

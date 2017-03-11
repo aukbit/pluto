@@ -10,11 +10,17 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+const (
+	// DefaultName prefix datastore client name
+	DefaultName    = "client_db"
+	defaultVersion = "v1.0.0"
+)
+
 var (
 	defaultCluster = "127.0.0.1"
 )
 
-type datastore struct {
+type Datastore struct {
 	cfg     *Config
 	cluster *gocql.ClusterConfig
 	session *gocql.Session
@@ -22,20 +28,46 @@ type datastore struct {
 	health  *health.Server
 }
 
+// New creates a default datatore
+func New(opts ...Option) *Datastore {
+	return newDatastore(opts...)
+}
+
 // NewServer will instantiate a new Server with the given config
-func newDatastore(cfgs ...ConfigFunc) *datastore {
-	c := newConfig(cfgs...)
-	d := &datastore{cfg: c,
+func newDatastore(opts ...Option) *Datastore {
+	d := &Datastore{
+		cfg:    newConfig(),
 		health: health.NewServer(),
 	}
-	d.logger, _ = zap.NewProduction()
+	// d.logger, _ = zap.NewProduction()
+	if len(opts) > 0 {
+		d = d.WithOptions(opts...)
+	}
 	return d
 }
 
-func (ds *datastore) Connect(cfgs ...ConfigFunc) error {
+// WithOptions clones the current Client, applies the supplied Options, and
+// returns the resulting Client. It's safe to use concurrently.
+func (ds *Datastore) WithOptions(opts ...Option) *Datastore {
+	c := ds.clone()
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+	return c
+}
+
+// clone creates a shallow copy client
+func (ds *Datastore) clone() *Datastore {
+	copy := *ds
+	return &copy
+}
+
+func (ds *Datastore) Connect(opts ...Option) error {
 	// set last configs
-	for _, c := range cfgs {
-		c(ds.cfg)
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			opt.apply(ds)
+		}
 	}
 	// register at service discovery
 	if err := ds.register(); err != nil {
@@ -56,7 +88,7 @@ func (ds *datastore) Connect(cfgs ...ConfigFunc) error {
 	return nil
 }
 
-func (ds *datastore) RefreshSession() error {
+func (ds *Datastore) RefreshSession() error {
 	ds.logger.Info("session")
 	s, err := ds.cluster.CreateSession()
 	if err != nil {
@@ -68,11 +100,11 @@ func (ds *datastore) RefreshSession() error {
 	return nil
 }
 
-func (ds *datastore) Config() *Config {
+func (ds *Datastore) Config() *Config {
 	return ds.cfg
 }
 
-func (ds *datastore) Close() {
+func (ds *Datastore) Close() {
 	ds.logger.Info("close")
 	// set health as not serving
 	ds.health.SetServingStatus(ds.cfg.ID, 2)
@@ -81,11 +113,11 @@ func (ds *datastore) Close() {
 	ds.session.Close()
 }
 
-func (ds *datastore) Session() *gocql.Session {
+func (ds *Datastore) Session() *gocql.Session {
 	return ds.session
 }
 
-func (ds *datastore) Health() *healthpb.HealthCheckResponse {
+func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
 	ds.RefreshSession()
 	hcr, err := ds.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
@@ -96,7 +128,7 @@ func (ds *datastore) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
-func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) error {
+func (ds *Datastore) createKeyspace(keyspace string, replicationFactor int) error {
 	q := "CREATE KEYSPACE ? WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : ? };"
 	if err := ds.session.Query(q, keyspace, replicationFactor).Exec(); err != nil {
 		return err
@@ -104,7 +136,7 @@ func (ds *datastore) createKeyspace(keyspace string, replicationFactor int) erro
 	return nil
 }
 
-func (ds *datastore) setLogger() {
+func (ds *Datastore) setLogger() {
 	ds.logger = ds.logger.With(
 		zap.String("type", "db"),
 		zap.String("id", ds.cfg.ID),

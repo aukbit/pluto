@@ -141,10 +141,8 @@ func TestExampleUser(t *testing.T) {
 			assert.Equal(t, test.BodyContains(user.Id), string(actualBody))
 		}
 	}
-}
 
-func TestExampleUserFilter(t *testing.T) {
-	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	// ExampleUserFilter
 	r, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -162,4 +160,30 @@ func TestExampleUserFilter(t *testing.T) {
 	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, response.StatusCode, response.StatusCode)
 	assert.Equal(t, true, len(actualBody) > 0)
+
 }
+
+// func TestExampleUserFilter(t *testing.T) {
+// 	defer func() {
+// 		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+// 		time.Sleep(time.Millisecond * 2000)
+// 	}
+//
+// 	r, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	// call handler
+// 	response, err := http.DefaultClient.Do(r)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	actualBody, err := ioutil.ReadAll(response.Body)
+// 	defer response.Body.Close()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
+// 	assert.Equal(t, response.StatusCode, response.StatusCode)
+// 	assert.Equal(t, true, len(actualBody) > 0)
+// }
