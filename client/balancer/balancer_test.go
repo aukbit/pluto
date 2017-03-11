@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/paulormart/assert"
 
 	"github.com/aukbit/pluto/server"
@@ -34,17 +36,20 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
-	var servers []server.Server
+	var servers []*server.Server
 
 	if !testing.Short() {
 		for i := 0; i < numServers; i++ {
 			p := PORT + i
-			s := server.NewServer(
+			logger, _ := zap.NewDevelopment()
+			s := server.New(
 				server.Name(fmt.Sprintf("test_gopher_%d", p)),
 				server.Addr(fmt.Sprintf(":%d", p)),
 				server.GRPCRegister(func(g *grpc.Server) {
 					pb.RegisterGreeterServer(g, &greeter{})
-				}))
+				}),
+				server.Logger(logger),
+			)
 			go func() {
 				if err := s.Run(); err != nil {
 					log.Fatal(err)
@@ -62,14 +67,15 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
-func InitConnectors() (cons []*connector) {
+func InitConnectors() (cons []*Connector) {
 	for i := 0; i < numServers; i++ {
 		p := PORT + i
 		c := newConnector(
 			Target(fmt.Sprintf("localhost:%d", p)),
 			GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 				return pb.NewGreeterClient(cc)
-			}))
+			}),
+		)
 		c.Init()
 		cons = append(cons, c)
 	}
@@ -77,7 +83,7 @@ func InitConnectors() (cons []*connector) {
 }
 
 func InitBalancer(inCh <-chan Request) *Balancer {
-	b := NewBalancer()
+	b := New()
 	go b.Balance(inCh)
 	return b
 }
@@ -94,7 +100,7 @@ func TestBalancer(t *testing.T) {
 	}
 	t.Logf("Balancer %v", b)
 
-	connsCh := make(chan *connector)
+	connsCh := make(chan *Connector)
 	// fake some requests
 	wg.Add(numRequests)
 	for i := 0; i < numRequests; i++ {

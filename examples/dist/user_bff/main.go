@@ -39,13 +39,13 @@ func service() error {
 	mux.DELETE("/user/:id", views.DeleteHandler)
 
 	// Define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name(*name),
 		server.Addr(*httpPort),
 		server.Mux(mux))
 
 	// Define grpc Client
-	clt := client.NewClient(
+	clt := client.New(
 		client.Name(*name),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)

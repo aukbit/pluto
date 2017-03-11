@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/server"
 	pb "github.com/aukbit/pluto/test/proto"
@@ -23,13 +25,16 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
+	logger, _ := zap.NewDevelopment()
 	// Create pluto server
-	s := server.NewServer(
+	s := server.New(
 		server.Name("client_test_gopher"),
 		server.Addr(":65061"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
-		}))
+		}),
+		server.Logger(logger),
+	)
 
 	if !testing.Short() {
 		// Run Server
@@ -51,8 +56,10 @@ func TestMain(m *testing.M) {
 
 func TestClient(t *testing.T) {
 
+	logger, _ := zap.NewDevelopment()
 	// Create a grpc client
-	c := client.NewClient(
+	c := client.New(
+		client.Logger(logger),
 		client.Name("client_test_gopher"),
 		client.Description("gopher super client"),
 		client.Targets("localhost:65061"),
@@ -94,7 +101,9 @@ func TestClient(t *testing.T) {
 }
 
 func TestHealth(t *testing.T) {
-	c := client.NewClient(
+	logger, _ := zap.NewDevelopment()
+	c := client.New(
+		client.Logger(logger),
 		client.Targets("localhost:65061"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)

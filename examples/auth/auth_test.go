@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
@@ -130,17 +132,19 @@ func RunAuthFrontend() {
 func MockUserBackend() {
 	defer wg.Done()
 	// Define Pluto Server
-	grpcSrv := server.NewServer(
+	grpcSrv := server.New(
 		server.Addr(":65080"),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pbu.RegisterUserServiceServer(g, &MockUser{})
 		}),
 	)
+	// logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("MockUserBackend"),
 		pluto.Servers(grpcSrv),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9094"),
 	)
 	// Run service
@@ -155,7 +159,7 @@ func MockUserFrontend() {
 	mux := router.NewMux()
 	mux.POST("/user", PostHandler)
 	// define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name("user_api"),
 		server.Addr(":8088"),
 		server.Mux(mux),
@@ -163,12 +167,14 @@ func MockUserFrontend() {
 	)
 	// define authentication client
 	clt := auth.NewClientAuth("127.0.0.1:65081")
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("MockUserFrontend"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9095"),
 	)
 	// Run service

@@ -12,7 +12,7 @@ import (
 
 // loggerMiddleware Middleware that adds logger instance
 // available in handlers context and logs request
-func loggerMiddleware(srv *defaultServer) router.Middleware {
+func loggerMiddleware(srv *Server) router.Middleware {
 	return func(h router.Handler) router.Handler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get or create unique event id for every request

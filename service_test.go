@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/paulormart/assert"
 
 	context "golang.org/x/net/context"
@@ -47,14 +49,14 @@ func TestMain(m *testing.M) {
 	mux := router.NewMux()
 	mux.GET("/", Index)
 	// Create pluto server
-	srvHTTP := server.NewServer(
+	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
 		server.Description("gopher super server"),
 		server.Addr(":8080"),
 		server.Mux(mux),
 	)
 	// Create grpc pluto server
-	srvGRPC := server.NewServer(
+	srvGRPC := server.New(
 		server.Name(serviceName+"_grpc"),
 		server.Description("grpc super server"),
 		server.Addr(":65060"),
@@ -63,7 +65,7 @@ func TestMain(m *testing.M) {
 		}),
 	)
 	// Create grpc pluto client
-	cltGRPC := client.NewClient(
+	cltGRPC := client.New(
 		client.Name(serviceName),
 		client.Targets("localhost:65060"),
 		// client.TargetName("grpc"),
@@ -86,9 +88,10 @@ func TestMain(m *testing.M) {
 	fn2 := func(ctx context.Context) {
 		log.Print("second run after service starts")
 	}
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := New(
-		Development(),
 		Name(serviceName),
 		Servers(srvHTTP),
 		Servers(srvGRPC),
@@ -97,6 +100,7 @@ func TestMain(m *testing.M) {
 		Datastore(db),
 		HealthAddr(":9091"),
 		// Discovery(d),
+		Logger(logger),
 	)
 
 	if !testing.Short() {

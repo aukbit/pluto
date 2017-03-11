@@ -29,7 +29,7 @@ func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc
 	return uh
 }
 
-func loggerUnaryServerInterceptor(srv *defaultServer) grpc.UnaryServerInterceptor {
+func loggerUnaryServerInterceptor(srv *Server) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// get or create unique event id for every request
 		e, ctx := common.GetOrCreateEventID(ctx)

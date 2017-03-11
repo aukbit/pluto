@@ -73,7 +73,10 @@ func (s *Service) clone() *Service {
 // Run starts service
 func (s *Service) Run() error {
 	// set logger
-	s.setLogger()
+	s.logger = s.logger.With(
+		zap.String("id", s.cfg.ID),
+		zap.String("name", s.cfg.Name),
+	)
 	// set health server
 	s.setHealthServer()
 	// register at service discovery
@@ -104,7 +107,7 @@ func (s *Service) Config() Config {
 }
 
 // Server returns a server instance by name if initialized in service
-func (s *Service) Server(name string) (srv server.Server, ok bool) {
+func (s *Service) Server(name string) (srv *server.Server, ok bool) {
 	name = common.SafeName(name, server.DefaultName)
 	if srv, ok = s.cfg.Servers[name]; !ok {
 		return
@@ -113,7 +116,7 @@ func (s *Service) Server(name string) (srv server.Server, ok bool) {
 }
 
 // Client returns a client instance by name if initialized in service
-func (s *Service) Client(name string) (clt client.Client, ok bool) {
+func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
@@ -136,19 +139,13 @@ func (s *Service) setHealthServer() {
 	mux := router.NewMux()
 	mux.GET("/_health/:module/:name", healthHandler)
 	// Define server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name(s.cfg.Name+"_health"),
 		server.Addr(s.cfg.HealthAddr),
 		server.Mux(mux),
+		server.Logger(s.logger),
 	)
 	s.cfg.Servers[srv.Config().Name] = srv
-}
-
-func (s *Service) setLogger() {
-	s.logger = s.logger.With(
-		zap.String("type", "service"),
-		zap.String("id", s.cfg.ID),
-		zap.String("name", s.cfg.Name))
 }
 
 func (s *Service) start() error {
@@ -196,14 +193,15 @@ func (s *Service) startServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(srv server.Server) {
+		go func(srv *server.Server) {
 			defer s.wg.Done()
 			for {
 				err := srv.Run(
-					server.ParentID(s.cfg.ID),
 					server.Middlewares(serviceContextMiddleware(s)),
 					server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
-					server.Discovery(s.Config().Discovery))
+					server.Discovery(s.Config().Discovery),
+					server.Logger(s.logger),
+				)
 				if err == nil {
 					return
 				}
@@ -219,11 +217,11 @@ func (s *Service) startClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(clt client.Client) {
+		go func(clt *client.Client) {
 			defer s.wg.Done()
 			for {
 				err := clt.Dial(
-					client.ParentID(s.cfg.ID),
+					client.Logger(s.logger),
 					client.Discovery(s.Config().Discovery))
 				if err == nil {
 					return
@@ -273,7 +271,7 @@ func (s *Service) closeClients() {
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(clt client.Client) {
+		go func(clt *client.Client) {
 			defer s.wg.Done()
 			clt.Close()
 		}(clt)
@@ -284,7 +282,7 @@ func (s *Service) stopServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(srv server.Server) {
+		go func(srv *server.Server) {
 			defer s.wg.Done()
 			srv.Stop()
 		}(srv)

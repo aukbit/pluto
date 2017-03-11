@@ -16,8 +16,8 @@ type Config struct {
 	Name        string
 	Description string
 	Version     string
-	Servers     map[string]server.Server
-	Clients     map[string]client.Client
+	Servers     map[string]*server.Server
+	Clients     map[string]*client.Client
 	Datastore   datastore.Datastore
 	Discovery   discovery.Discovery
 	Hooks       map[string][]HookFunc
@@ -32,8 +32,8 @@ func newConfig() Config {
 		ID:         common.RandID("plt_", 6),
 		Name:       defaultName,
 		Version:    defaultVersion,
-		Servers:    make(map[string]server.Server),
-		Clients:    make(map[string]client.Client),
+		Servers:    make(map[string]*server.Server),
+		Clients:    make(map[string]*client.Client),
 		Hooks:      make(map[string][]HookFunc),
 		HealthAddr: defaultHealthAddr,
 	}

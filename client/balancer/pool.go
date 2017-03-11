@@ -4,7 +4,7 @@ import "container/heap"
 
 // Pool implements heap.Interface and holds Workers.
 // https://golang.org/pkg/container/heap/
-type Pool []*connector
+type Pool []*Connector
 
 func newPool() Pool {
 	p := Pool{}
@@ -25,7 +25,7 @@ func (p Pool) Swap(i, j int) {
 func (p *Pool) Push(item interface{}) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*p = append(*p, item.(*connector))
+	*p = append(*p, item.(*Connector))
 }
 
 // Pop ...

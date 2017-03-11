@@ -3,6 +3,8 @@ package frontend
 import (
 	"flag"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/examples/user/frontend/views"
@@ -27,27 +29,29 @@ func Run() error {
 	mux.DELETE("/user/:id", frontend.DeleteHandler)
 
 	// define http server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name("api"),
 		server.Addr(*http_port),
 		server.Mux(mux),
 	)
 
 	// Define grpc Client
-	clt := client.NewClient(
+	clt := client.New(
 		client.Name("user"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
 		client.Target(*target),
 	)
+	// Logger
+	logger, _ := zap.NewDevelopment()
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("frontend"),
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Development(),
+		pluto.Logger(logger),
 		pluto.HealthAddr(":9097"),
 	)
 

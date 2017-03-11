@@ -30,7 +30,7 @@ func main() {
 func service() error {
 
 	// Define Pluto Server
-	srv := server.NewServer(
+	srv := server.New(
 		server.Name(*name),
 		server.Addr(*grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {

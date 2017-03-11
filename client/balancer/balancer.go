@@ -9,22 +9,22 @@ type Balancer struct {
 	connsCh ConnsCh
 }
 
-// NewBalancer starts a balancer with an empty pool
-func NewBalancer() *Balancer {
+// New starts a balancer with an empty pool
+func New() *Balancer {
 	return &Balancer{
 		pool:    newPool(),
-		connsCh: make(chan *connector)}
+		connsCh: make(chan *Connector)}
 }
 
 // Push pushes the connector onto the heap
-func (b *Balancer) Push(c *connector) {
+func (b *Balancer) Push(c *Connector) {
 	heap.Push(&b.pool, c)
 }
 
 // Pop removes the minimum element (according to Less)
 // from the heap and returns it
-func (b *Balancer) Pop() *connector {
-	return heap.Pop(&b.pool).(*connector)
+func (b *Balancer) Pop() *Connector {
+	return heap.Pop(&b.pool).(*Connector)
 }
 
 // Pool returns balancer pool
@@ -33,7 +33,7 @@ func (b *Balancer) Pool() Pool {
 }
 
 // Done send connector over connsCh channel
-func (b *Balancer) Done(conn *connector) {
+func (b *Balancer) Done(conn *Connector) {
 	// send conn over balancer connsCh
 	b.connsCh <- conn
 }
@@ -52,7 +52,7 @@ func (b *Balancer) Balance(ch <-chan Request) {
 
 func (b *Balancer) dispatch(req Request) {
 	// get the least loaded connector..
-	c := heap.Pop(&b.pool).(*connector)
+	c := heap.Pop(&b.pool).(*Connector)
 	// send it the call
 	c.requestsCh <- req
 	// one more in its work queue
@@ -61,7 +61,7 @@ func (b *Balancer) dispatch(req Request) {
 	heap.Push(&b.pool, c)
 }
 
-func (b *Balancer) completed(c *connector) {
+func (b *Balancer) completed(c *Connector) {
 	// remove one from the queue
 	c.pending--
 	// remove it from the heap
