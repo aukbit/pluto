@@ -31,7 +31,7 @@ Articles
 
 ### Pluto - Hello World
 
-```
+```go
 package main
 
 import (
@@ -69,7 +69,7 @@ func main() {
 
 ```
 
-```
+```sh
 go run ./examples/hello/main.go
 {"level":"info","ts":1489193908.1746852,"caller":"/github.com/aukbit/pluto/service.go:155","msg":"start","id":"plt_5QPRA9","name":"pluto","ip4":"192.168.0.4","servers":2,"clients":0}
 {"level":"info","ts":1489193908.1748319,"caller":"/github.com/aukbit/pluto/server/server.go:165","msg":"start","id":"plt_5QPRA9","name":"pluto","id":"srv_R3E4TJ","name":"server","format":"http","port":":8080"}
