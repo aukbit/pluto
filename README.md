@@ -2,11 +2,20 @@
 
 # Pluto [![Circle CI](https://circleci.com/gh/aukbit/pluto.svg?style=svg)](https://circleci.com/gh/aukbit/pluto)
 An implementation of microservices with golang to tackle some of the challenges in distributed systems.
+### Features
+- Currently supports a multiplexer HTTP router with dynamic paths and still compatible with the standard net/http library.
+- Client/Server implementation with [gRPC](http://www.grpc.io/) for communication between services.
+- Clients support service discover via [Consul](https://www.consul.io/).
+- Clients use a load balancer heap according to the less used service to dispatch requests.
+- Datastore package currently supports [Cassandra](http://cassandra.apache.org/) by using [gocql](https://github.com/gocql/gocql).
+- Structured Logs by using [zap](https://github.com/uber-go/zap).
+
 
 ### Inspiration
 Projects that had influence in Pluto design and helped to solve technical barriers.
 - [go-kit](https://github.com/go-kit/kit)
 - [go-micro](https://github.com/myodc/go-micro)
+- [gorilla](https://github.com/gorilla/mux)
 
 Books
 - [Building Microservices](http://shop.oreilly.com/product/0636920033158.do)
