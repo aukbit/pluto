@@ -20,7 +20,7 @@ func Run() error {
 	flag.Parse()
 
 	// Define handlers
-	mux := router.NewMux()
+	mux := router.New()
 	mux.POST("/authenticate", frontend.PostHandler)
 
 	// define http server

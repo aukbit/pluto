@@ -21,12 +21,12 @@ func Run() error {
 	flag.Parse()
 
 	// Define handlers
-	mux := router.NewMux()
-	mux.GET("/user", frontend.GetHandler)
-	mux.POST("/user", frontend.PostHandler)
-	mux.GET("/user/:id", frontend.GetHandlerDetail)
-	mux.PUT("/user/:id", frontend.PutHandler)
-	mux.DELETE("/user/:id", frontend.DeleteHandler)
+	mux := router.New()
+	mux.Handle("GET", "/user", router.WrapErr(frontend.GetHandler))
+	mux.Handle("POST", "/user", router.WrapErr(frontend.PostHandler))
+	mux.Handle("GET", "/user/:id", router.WrapErr(frontend.GetHandlerDetail))
+	mux.Handle("PUT", "/user/:id", router.WrapErr(frontend.PutHandler))
+	mux.Handle("DELETE", "/user/:id", router.WrapErr(frontend.DeleteHandler))
 
 	// define http server
 	srv := server.New(

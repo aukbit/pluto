@@ -52,7 +52,7 @@ func Addr(a string) Option {
 }
 
 // Mux server multiplexer
-func Mux(m router.Mux) Option {
+func Mux(m *router.Router) Option {
 	return optionFunc(func(s *Server) {
 		s.cfg.Mux = m
 	})

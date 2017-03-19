@@ -13,7 +13,7 @@ import (
 // loggerMiddleware Middleware that adds logger instance
 // available in handlers context and logs request
 func loggerMiddleware(srv *Server) router.Middleware {
-	return func(h router.Handler) router.Handler {
+	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get or create unique event id for every request
 			e, ctx := common.GetOrCreateEventID(r.Context())
@@ -33,7 +33,7 @@ func loggerMiddleware(srv *Server) router.Middleware {
 // strictSecurityHeaderMiddleware Middleware that adds
 // Strict-Transport-Security header
 func strictSecurityHeaderMiddleware() router.Middleware {
-	return func(h router.Handler) router.Handler {
+	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 			h.ServeHTTP(w, r)

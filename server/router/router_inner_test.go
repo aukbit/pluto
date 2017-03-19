@@ -136,7 +136,7 @@ func TestFindData(t *testing.T) {
 				value:   "/home",
 				prefix:  "",
 				vars:    []string{},
-				methods: map[string]Handler{"GET": DefaultRootHandler},
+				methods: map[string]HandlerFunc{"GET": DefaultRootHandler},
 			},
 			Values: []string{},
 		},

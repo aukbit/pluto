@@ -22,7 +22,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serverMiddleware(srv *Server) router.Middleware {
-	return func(h router.Handler) router.Handler {
+	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, "server", srv)

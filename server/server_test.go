@@ -44,7 +44,7 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 
 func TestMain(m *testing.M) {
 	// Define Router
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/home", Home)
 	mux.GET("/home/:id", Detail)
 

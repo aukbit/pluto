@@ -25,7 +25,7 @@ func main() {
 func run() error {
 
 	// Set server handlers
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/", GetHandler)
 
 	// Create new http server

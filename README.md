@@ -46,7 +46,7 @@ import (
 
 func main() {
 	// Define router
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/", func(w http.ResponseWriter, r *http.Request) {
 		reply.Json(w, r, http.StatusOK, "Hello World")
 	})
