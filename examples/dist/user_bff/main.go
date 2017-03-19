@@ -31,7 +31,7 @@ func main() {
 func service() error {
 
 	// Define handlers
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/user", views.GetHandler)
 	mux.POST("/user", views.PostHandler)
 	mux.GET("/user/:id", views.GetHandlerDetail)

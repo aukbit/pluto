@@ -3,17 +3,14 @@ package router_test
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/paulormart/assert"
-
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/paulormart/assert"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -27,17 +24,12 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, "Hello World")
 }
 func PostHandler(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	var v interface{}
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	data := make(map[string]string)
-	if err := json.Unmarshal(body, &data); err != nil {
-		log.Println(err.Error())
-	}
-
-	reply.Json(w, r, http.StatusCreated, data)
+	defer r.Body.Close()
+	reply.Json(w, r, http.StatusCreated, v)
 }
 func GetDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -72,106 +64,105 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 func TestRouter(t *testing.T) {
 	router := router.NewRouter()
-	router.Handle("GET", "/", IndexHandler)
-	router.Handle("GET", "/home", GetHandler)
-	router.Handle("GET", "/home/home", GetHandler)
-	router.Handle("GET", "/home/home/home", GetHandler)
-	router.Handle("POST", "/home", PostHandler)
-	router.Handle("GET", "/home/:id", GetDetailHandler)
-	router.Handle("PUT", "/home/:id", PutDetailHandler)
-	router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
-	router.Handle("GET", "/home/:id/room", GetRoomHandler)
-	router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+	router.HandleFunc("GET", "/", IndexHandler)
+	router.HandleFunc("GET", "/home", GetHandler)
+	router.HandleFunc("GET", "/home/home", GetHandler)
+	router.HandleFunc("GET", "/home/home/home", GetHandler)
+	router.HandleFunc("POST", "/home", PostHandler)
+	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
+	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
+	router.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
+	router.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
+	router.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
 
 	var tests = []struct {
 		Method       string
 		Path         string
 		Body         io.Reader
-		BodyContains string
+		BodyContains interface{}
 		Status       int
 	}{
 		{
 			Method:       "GET",
 			Path:         "/",
-			BodyContains: `"Hello World"`,
+			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home",
-			BodyContains: `"Hello World"`,
+			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/home",
-			BodyContains: `"Hello World"`,
+			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/home/home",
-			BodyContains: `"Hello World"`,
+			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "POST",
 			Path:         "/home",
 			Body:         strings.NewReader(`{"name":"Gopher house"}`),
-			BodyContains: `{"name":"Gopher house"}`,
+			BodyContains: map[string]string{"name": "Gopher house"},
 			Status:       http.StatusCreated,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/123",
-			BodyContains: `{"id":"123","message":"Hello World"}`,
+			BodyContains: map[string]string{"id": "123", "message": "Hello World"},
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "PUT",
 			Path:         "/home/123",
 			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-			BodyContains: `{"id":"123","message":"Hello World"}`,
+			BodyContains: map[string]string{"id": "123", "message": "Hello World"},
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "DELETE",
 			Path:         "/home/123",
-			BodyContains: `{"id":"123","message":"deleted"}`,
+			BodyContains: map[string]string{"id": "123", "message": "deleted"},
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/456/room",
-			BodyContains: `{"id":"456","message":"Hello World"}`,
+			BodyContains: map[string]string{"id": "456", "message": "Hello World"},
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/456/room/999",
-			BodyContains: `{"category":"999","id":"456","message":"Hello World"}`,
+			BodyContains: map[string]string{"id": "456", "category": "999", "message": "Hello World"},
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/home/",
-			BodyContains: `"Hello World"`,
+			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
 		{
 			Method:       "GET",
 			Path:         "/abc",
-			BodyContains: `"404 page not found"`,
+			BodyContains: "404 page not found",
 			Status:       http.StatusNotFound,
 		},
 		{
 			Method:       "GET",
 			Path:         "/somethingelse/123/w444/f444",
-			BodyContains: `"404 page not found"`,
+			BodyContains: "404 page not found",
 			Status:       http.StatusNotFound,
 		},
 	}
-
 	server := httptest.NewServer(router)
 	defer server.Close()
 	for _, test := range tests {
@@ -180,35 +171,43 @@ func TestRouter(t *testing.T) {
 			t.Fatal(err)
 		}
 		// call handler
-		response, err := http.DefaultClient.Do(r)
+		resp, err := http.DefaultClient.Do(r)
 		if err != nil {
 			t.Fatal(err)
 		}
-		actualBody, err := ioutil.ReadAll(response.Body)
-		if err != nil {
+		defer resp.Body.Close()
+		var v interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-		assert.Equal(t, test.Status, response.StatusCode)
-		assert.Equal(t, test.BodyContains, string(actualBody))
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+		assert.Equal(t, test.Status, resp.StatusCode)
+		switch v.(type) {
+		case string:
+			assert.Equal(t, test.BodyContains, v)
+		case map[string]interface{}:
+			assert.Equal(t, test.BodyContains.(map[string]string)["name"], v.(map[string]interface{})["name"])
+			assert.Equal(t, test.BodyContains.(map[string]string)["id"], v.(map[string]interface{})["id"])
+			assert.Equal(t, test.BodyContains.(map[string]string)["category"], v.(map[string]interface{})["category"])
+			assert.Equal(t, test.BodyContains.(map[string]string)["message"], v.(map[string]interface{})["message"])
+		}
 	}
-
 }
 
 // GOMAXPROCS=1 go test ./server/router -bench=BenchmarkRouter -benchmem
 // BenchmarkRouter             1000           1945098 ns/op           21038 B/op        211 allocs/op
 func BenchmarkRouter(b *testing.B) {
 	router := router.NewRouter()
-	router.Handle("GET", "/", IndexHandler)
-	router.Handle("GET", "/home", GetHandler)
-	router.Handle("GET", "/home/home", GetHandler)
-	router.Handle("GET", "/home/home/home", GetHandler)
-	router.Handle("POST", "/home", PostHandler)
-	router.Handle("GET", "/home/:id", GetDetailHandler)
-	router.Handle("PUT", "/home/:id", PutDetailHandler)
-	router.Handle("DELETE", "/home/:id", DeleteDetailHandler)
-	router.Handle("GET", "/home/:id/room", GetRoomHandler)
-	router.Handle("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+	router.HandleFunc("GET", "/", IndexHandler)
+	router.HandleFunc("GET", "/home", GetHandler)
+	router.HandleFunc("GET", "/home/home", GetHandler)
+	router.HandleFunc("GET", "/home/home/home", GetHandler)
+	router.HandleFunc("POST", "/home", PostHandler)
+	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
+	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
+	router.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
+	router.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
+	router.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
 
 	server := httptest.NewServer(router)
 	defer server.Close()

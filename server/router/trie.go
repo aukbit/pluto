@@ -244,14 +244,14 @@ type data struct {
 	value   string
 	prefix  string
 	vars    []string
-	methods map[string]Handler
+	methods map[string]HandlerFunc
 }
 
 // newData returns a new data instance
 func newData() *data {
 	return &data{
 		vars:    []string{},
-		methods: make(map[string]Handler),
+		methods: make(map[string]HandlerFunc),
 	}
 }
 

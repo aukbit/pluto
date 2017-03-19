@@ -136,7 +136,7 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/_health/:module/:name", healthHandler)
 	// Define server
 	srv := server.New(

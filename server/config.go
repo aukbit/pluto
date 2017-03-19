@@ -20,7 +20,7 @@ type Config struct {
 	Version                 string
 	Addr                    string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format                  string
-	Mux                     router.Mux
+	Mux                     *router.Router
 	TLSConfig               *tls.Config // optional TLS config, used by ListenAndServeTLS
 	GRPCRegister            GRPCRegisterServiceFunc
 	Middlewares             []router.Middleware           // http middlewares

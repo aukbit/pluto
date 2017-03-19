@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -40,13 +39,13 @@ func TestExampleHTTPS(t *testing.T) {
 		Method       string
 		Path         func() string
 		Body         io.Reader
-		BodyContains func() string
+		BodyContains func() *Message
 		Status       int
 	}{
 		{
 			Method:       "GET",
 			Path:         func() string { return URL + "/" },
-			BodyContains: func() string { return `{"message":"Hello Gopher"}` },
+			BodyContains: func() *Message { return &Message{"Hello Gopher"} },
 			Status:       http.StatusOK,
 		},
 	}
@@ -60,25 +59,17 @@ func TestExampleHTTPS(t *testing.T) {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		client := &http.Client{Transport: tr}
-		response, err := client.Get(test.Path())
+		resp, err := client.Get(test.Path())
 		if err != nil {
 			t.Fatal(err)
 		}
-		actualBody, err := ioutil.ReadAll(response.Body)
-		defer response.Body.Close()
-		if err != nil {
+		defer resp.Body.Close()
+		if err = json.NewDecoder(resp.Body).Decode(&message); err != nil {
 			t.Fatal(err)
 		}
-		err = json.Unmarshal(actualBody, message)
-		if err != nil {
-			log.Fatalf("Unmarshal %v", err)
-		} else {
-			assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
-			assert.Equal(t, "max-age=63072000; includeSubDomains", response.Header.Get("Strict-Transport-Security"))
-			assert.Equal(t, test.Status, response.StatusCode)
-			assert.Equal(t, test.BodyContains(), string(actualBody))
-		}
-
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+		assert.Equal(t, "max-age=63072000; includeSubDomains", resp.Header.Get("Strict-Transport-Security"))
+		assert.Equal(t, test.Status, resp.StatusCode)
+		assert.Equal(t, test.BodyContains(), message)
 	}
-
 }

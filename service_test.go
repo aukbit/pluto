@@ -46,7 +46,7 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 func TestMain(m *testing.M) {
 
 	// Define router
-	mux := router.NewMux()
+	mux := router.New()
 	mux.GET("/", Index)
 	// Create pluto server
 	srvHTTP := server.New(

@@ -97,18 +97,18 @@ func TestExampleAuth(t *testing.T) {
 	// set Bearer authorization header
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.Jwt))
 	// call handler
-	response, err = http.DefaultClient.Do(r)
+	resp, err := http.DefaultClient.Do(r)
 	if err != nil {
 		t.Fatal(err)
 	}
-	actualBody, err = ioutil.ReadAll(response.Body)
-	defer response.Body.Close()
-	if err != nil {
+	defer resp.Body.Close()
+	var v interface{}
+	if err = json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-	assert.Equal(t, http.StatusCreated, response.StatusCode)
-	assert.Equal(t, `"ok"`, string(actualBody))
+	assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, "ok", v)
 }
 
 // Helper functions
@@ -156,7 +156,7 @@ func MockUserBackend() {
 func MockUserFrontend() {
 	defer wg.Done()
 	// Define handlers
-	mux := router.NewMux()
+	mux := router.New()
 	mux.POST("/user", PostHandler)
 	// define http server
 	srv := server.New(

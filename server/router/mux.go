@@ -4,16 +4,16 @@ import "net/http"
 
 // Mux interface to expose router struct
 type Mux interface {
-	GET(string, Handler)
-	POST(string, Handler)
-	PUT(string, Handler)
-	DELETE(string, Handler)
-	Handle(string, string, Handler)
+	GET(string, HandlerFunc)
+	POST(string, HandlerFunc)
+	PUT(string, HandlerFunc)
+	DELETE(string, HandlerFunc)
+	HandleFunc(string, string, HandlerFunc)
 	ServeHTTP(http.ResponseWriter, *http.Request)
 	WrapperMiddleware(...Middleware)
 }
 
-// NewMux creates a new router
-func NewMux() Mux {
+// New creates a new router
+func New() *Router {
 	return NewRouter()
 }

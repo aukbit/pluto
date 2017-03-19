@@ -14,7 +14,7 @@ import (
 // MiddlewareBearerAuth Middleware to validate all handlers with
 // Authorization: Bearer jwt
 func MiddlewareBearerAuth() router.Middleware {
-	return func(h router.Handler) router.Handler {
+	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// get jwt token from Authorization header
 			t, ok := jwt.BearerAuth(r)

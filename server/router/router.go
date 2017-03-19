@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"context"
 
 	"github.com/aukbit/pluto/reply"
@@ -16,11 +18,37 @@ import (
 //
 
 // Handler is a function type like "net/http" Handler
-type Handler func(http.ResponseWriter, *http.Request)
+type Handler interface {
+	ServeHTTP(http.ResponseWriter, *http.Request)
+}
 
-// ServeHTTP calls f(w, r).
-func (f Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	f(w, r)
+// HandlerFunc is a function type like "net/http" HandlerFunc
+type HandlerFunc func(http.ResponseWriter, *http.Request)
+
+// ServeHTTP calls f(w, r)
+func (fn HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fn(w, r)
+}
+
+// HandlerErr struct containing an error and helper fields
+type HandlerErr struct {
+	Error   error
+	Message string
+	Code    int
+}
+
+// WrapErr reduces the repetition of dealing with errors in Handlers
+// returning an error
+type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
+
+func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
+		log, ok := r.Context().Value("logger").(*zap.Logger)
+		if ok {
+			log.Error(e.Error.Error())
+		}
+		http.Error(w, e.Message, e.Code)
+	}
 }
 
 //
@@ -53,28 +81,33 @@ func (r *Router) Handle(method, path string, handler Handler) {
 	data.value = value
 	data.prefix = prefix
 	data.vars = vars
-	data.methods[method] = handler
+	data.methods[method] = handler.ServeHTTP
 	r.trie.Put(key, data)
 }
 
+// HandleFunc registers the handler function for the given pattern.
+func (r *Router) HandleFunc(method, path string, handlerFn HandlerFunc) {
+	r.Handle(method, path, HandlerFunc(handlerFn))
+}
+
 // GET is a shortcut for Handle with method "GET"
-func (r *Router) GET(path string, handler Handler) {
-	r.Handle("GET", path, handler)
+func (r *Router) GET(path string, handlerFn HandlerFunc) {
+	r.HandleFunc("GET", path, handlerFn)
 }
 
-// POST is a shortcut for Handle with method "GET"
-func (r *Router) POST(path string, handler Handler) {
-	r.Handle("POST", path, handler)
+// POST is a shortcut for Handle with method "POST"
+func (r *Router) POST(path string, handlerFn HandlerFunc) {
+	r.HandleFunc("POST", path, handlerFn)
 }
 
-// PUT is a shortcut for Handle with method "GET"
-func (r *Router) PUT(path string, handler Handler) {
-	r.Handle("PUT", path, handler)
+// PUT is a shortcut for Handle with method "PUT"
+func (r *Router) PUT(path string, handler HandlerFunc) {
+	r.HandleFunc("PUT", path, handler)
 }
 
-// DELETE is a shortcut for Handle with method "GET"
-func (r *Router) DELETE(path string, handler Handler) {
-	r.Handle("DELETE", path, handler)
+// DELETE is a shortcut for Handle with method "DELETE"
+func (r *Router) DELETE(path string, handlerFn HandlerFunc) {
+	r.HandleFunc("DELETE", path, handlerFn)
 }
 
 // ServeHTTP
@@ -285,12 +318,12 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 	return ctx
 }
 
-// Middleware wraps an http.Handler with additional
+// Middleware wraps an http.HandlerFunc with additional
 // functionality.
-type Middleware func(Handler) Handler
+type Middleware func(HandlerFunc) HandlerFunc
 
 // Wrap h with all specified middlewares.
-func Wrap(h Handler, middlewares ...Middleware) Handler {
+func Wrap(h HandlerFunc, middlewares ...Middleware) HandlerFunc {
 	for _, m := range middlewares {
 		h = m(h)
 	}

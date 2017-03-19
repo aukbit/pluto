@@ -138,7 +138,7 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 
 func (s *Server) setHTTPServer() {
 	if s.cfg.Mux == nil {
-		s.cfg.Mux = router.NewMux()
+		s.cfg.Mux = router.New()
 	}
 	// set health check handler
 	s.cfg.Mux.GET("/_health", router.Wrap(healthHandler, serverMiddleware(s)))

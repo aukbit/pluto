@@ -24,7 +24,7 @@ func TestNewData(t *testing.T) {
 	assert.Equal(t, "home", d.value)
 	assert.Equal(t, "/", d.prefix)
 	assert.Equal(t, []string{}, d.vars)
-	assert.Equal(t, make(map[string]Handler), d.methods)
+	assert.Equal(t, make(map[string]HandlerFunc), d.methods)
 }
 
 func TestPut(t *testing.T) {
