@@ -18,6 +18,7 @@ type Config struct {
 	Version     string
 	Servers     map[string]*server.Server
 	Clients     map[string]*client.Client
+	clientsCh   chan *client.Client
 	Datastore   *datastore.Datastore
 	Discovery   discovery.Discovery
 	Hooks       map[string][]HookFunc
@@ -34,6 +35,7 @@ func newConfig() Config {
 		Version:    defaultVersion,
 		Servers:    make(map[string]*server.Server),
 		Clients:    make(map[string]*client.Client),
+		clientsCh:  make(chan *client.Client, 100),
 		Hooks:      make(map[string][]HookFunc),
 		HealthAddr: defaultHealthAddr,
 	}

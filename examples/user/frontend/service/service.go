@@ -34,7 +34,6 @@ func Run() error {
 		server.Addr(*http_port),
 		server.Mux(mux),
 	)
-
 	// Define grpc Client
 	clt := client.New(
 		client.Name("user"),
@@ -43,6 +42,7 @@ func Run() error {
 		}),
 		client.Target(*target),
 	)
+
 	// Logger
 	logger, _ := zap.NewDevelopment()
 	// Define Pluto service
