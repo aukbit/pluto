@@ -106,6 +106,13 @@ func (s *Service) Config() Config {
 	return s.cfg
 }
 
+// Push allows to start additional options while service is running
+func (s *Service) Push(opts ...Option) {
+	for _, opt := range opts {
+		opt.apply(s)
+	}
+}
+
 // Server returns a server instance by name if initialized in service
 func (s *Service) Server(name string) (srv *server.Server, ok bool) {
 	name = common.SafeName(name, server.DefaultName)
@@ -216,25 +223,61 @@ func (s *Service) startServers() {
 	}
 }
 
+// startClients listen to the clientsCh
 func (s *Service) startClients() {
-	for _, clt := range s.cfg.Clients {
-		// add go routine to WaitGroup
-		s.wg.Add(1)
-		go func(clt *client.Client) {
-			defer s.wg.Done()
-			for {
-				err := clt.Dial(
-					client.Logger(s.logger),
-					client.Discovery(s.Config().Discovery))
-				if err == nil {
-					return
+	go func() {
+		for {
+			select {
+			case clt, ok := <-s.cfg.clientsCh:
+				if !ok {
+					break
 				}
-				s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
-				time.Sleep(time.Second * 10)
+				s.startClient(clt)
+			default:
+				time.Sleep(time.Second * 1)
+				continue
 			}
-		}(clt)
-	}
+		}
+	}()
 }
+
+func (s *Service) startClient(clt *client.Client) {
+	// add go routine to WaitGroup
+	s.wg.Add(1)
+	go func(clt *client.Client) {
+		defer s.wg.Done()
+		for {
+			err := clt.Dial(
+				client.Logger(s.logger),
+				client.Discovery(s.Config().Discovery))
+			if err == nil {
+				return
+			}
+			s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
+			time.Sleep(time.Second * 10)
+		}
+	}(clt)
+}
+
+// func (s *Service) startClients() {
+// 	for _, clt := range s.cfg.Clients {
+// 		// add go routine to WaitGroup
+// 		s.wg.Add(1)
+// 		go func(clt *client.Client) {
+// 			defer s.wg.Done()
+// 			for {
+// 				err := clt.Dial(
+// 					client.Logger(s.logger),
+// 					client.Discovery(s.Config().Discovery))
+// 				if err == nil {
+// 					return
+// 				}
+// 				s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
+// 				time.Sleep(time.Second * 10)
+// 			}
+// 		}(clt)
+// 	}
+// }
 
 // waitUntilStopOrSig waits for close channel or syscall Signal
 func (s *Service) waitUntilStopOrSig() {
@@ -271,6 +314,7 @@ outer:
 }
 
 func (s *Service) closeClients() {
+	close(s.cfg.clientsCh)
 	for _, clt := range s.cfg.Clients {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
@@ -279,6 +323,7 @@ func (s *Service) closeClients() {
 			clt.Close()
 		}(clt)
 	}
+
 }
 
 func (s *Service) stopServers() {

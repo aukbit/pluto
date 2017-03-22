@@ -53,6 +53,7 @@ func Servers(srv *server.Server) Option {
 func Clients(clt *client.Client) Option {
 	return optionFunc(func(s *Service) {
 		s.cfg.Clients[clt.Config().Name] = clt
+		s.cfg.clientsCh <- clt
 	})
 }
 
