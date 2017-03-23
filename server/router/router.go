@@ -150,7 +150,10 @@ func (r *Router) findMatch(req *http.Request) *Match {
 		data := r.trie.Get(key)
 		if data != nil {
 			ctx := setContext(req.Context(), data.vars, values)
-			handler := data.methods[req.Method]
+			handler, ok := data.methods[req.Method]
+			if !ok {
+				return nil
+			}
 			return &Match{handler: handler, ctx: ctx}
 		}
 	}

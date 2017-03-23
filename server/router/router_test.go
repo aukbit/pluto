@@ -68,12 +68,6 @@ func TestRouter(t *testing.T) {
 	router.HandleFunc("GET", "/home", GetHandler)
 	router.HandleFunc("GET", "/home/home", GetHandler)
 	router.HandleFunc("GET", "/home/home/home", GetHandler)
-	router.HandleFunc("POST", "/home", PostHandler)
-	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
-	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
-	router.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
-	router.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
-	router.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
 
 	var tests = []struct {
 		Method       string
@@ -106,6 +100,53 @@ func TestRouter(t *testing.T) {
 			BodyContains: "Hello World",
 			Status:       http.StatusOK,
 		},
+	}
+	server := httptest.NewServer(router)
+	defer server.Close()
+	for _, test := range tests {
+		r, err := http.NewRequest(test.Method, server.URL+test.Path, test.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// call handler
+		resp, err := http.DefaultClient.Do(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var v interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+		assert.Equal(t, test.Status, resp.StatusCode)
+		assert.Equal(t, test.BodyContains, v)
+	}
+}
+
+func TestDynamicRouter(t *testing.T) {
+	router := router.NewRouter()
+	router.HandleFunc("GET", "/", IndexHandler)
+	router.HandleFunc("POST", "/home", PostHandler)
+	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
+	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
+	router.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
+	router.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
+	router.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+
+	var tests = []struct {
+		Method       string
+		Path         string
+		Body         io.Reader
+		BodyContains interface{}
+		Status       int
+	}{
+		{
+			Method:       "GET",
+			Path:         "/",
+			BodyContains: "Hello World",
+			Status:       http.StatusOK,
+		},
 		{
 			Method:       "POST",
 			Path:         "/home",
@@ -120,8 +161,9 @@ func TestRouter(t *testing.T) {
 			Status:       http.StatusOK,
 		},
 		{
-			Method:       "PUT",
-			Path:         "/home/123",
+			Method: "PUT",
+			Path:   "/home/123",
+
 			Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
 			BodyContains: map[string]string{"id": "123", "message": "Hello World"},
 			Status:       http.StatusOK,
@@ -147,8 +189,8 @@ func TestRouter(t *testing.T) {
 		{
 			Method:       "GET",
 			Path:         "/home/",
-			BodyContains: "Hello World",
-			Status:       http.StatusOK,
+			BodyContains: "404 page not found",
+			Status:       http.StatusNotFound,
 		},
 		{
 			Method:       "GET",
@@ -199,9 +241,6 @@ func TestRouter(t *testing.T) {
 func BenchmarkRouter(b *testing.B) {
 	router := router.NewRouter()
 	router.HandleFunc("GET", "/", IndexHandler)
-	router.HandleFunc("GET", "/home", GetHandler)
-	router.HandleFunc("GET", "/home/home", GetHandler)
-	router.HandleFunc("GET", "/home/home/home", GetHandler)
 	router.HandleFunc("POST", "/home", PostHandler)
 	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
 	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
