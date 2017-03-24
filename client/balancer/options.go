@@ -1,6 +1,8 @@
 package balancer
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -43,5 +45,13 @@ func Logger(l *zap.Logger) Option {
 	return optionFunc(func(c *Connector) {
 		copy := *l
 		c.logger = &copy
+	})
+}
+
+// Timeout returns an Option that configures a timeout for dialing a ClientConn
+// initially. This is valid if and only if WithBlock() is present.
+func Timeout(d time.Duration) Option {
+	return optionFunc(func(c *Connector) {
+		c.cfg.Timeout = d
 	})
 }
