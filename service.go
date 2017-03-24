@@ -307,7 +307,8 @@ outer:
 			break outer
 		default:
 			// keep on looping, non-blocking channel operations
-			// continue
+			time.Sleep(50 * time.Millisecond)
+			continue
 		}
 	}
 }
