@@ -306,9 +306,8 @@ outer:
 			s.stopServers()
 			break outer
 		default:
-			s.logger.Debug("pulse")
-			time.Sleep(time.Second * 1)
-			continue
+			// keep on looping, non-blocking channel operations
+			// continue
 		}
 	}
 }
