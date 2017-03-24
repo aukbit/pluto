@@ -1,6 +1,8 @@
 package balancer
 
 import (
+	"time"
+
 	"google.golang.org/grpc"
 )
 
@@ -9,6 +11,7 @@ type Config struct {
 	Target                  string                             // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	GRPCRegister            func(*grpc.ClientConn) interface{} //
 	UnaryClientInterceptors []grpc.UnaryClientInterceptor      // gRPC interceptors
+	Timeout                 time.Duration
 }
 
 // ConfigFn registers the Config
@@ -20,6 +23,7 @@ var (
 
 func newConfig() *Config {
 	return &Config{
-		Target: defaultTarget,
+		Target:  defaultTarget,
+		Timeout: 500 * time.Millisecond,
 	}
 }

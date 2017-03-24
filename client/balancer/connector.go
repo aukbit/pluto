@@ -83,6 +83,8 @@ func (c *Connector) dial() error {
 	conn, err := grpc.Dial(
 		c.cfg.Target,
 		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(c.cfg.Timeout),
 		grpc.WithUnaryInterceptor(g.WrapperUnaryClient(c.cfg.UnaryClientInterceptors...)))
 	if err != nil {
 		return err

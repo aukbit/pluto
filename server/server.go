@@ -269,25 +269,15 @@ func errClosing(ln net.Listener) error {
 // waitUntilStop waits for close channel
 func (s *Server) waitUntilStop(ln net.Listener) {
 	defer s.wg.Done()
-outer:
-	for {
-		select {
-		case <-s.close:
-			// Waits for call to stop
-			s.unregister()
-			switch s.cfg.Format {
-			case "grpc":
-				s.grpcServer.GracefulStop()
-			default:
-				if err := ln.Close(); err != nil {
-					s.logger.Error("Close()", zap.String("err", err.Error()))
-				}
-			}
-			break outer
-		default:
-			s.logger.Debug("pulse")
-			time.Sleep(time.Second * 1)
-			continue
+	// Waits for call to stop
+	<-s.close
+	s.unregister()
+	switch s.cfg.Format {
+	case "grpc":
+		s.grpcServer.GracefulStop()
+	default:
+		if err := ln.Close(); err != nil {
+			s.logger.Error("Close()", zap.String("err", err.Error()))
 		}
 	}
 }
