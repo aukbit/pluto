@@ -11,6 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/aukbit/fibonacci"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/datastore"
@@ -205,6 +206,7 @@ func (s *Service) startServers() {
 		s.wg.Add(1)
 		go func(srv *server.Server) {
 			defer s.wg.Done()
+			f := fibonacci.F()
 			for {
 				err := srv.Run(
 					server.Middlewares(serviceContextMiddleware(s)),
@@ -215,9 +217,8 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				s.logger.Error(fmt.Sprintf("Run failed on server: %v. Error: %v. On hold by 10s...", srv.Config().Name, err.Error()))
-				time.Sleep(time.Second * 10)
-				// delete(s.cfg.Servers, srv.Config().Name)
+				s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Config().Name, err.Error()))
+				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)
 	}
@@ -234,7 +235,7 @@ func (s *Service) startClients() {
 				}
 				s.startClient(clt)
 			default:
-				time.Sleep(time.Second * 1)
+				time.Sleep(500 * time.Millisecond)
 				continue
 			}
 		}
@@ -246,6 +247,7 @@ func (s *Service) startClient(clt *client.Client) {
 	s.wg.Add(1)
 	go func(clt *client.Client) {
 		defer s.wg.Done()
+		f := fibonacci.F()
 		for {
 			err := clt.Dial(
 				client.Logger(s.logger),
@@ -253,8 +255,8 @@ func (s *Service) startClient(clt *client.Client) {
 			if err == nil {
 				return
 			}
-			s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
-			time.Sleep(time.Second * 10)
+			s.logger.Error(fmt.Sprintf("dial failed on client: %v - error: %v", clt.Config().Name, err.Error()))
+			time.Sleep(time.Duration(f()) * time.Second)
 		}
 	}(clt)
 }
