@@ -52,7 +52,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = s.Health()
 	}
-	if hcr.Status.String() != "SERVING" {
+	if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
 		reply.Json(w, r, http.StatusTooManyRequests, hcr)
 		return
 	}

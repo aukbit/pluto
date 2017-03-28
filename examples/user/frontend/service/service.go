@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var target = flag.String("target", "127.0.0.1:65065", "backend address")
+var target = flag.String("target", "127.0.0.1:65087", "backend address")
 var http_port = flag.String("http_port", ":8087", "frontend http port")
 
 func Run() error {

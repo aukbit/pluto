@@ -3,10 +3,12 @@ package auth
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/auth/jwt"
 	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server/router"
 )
@@ -32,8 +34,15 @@ func MiddlewareBearerAuth() router.Middleware {
 				reply.Json(w, r, http.StatusInternalServerError, err.Error())
 				return
 			}
+			// dial
+			i, err := c.Dial(client.Timeout(5 * time.Second))
+			if err != nil {
+				reply.Json(w, r, http.StatusInternalServerError, err.Error())
+				return
+			}
+			defer c.Close()
 			// make a call to the Auth backend service
-			v, err := c.Call().(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t})
+			v, err := i.(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t})
 			if err != nil {
 				reply.Json(w, r, http.StatusUnauthorized, err.Error())
 				return

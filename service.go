@@ -243,23 +243,29 @@ func (s *Service) startClients() {
 }
 
 func (s *Service) startClient(clt *client.Client) {
-	// add go routine to WaitGroup
-	s.wg.Add(1)
 	go func(clt *client.Client) {
-		defer s.wg.Done()
-		f := fibonacci.F()
-		for {
-			err := clt.Dial(
-				client.Logger(s.logger),
-				client.Discovery(s.Config().Discovery))
-			if err == nil {
-				return
-			}
-			s.logger.Error(fmt.Sprintf("dial failed on client: %v - error: %v", clt.Config().Name, err.Error()))
-			time.Sleep(time.Duration(f()) * time.Second)
-		}
+		clt.Init()
 	}(clt)
 }
+
+// func (s *Service) startClient(clt *client.Client) {
+// 	go func(clt *client.Client) {
+// 		f := fibonacci.F()
+// 		for {
+// 			err := clt.Dial(
+// 				client.Logger(s.logger),
+// 				client.Discovery(s.Config().Discovery))
+// 			switch grpc.Code(err) {
+// 			case codes.OK:
+// 				// TODO should we return here?
+// 				return
+// 			default:
+// 				s.logger.Error(fmt.Sprintf("%v dial failed - error: %v %v", clt.Config().Name, grpc.Code(err), grpc.ErrorDesc(err)))
+// 				time.Sleep(time.Duration(f()) * time.Second)
+// 			}
+// 		}
+// 	}(clt)
+// }
 
 // func (s *Service) startClients() {
 // 	for _, clt := range s.cfg.Clients {
@@ -317,15 +323,14 @@ outer:
 
 func (s *Service) closeClients() {
 	close(s.cfg.clientsCh)
-	for _, clt := range s.cfg.Clients {
-		// add go routine to WaitGroup
-		s.wg.Add(1)
-		go func(clt *client.Client) {
-			defer s.wg.Done()
-			clt.Close()
-		}(clt)
-	}
-
+	// for _, clt := range s.cfg.Clients {
+	// 	// add go routine to WaitGroup
+	// 	s.wg.Add(1)
+	// 	go func(clt *client.Client) {
+	// 		defer s.wg.Done()
+	// 		clt.Close()
+	// 	}(clt)
+	// }
 }
 
 func (s *Service) stopServers() {

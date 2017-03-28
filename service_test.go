@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 	// Create grpc pluto client
 	cltGRPC := client.New(
 		client.Name(serviceName),
-		client.Targets("localhost:65060"),
+		client.Target("localhost:65060"),
 		// client.TargetName("grpc"),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewGreeterClient(cc)
