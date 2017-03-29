@@ -98,7 +98,9 @@ func (ds *Datastore) RefreshSession() error {
 	ds.logger.Info("session")
 	switch ds.cfg.Driver {
 	case "gocql":
-		f := gocql.NewCluster(hosts)
+		f := gocql.NewCluster("hosts")
+		gocql.NewSession(cfg)
+		f.CreateSession()
 		ds.session.(*gocql.Session)
 		s, err := ds.cluster.CreateSession()
 		if err != nil {
