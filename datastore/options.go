@@ -6,7 +6,9 @@ import (
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
+	"github.com/gocql/gocql"
 	"go.uber.org/zap"
+	mgo "gopkg.in/mgo.v2"
 )
 
 // Option is used to set options for the service.
@@ -75,5 +77,28 @@ func Logger(l *zap.Logger) Option {
 	return optionFunc(func(d *Datastore) {
 		copy := *l
 		d.logger = &copy
+	})
+}
+
+// Driver sets the driver to be used while establish a datastore connection
+func Driver(name string) Option {
+	return optionFunc(func(d *Datastore) {
+		d.cfg.Driver = name
+	})
+}
+
+// Cassandra sets cassandra cluster configuration
+func Cassandra(cfg *gocql.ClusterConfig) Option {
+	return optionFunc(func(d *Datastore) {
+		d.cfg.Cassandra = cfg
+		d.cfg.driver = "gocql"
+	})
+}
+
+// MongoDB sets mongodb configuration
+func MongoDB(cfg *mgo.DialInfo) Option {
+	return optionFunc(func(d *Datastore) {
+		d.cfg.MongoDB = cfg
+		d.cfg.driver = "mgo"
 	})
 }

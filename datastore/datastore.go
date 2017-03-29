@@ -2,10 +2,12 @@ package datastore
 
 import (
 	"context"
+	"fmt"
 
-	"go.uber.org/zap"
+	mgo "gopkg.in/mgo.v2"
 
 	"github.com/gocql/gocql"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -22,8 +24,7 @@ var (
 
 type Datastore struct {
 	cfg     *Config
-	cluster *gocql.ClusterConfig
-	session *gocql.Session
+	session interface{}
 	logger  *zap.Logger
 	health  *health.Server
 }
@@ -69,51 +70,69 @@ func (ds *Datastore) Connect(opts ...Option) error {
 			opt.apply(ds)
 		}
 	}
-	// register at service discovery
-	if err := ds.register(); err != nil {
-		return err
-	}
-	// set target from service discovery
-	if err := ds.target(); err != nil {
-		return err
-	}
 	// set logger
 	ds.setLogger()
-	ds.logger.Info("connect")
-	ds.cluster = gocql.NewCluster(ds.cfg.Target)
-	ds.cluster.ProtoVersion = 3
-	ds.cluster.Keyspace = ds.cfg.Keyspace
+	// create db session
+	switch ds.cfg.driver {
+	case "gocql":
+		s, err := gocql.NewSession(cfg)
+		if err != nil {
+			return err
+		}
+	case "mgo":
+		s, err := mgo.DialWithInfo(ds.cfg.MongoDB)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("datastore driver not available %v", ds.cfg.Driver)
+	}
+	ds.session = s
+	ds.logger.Info("connected")
 	// set health
-	ds.health.SetServingStatus(ds.cfg.ID, 1)
+	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
 	return nil
 }
 
 func (ds *Datastore) RefreshSession() error {
 	ds.logger.Info("session")
-	s, err := ds.cluster.CreateSession()
-	if err != nil {
-		ds.health.SetServingStatus(ds.cfg.ID, 2)
-		return err
+	switch ds.cfg.Driver {
+	case "gocql":
+		f := gocql.NewCluster(hosts)
+		ds.session.(*gocql.Session)
+		s, err := ds.cluster.CreateSession()
+		if err != nil {
+			ds.health.SetServingStatus(ds.cfg.ID, 2)
+			return err
+		}
 	}
 	ds.session = s
-	ds.health.SetServingStatus(ds.cfg.ID, 1)
+	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
 	return nil
-}
-
-func (ds *Datastore) Config() *Config {
-	return ds.cfg
 }
 
 func (ds *Datastore) Close() {
 	ds.logger.Info("close")
 	// set health as not serving
-	ds.health.SetServingStatus(ds.cfg.ID, 2)
-	// unregister
-	ds.unregister()
-	ds.session.Close()
+	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
+	//
+	switch ds.cfg.Driver {
+	case "gocql":
+		ds.session.(*gocql.Session).Close()
+	case "mgo":
+		ds.session.(*mgo.Session).Close()
+	default:
+		//
+	}
 }
 
-func (ds *Datastore) Session() *gocql.Session {
+func (ds *Datastore) Session() interface{} {
+	switch ds.cfg.Driver {
+	case "gocql":
+		ds.NewCluster(ds.cfg.Keyspace, ds.cfg.Target)
+	default:
+		return fmt.Errorf("datastore driver not available %v", ds.cfg.Driver)
+	}
 	return ds.session
 }
 
