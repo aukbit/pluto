@@ -2,10 +2,12 @@ package backend
 
 import (
 	"errors"
+	"time"
 
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/auth/jwt"
 	pba "github.com/aukbit/pluto/auth/proto"
+	"github.com/aukbit/pluto/client"
 	pbu "github.com/aukbit/pluto/examples/user/proto"
 	"golang.org/x/net/context"
 )
@@ -26,13 +28,19 @@ type AuthViews struct{}
 // Authenticate implements authentication
 func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
 	// get client user from pluto service from context
-	clt, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &pba.Token{}, errClientUserNotAvailable
 	}
+	// dial
+	i, err := c.Dial(client.Timeout(5 * time.Second))
+	if err != nil {
+		return &pba.Token{}, err
+	}
+	defer c.Close()
 	// make a call to user backend service for credentials verification
 	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
-	v, err := clt.Call().(pbu.UserServiceClient).VerifyUser(ctx, nCred)
+	v, err := i.(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
 		return &pba.Token{}, err
 	}

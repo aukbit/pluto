@@ -1,9 +1,9 @@
 package client
 
 import (
+	"time"
+
 	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/discovery"
-	"github.com/aukbit/pluto/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -41,24 +41,10 @@ func Description(d string) Option {
 	})
 }
 
-// Targets slice of server address
-func Targets(t ...string) Option {
-	return optionFunc(func(c *Client) {
-		c.cfg.Targets = t
-	})
-}
-
 // Target server address
 func Target(t string) Option {
 	return optionFunc(func(c *Client) {
-		c.cfg.Targets[0] = t
-	})
-}
-
-// TargetName server address
-func TargetName(name string) Option {
-	return optionFunc(func(c *Client) {
-		c.cfg.TargetName = common.SafeName(name, server.DefaultName)
+		c.cfg.Target = t
 	})
 }
 
@@ -76,17 +62,18 @@ func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	})
 }
 
-// Discovery service discoery
-func Discovery(d discovery.Discovery) Option {
-	return optionFunc(func(c *Client) {
-		c.cfg.Discovery = d
-	})
-}
-
 // Logger sets a shallow copy from an input logger
 func Logger(l *zap.Logger) Option {
 	return optionFunc(func(c *Client) {
 		copy := *l
 		c.logger = &copy
+	})
+}
+
+// Timeout returns an Option that configures a timeout for dialing a ClientConn
+// initially. This is valid if and only if WithBlock() is present.
+func Timeout(d time.Duration) Option {
+	return optionFunc(func(c *Client) {
+		c.cfg.Timeout = d
 	})
 }

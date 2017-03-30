@@ -1,4 +1,4 @@
-package balancer
+package client
 
 // loggerUnaryClientInterceptor ...
 import (
@@ -9,15 +9,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func loggerUnaryClientInterceptor(conn *Connector) grpc.UnaryClientInterceptor {
+func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// get or create unique event id for every request
 		e, ctx := common.GetOrCreateEventID(ctx)
 		// create new log instance with eventID
-		l := conn.logger.With(
-			zap.String("event", e))
-		l.Info("call",
-			zap.String("method", method))
+		l := clt.logger.With(
+			zap.String("event", e),
+		)
+		l.Info("dial",
+			zap.String("method", method),
+		)
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }

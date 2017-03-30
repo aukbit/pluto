@@ -8,7 +8,6 @@ import (
 
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/discovery"
 	pb "github.com/aukbit/pluto/examples/dist/user_bff/proto"
 	"github.com/aukbit/pluto/examples/dist/user_bff/views"
 	"github.com/aukbit/pluto/server"
@@ -17,7 +16,7 @@ import (
 
 var httpPort = flag.String("http_port", ":8080", "backend for frontend http port")
 var name = flag.String("name", "user_bff", "service name instance")
-var targetName = flag.String("target_name", "user_backend", "target server name instance")
+var target = flag.String("target_name", "user_backend:65060", "target server name instance")
 var consulAddr = flag.String("consul_addr", "192.168.99.100:8500", "consul agent address")
 
 func main() {
@@ -50,10 +49,7 @@ func service() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.TargetName(*targetName))
-
-	// Define consul
-	dis := discovery.NewDiscovery(discovery.Addr(*consulAddr))
+		client.Target(*target))
 
 	// Define Pluto service
 	s := pluto.New(
@@ -61,7 +57,6 @@ func service() error {
 		pluto.Description("User backend for frontend service is responsible to parse all json data from http requests"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Discovery(dis),
 	)
 
 	// Run service

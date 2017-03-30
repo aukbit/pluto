@@ -2,30 +2,26 @@ package datastore
 
 import (
 	"context"
+	"fmt"
 
-	"go.uber.org/zap"
+	mgo "gopkg.in/mgo.v2"
 
 	"github.com/gocql/gocql"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 const (
 	// DefaultName prefix datastore client name
-	DefaultName    = "client_db"
+	defaultName    = "db"
 	defaultVersion = "v1.0.0"
 )
 
-var (
-	defaultCluster = "127.0.0.1"
-)
-
 type Datastore struct {
-	cfg     *Config
-	cluster *gocql.ClusterConfig
-	session *gocql.Session
-	logger  *zap.Logger
-	health  *health.Server
+	cfg    *Config
+	logger *zap.Logger
+	health *health.Server
 }
 
 // New creates a default datatore
@@ -62,85 +58,91 @@ func (ds *Datastore) clone() *Datastore {
 	return &copy
 }
 
-func (ds *Datastore) Connect(opts ...Option) error {
+func (ds *Datastore) Init(opts ...Option) error {
 	// set last configs
 	if len(opts) > 0 {
 		for _, opt := range opts {
 			opt.apply(ds)
 		}
 	}
-	// register at service discovery
-	if err := ds.register(); err != nil {
-		return err
-	}
-	// set target from service discovery
-	if err := ds.target(); err != nil {
-		return err
-	}
 	// set logger
 	ds.setLogger()
-	ds.logger.Info("connect")
-	ds.cluster = gocql.NewCluster(ds.cfg.Target)
-	ds.cluster.ProtoVersion = 3
-	ds.cluster.Keyspace = ds.cfg.Keyspace
-	// set health
-	ds.health.SetServingStatus(ds.cfg.ID, 1)
-	return nil
-}
-
-func (ds *Datastore) RefreshSession() error {
-	ds.logger.Info("session")
-	s, err := ds.cluster.CreateSession()
+	ds.logger.Info("init")
+	s, err := ds.NewSession()
 	if err != nil {
-		ds.health.SetServingStatus(ds.cfg.ID, 2)
 		return err
 	}
-	ds.session = s
-	ds.health.SetServingStatus(ds.cfg.ID, 1)
+	defer ds.Close(s)
+	// set health
+	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
 	return nil
 }
 
-func (ds *Datastore) Config() *Config {
-	return ds.cfg
+func (ds *Datastore) Close(session interface{}) {
+	switch session.(type) {
+	case *gocql.Session:
+		defer session.(*gocql.Session).Close()
+	case *mgo.Session:
+		defer session.(*mgo.Session).Close()
+	}
 }
 
-func (ds *Datastore) Close() {
-	ds.logger.Info("close")
-	// set health as not serving
-	ds.health.SetServingStatus(ds.cfg.ID, 2)
-	// unregister
-	ds.unregister()
-	ds.session.Close()
+func (ds *Datastore) NewSession() (session interface{}, err error) {
+	switch ds.cfg.driver {
+	case "gocql":
+		session, err = gocql.NewSession(*ds.cfg.Cassandra)
+		if err != nil {
+			return nil, err
+		}
+	case "mgo":
+		session, err = mgo.DialWithInfo(ds.cfg.MongoDB)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("datastore driver not available")
+	}
+	return session, nil
 }
 
-func (ds *Datastore) Session() *gocql.Session {
-	return ds.session
+func (ds *Datastore) setHealth() {
+	session, err := ds.NewSession()
+	if err != nil {
+		ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+	defer ds.Close(session)
+	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
 }
 
 func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
-	ds.RefreshSession()
+	ds.setHealth()
 	hcr, err := ds.health.Check(
-		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
+		context.Background(),
+		&healthpb.HealthCheckRequest{Service: ds.cfg.ID},
+	)
 	if err != nil {
 		ds.logger.Error("Health", zap.String("err", err.Error()))
-		return &healthpb.HealthCheckResponse{Status: 2}
+		return &healthpb.HealthCheckResponse{
+			Status: healthpb.HealthCheckResponse_NOT_SERVING,
+		}
 	}
 	return hcr
 }
 
-func (ds *Datastore) createKeyspace(keyspace string, replicationFactor int) error {
-	q := "CREATE KEYSPACE ? WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : ? };"
-	if err := ds.session.Query(q, keyspace, replicationFactor).Exec(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (ds *Datastore) setLogger() {
 	ds.logger = ds.logger.With(
-		zap.String("type", "db"),
 		zap.String("id", ds.cfg.ID),
 		zap.String("name", ds.cfg.Name),
-		zap.String("target", ds.cfg.Target),
-		zap.String("keyspace", ds.cfg.Keyspace))
+		zap.String("driver", ds.cfg.driver),
+	)
+}
+
+// Name returns datastore name
+func (ds *Datastore) Name() string {
+	return ds.cfg.Name
+}
+
+// IsAvailable checks if a Datastore instance as been initialized
+func (ds *Datastore) IsAvailable() bool {
+	return ds != nil
 }

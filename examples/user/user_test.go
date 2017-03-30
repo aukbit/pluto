@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -44,7 +45,7 @@ func TestMain(m *testing.M) {
 	if !testing.Short() {
 		wg.Add(2)
 		go RunBackend()
-		time.Sleep(time.Millisecond * 2000)
+		// time.Sleep(time.Millisecond * 2000)
 		go RunFrontend()
 		time.Sleep(time.Millisecond * 1000)
 	}
@@ -110,45 +111,59 @@ func TestExampleUser(t *testing.T) {
 			Method: "GET",
 			Path:   func(id string) string { return URL + "/user/abc" },
 			Response: func(id string) *pb.User {
-				return &pb.User{
-					Id:    id,
-					Name:  "Gopher",
-					Email: "gopher@email.com",
-				}
+				return &pb.User{}
 			},
 			Status: http.StatusNotFound,
 		},
-		// {
-		// 	Method: "PUT",
-		// 	Path:   func(id string) string { return URL + "/user/" + id },
-		// 	Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{
-		// 			Id:   id,
-		// 			Name: "Super Gopher house",
-		// 		}
-		// 	},
-		// 	Status: http.StatusOK,
-		// },
-		// {
-		// 	Method:       "PUT",
-		// 	Path:         func(id string) string { return URL + "/user/abc" },
-		// 	Body:         strings.NewReader(`{"name":"Super Gopher house"}`),
-		// 	BodyContains: func(id string) string { return `{"id":"` + id + `","name":"Super Gopher house"}` },
-		// 	Status:       http.StatusNotFound,
-		// },
-		// {
-		// 	Method:       "DELETE",
-		// 	Path:         func(id string) string { return URL + "/user/" + id },
-		// 	BodyContains: func(id string) string { return `{}` },
-		// 	Status:       http.StatusOK,
-		// },
-		// {
-		// 	Method:       "DELETE",
-		// 	Path:         func(id string) string { return URL + "/user/abc" },
-		// 	BodyContains: func(id string) string { return `{}` },
-		// 	Status:       http.StatusNotFound,
-		// },
+		{
+			Method: "PUT",
+			Path:   func(id string) string { return URL + "/user/" + id },
+			Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
+			Response: func(id string) *pb.User {
+				return &pb.User{
+					Id:    id,
+					Name:  "Super Gopher house",
+					Email: "gopher@email.com",
+				}
+			},
+			ResponseHeader: func(id string) *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				h.Set("Location", "/user/"+id)
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "PUT",
+			Path:   func(id string) string { return URL + "/user/abc" },
+			Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			Status: http.StatusNotFound,
+		},
+		{
+			Method: "DELETE",
+			Path:   func(id string) string { return URL + "/user/" + id },
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			ResponseHeader: func(id string) *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "DELETE",
+			Path:   func(id string) string { return URL + "/user/abc" },
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			Status: http.StatusNotFound,
+		},
 	}
 
 	for _, test := range tests {
@@ -163,7 +178,9 @@ func TestExampleUser(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer resp.Body.Close()
-
+		if resp.Request.Method == "DELETE" {
+			user = &pb.User{}
+		}
 		// decode body into user struct
 		err = json.NewDecoder(resp.Body).Decode(user)
 		if err != nil {
@@ -172,54 +189,29 @@ func TestExampleUser(t *testing.T) {
 			assert.Equal(t, test.Status, resp.StatusCode)
 			assert.Equal(t, test.ResponseHeader("").Get("Content-Type"), resp.Header.Get("Content-Type"))
 			assert.Equal(t, test.ResponseHeader(user.Id).Get("Location"), resp.Header.Get("Location"))
-			assert.Equal(t, test.Response(user.Id).Id, user.Id)
-			assert.Equal(t, test.Response(user.Id).Name, user.Name)
-			assert.Equal(t, test.Response(user.Id).Email, user.Email)
+			assert.Equal(t, test.Response(user.Id).String(), user.String())
 		}
 	}
 
 	// ExampleUserFilter
-	// r, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// // call handler
-	// response, err := http.DefaultClient.Do(r)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// actualBody, err := ioutil.ReadAll(response.Body)
-	// defer response.Body.Close()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-	// assert.Equal(t, response.StatusCode, response.StatusCode)
+	user = &pb.User{}
+	req, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// call handler
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	// decode body into user struct
+	err = json.NewDecoder(resp.Body).Decode(user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	fmt.Println(user)
 	// assert.Equal(t, true, len(actualBody) > 0)
-
 }
-
-// func TestExampleUserFilter(t *testing.T) {
-// 	defer func() {
-// 		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-// 		time.Sleep(time.Millisecond * 2000)
-// 	}
-//
-// 	r, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	// call handler
-// 	response, err := http.DefaultClient.Do(r)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	actualBody, err := ioutil.ReadAll(response.Body)
-// 	defer response.Body.Close()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	assert.Equal(t, response.Header.Get("Content-Type"), "application/json")
-// 	assert.Equal(t, response.StatusCode, response.StatusCode)
-// 	assert.Equal(t, true, len(actualBody) > 0)
-// }
