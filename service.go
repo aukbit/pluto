@@ -2,6 +2,7 @@ package pluto
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,6 +26,10 @@ const (
 	defaultName       = "pluto"
 	defaultVersion    = "v1.0.0"
 	defaultHealthAddr = ":9090"
+)
+
+var (
+	ErrDatastoreNotInitialized = errors.New("datastore not initialized")
 )
 
 // Key ...
@@ -136,7 +141,7 @@ func (s *Service) Datastore() (*datastore.Datastore, error) {
 	if s.cfg.Datastore != nil {
 		return s.cfg.Datastore, nil
 	}
-	return nil, fmt.Errorf("datastore not initialized")
+	return nil, ErrDatastoreNotInitialized
 }
 
 // Health ...
@@ -197,10 +202,11 @@ func (s *Service) hookAfterStart() {
 }
 
 func (s *Service) initDatastore() error {
-	if s.cfg.Datastore == nil {
+	db, err := s.Datastore()
+	if err == ErrDatastoreNotInitialized {
 		return nil
 	}
-	err := s.cfg.Datastore.Init(
+	err = db.Init(
 		datastore.Logger(s.logger),
 	)
 	if err != nil {

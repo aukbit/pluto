@@ -23,7 +23,7 @@ func datastoreContextUnaryServerInterceptor(s *Service) grpc.UnaryServerIntercep
 		// get datastore from pluto service
 		db, err := s.Datastore()
 		if err != nil {
-			return nil, err
+			return handler(ctx, req)
 		}
 		// requests new db session
 		session, err := db.NewSession()

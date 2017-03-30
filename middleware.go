@@ -26,12 +26,10 @@ func serviceContextMiddleware(s *Service) router.Middleware {
 func datastoreContextMiddleware(s *Service) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			// get context
-			ctx := r.Context()
 			// get datastore from pluto service
 			db, err := s.Datastore()
 			if err != nil {
-				h.ServeHTTP(w, r.WithContext(ctx))
+				h.ServeHTTP(w, r)
 				return
 			}
 			// requests new db session
@@ -41,6 +39,8 @@ func datastoreContextMiddleware(s *Service) router.Middleware {
 				return
 			}
 			defer db.Close(session) // clean up
+			// get context
+			ctx := r.Context()
 			// save it in the router context
 			ctx = context.WithValue(ctx, Key("session"), session)
 			// pass execution to the original handler
