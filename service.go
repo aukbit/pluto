@@ -27,7 +27,10 @@ const (
 	defaultHealthAddr = ":9090"
 )
 
-// Service
+// Key ...
+type Key string
+
+// Service ...
 type Service struct {
 	cfg    Config
 	close  chan bool
@@ -80,10 +83,6 @@ func (s *Service) Run() error {
 	)
 	// set health server
 	s.setHealthServer()
-	// register at service discovery
-	if err := s.register(); err != nil {
-		return err
-	}
 	// start service
 	if err := s.start(); err != nil {
 		return err
@@ -132,6 +131,15 @@ func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 	return clt, true
 }
 
+// Datastore returns the datastore instance in initialize in service
+func (s *Service) Datastore() (*datastore.Datastore, error) {
+	if s.cfg.Datastore != nil {
+		return s.cfg.Datastore, nil
+	}
+	return nil, fmt.Errorf("datastore not initialized")
+}
+
+// Health ...
 func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
@@ -163,7 +171,10 @@ func (s *Service) start() error {
 		zap.Int("clients", len(s.cfg.Clients)))
 
 	// connect to db
-	s.connectDB()
+	err := s.initDatastore()
+	if err != nil {
+		return err
+	}
 	// run servers
 	s.startServers()
 	// dial clients
@@ -180,24 +191,22 @@ func (s *Service) hookAfterStart() {
 		return
 	}
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "pluto", s)
-	ctx = context.WithValue(ctx, "logger", s.logger)
 	for _, h := range hooks {
 		h(ctx)
 	}
 }
 
-func (s *Service) connectDB() {
-	// connect datastore
-	if s.cfg.Datastore != nil {
-		s.cfg.Datastore.Connect(
-			datastore.Discovery(s.Config().Discovery),
-			datastore.Logger(s.logger),
-		)
-		if err := s.cfg.Datastore.RefreshSession(); err != nil {
-			s.logger.Error("RefreshSession()", zap.String("err", err.Error()))
-		}
+func (s *Service) initDatastore() error {
+	if s.cfg.Datastore == nil {
+		return nil
 	}
+	err := s.cfg.Datastore.Init(
+		datastore.Logger(s.logger),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) startServers() {
@@ -209,9 +218,14 @@ func (s *Service) startServers() {
 			f := fibonacci.F()
 			for {
 				err := srv.Run(
-					server.Middlewares(serviceContextMiddleware(s)),
-					server.UnaryServerInterceptors(serviceContextUnaryServerInterceptor(s)),
-					server.Discovery(s.Config().Discovery),
+					server.Middlewares(
+						datastoreContextMiddleware(s),
+						serviceContextMiddleware(s),
+					),
+					server.UnaryServerInterceptors(
+						datastoreContextUnaryServerInterceptor(s),
+						serviceContextUnaryServerInterceptor(s),
+					),
 					server.Logger(s.logger),
 				)
 				if err == nil {
@@ -247,45 +261,6 @@ func (s *Service) startClient(clt *client.Client) {
 		clt.Init()
 	}(clt)
 }
-
-// func (s *Service) startClient(clt *client.Client) {
-// 	go func(clt *client.Client) {
-// 		f := fibonacci.F()
-// 		for {
-// 			err := clt.Dial(
-// 				client.Logger(s.logger),
-// 				client.Discovery(s.Config().Discovery))
-// 			switch grpc.Code(err) {
-// 			case codes.OK:
-// 				// TODO should we return here?
-// 				return
-// 			default:
-// 				s.logger.Error(fmt.Sprintf("%v dial failed - error: %v %v", clt.Config().Name, grpc.Code(err), grpc.ErrorDesc(err)))
-// 				time.Sleep(time.Duration(f()) * time.Second)
-// 			}
-// 		}
-// 	}(clt)
-// }
-
-// func (s *Service) startClients() {
-// 	for _, clt := range s.cfg.Clients {
-// 		// add go routine to WaitGroup
-// 		s.wg.Add(1)
-// 		go func(clt *client.Client) {
-// 			defer s.wg.Done()
-// 			for {
-// 				err := clt.Dial(
-// 					client.Logger(s.logger),
-// 					client.Discovery(s.Config().Discovery))
-// 				if err == nil {
-// 					return
-// 				}
-// 				s.logger.Error(fmt.Sprintf("Dial failed on client: %v. Error: %v. On hold by 10s...", clt.Config().Name, err.Error()))
-// 				time.Sleep(time.Second * 10)
-// 			}
-// 		}(clt)
-// 	}
-// }
 
 // waitUntilStopOrSig waits for close channel or syscall Signal
 func (s *Service) waitUntilStopOrSig() {

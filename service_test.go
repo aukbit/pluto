@@ -13,6 +13,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/gocql/gocql"
 	"github.com/paulormart/assert"
 
 	context "golang.org/x/net/context"
@@ -27,7 +28,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const serviceURL = "http://localhost:8080"
+const serviceURL = "http://localhost:8081"
 const healthURL = "http://localhost:9091/_health"
 
 var serviceName = "gopher"
@@ -52,7 +53,7 @@ func TestMain(m *testing.M) {
 	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
 		server.Description("gopher super server"),
-		server.Addr(":8080"),
+		server.Addr(":8081"),
 		server.Mux(mux),
 	)
 	// Create grpc pluto server
@@ -74,10 +75,12 @@ func TestMain(m *testing.M) {
 		}),
 	)
 	// Create db client
-	// db := datastore.New(datastore.TargetName("cassandra"))
+	cfg := gocql.NewCluster("localhost")
+	cfg.ProtoVersion = 3
+	cfg.Keyspace = "default"
 	db := datastore.New(
 		datastore.Name(serviceName),
-		datastore.Target("localhost"),
+		datastore.Cassandra(cfg),
 	)
 	// Define service Discovery
 	// d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
@@ -99,7 +102,6 @@ func TestMain(m *testing.M) {
 		HookAfterStart(fn1, fn2),
 		Datastore(db),
 		HealthAddr(":9091"),
-		// Discovery(d),
 		Logger(logger),
 	)
 
@@ -197,7 +199,7 @@ func TestHealth(t *testing.T) {
 			Status:       http.StatusNotFound,
 		},
 		{
-			Path:         "/db/" + serviceName + "_client_db",
+			Path:         "/db/" + serviceName + "_db",
 			BodyContains: `SERVING`,
 			Status:       http.StatusOK,
 		},

@@ -28,7 +28,7 @@ type AuthViews struct{}
 // Authenticate implements authentication
 func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*pba.Token, error) {
 	// get client user from pluto service from context
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &pba.Token{}, errClientUserNotAvailable
 	}

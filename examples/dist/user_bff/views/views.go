@@ -31,7 +31,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("client")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("client")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -65,7 +65,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("client")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("client")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -104,7 +104,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("client")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("client")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())
@@ -137,7 +137,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("client")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("client")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
@@ -170,7 +170,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("client")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("client")
 	if !ok {
 		log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())

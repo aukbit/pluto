@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 
+	"github.com/gocql/gocql"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/datastore"
 	pb "github.com/aukbit/pluto/examples/dist/user_backend/proto"
@@ -35,11 +37,13 @@ func service() error {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})
 		}))
 
+	cfg := gocql.NewCluster(*db)
+	cfg.Keyspace = *keyspace
+	cfg.ProtoVersion = 3
 	// Define db connection
 	db := datastore.New(
 		datastore.Name(*name),
-		datastore.TargetName(*db),
-		datastore.Keyspace(*keyspace),
+		datastore.Cassandra(cfg),
 	)
 
 	// Define Pluto Service

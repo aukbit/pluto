@@ -15,7 +15,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	m := ctx.Value("module").(string)
 	n := ctx.Value("name").(string)
-	s := ctx.Value("pluto").(*Service)
+	s := ctx.Value(Key("pluto")).(*Service)
 
 	switch m {
 	case "server":
@@ -35,12 +35,12 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = clt.Health()
 	case "db":
-		db := s.Config().Datastore
-		if db == nil {
+		db, err := s.Datastore()
+		if err != nil {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}
-		if n != db.Config().Name {
+		if n != db.Name() {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}

@@ -3,13 +3,13 @@ package backend
 import (
 	"flag"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/examples/user/backend/views"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/server"
+	"github.com/gocql/gocql"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -27,9 +27,12 @@ func Run() error {
 		}),
 	)
 	// db connection
+	cfg := gocql.NewCluster(*db_addr)
+	cfg.Keyspace = "examples_user_backend"
+	cfg.ProtoVersion = 3
 	db := datastore.New(
-		datastore.Target(*db_addr),
-		datastore.Keyspace("examples_user_backend"))
+		datastore.Cassandra(cfg),
+	)
 	// logger
 	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
