@@ -3,18 +3,18 @@ package backend
 import (
 	"flag"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/examples/user/backend/views"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/server"
+	"github.com/gocql/gocql"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
-var grpc_port = flag.String("grpc_port", ":65065", "grpc listening port")
+var grpc_port = flag.String("grpc_port", ":65087", "grpc listening port")
 
 func Run() error {
 	flag.Parse()
@@ -27,9 +27,12 @@ func Run() error {
 		}),
 	)
 	// db connection
+	cfg := gocql.NewCluster(*db_addr)
+	cfg.Keyspace = "examples_user_backend"
+	cfg.ProtoVersion = 3
 	db := datastore.New(
-		datastore.Target(*db_addr),
-		datastore.Keyspace("examples_user_backend"))
+		datastore.Cassandra(cfg),
+	)
 	// logger
 	logger, _ := zap.NewDevelopment()
 	// Define Pluto Service

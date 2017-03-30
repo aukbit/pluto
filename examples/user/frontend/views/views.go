@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"go.uber.org/zap"
+	"time"
 
 	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/client"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server/router"
@@ -20,13 +20,7 @@ var (
 	errClientUserNotAvailable = errors.New("Client user not available")
 )
 
-func handleError(w http.ResponseWriter, r *http.Request, err error, status int) {
-	ctx := r.Context()
-	log := ctx.Value("logger").(*zap.Logger)
-	log.Error(err.Error())
-	http.Error(w, err.Error(), status)
-}
-
+// PostHandler ...
 func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
@@ -41,7 +35,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	}
 	defer r.Body.Close()
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -49,24 +43,33 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	// request a connection to make a call
-	conn := c.Request()
-	defer c.Done(conn)
-	// make a call the backend service
-	user, err := conn.Client().(pb.UserServiceClient).CreateUser(ctx, nu)
+	// dial
+	i, err := c.Dial(client.Timeout(2 * time.Second))
 	if err != nil {
 		return &router.HandlerErr{
-			Error:   errClientUserNotAvailable,
-			Message: errClientUserNotAvailable.Error(),
+			Error:   err,
+			Message: err.Error(),
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	defer c.Close()
+	// make call
+	user, err := i.(pb.UserServiceClient).CreateUser(ctx, nu)
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
 	reply.Json(w, r, http.StatusCreated, user)
 	return nil
 }
 
+// GetHandlerDetail ...
 func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
@@ -83,7 +86,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -91,11 +94,18 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	// request a connection to make a call
-	conn := c.Request()
-	defer c.Done(conn)
+	// dial
+	i, err := c.Dial()
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	defer c.Close()
 	// make a call the backend service
-	user, err = conn.Client().(pb.UserServiceClient).ReadUser(ctx, user)
+	user, err = i.(pb.UserServiceClient).ReadUser(ctx, user)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -109,6 +119,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	return nil
 }
 
+// PutHandler ...
 func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
@@ -125,7 +136,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// unmarshal body
-	if err := jsonpb.Unmarshal(r.Body, user); err != nil {
+	if err = jsonpb.Unmarshal(r.Body, user); err != nil {
 		return &router.HandlerErr{
 			Error:   err,
 			Message: err.Error(),
@@ -133,7 +144,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -141,11 +152,8 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	// request a connection to make a call
-	conn := c.Request()
-	defer c.Done(conn)
-	// make a call the backend service
-	user, err = conn.Client().(pb.UserServiceClient).UpdateUser(ctx, user)
+	// dial
+	i, err := c.Dial()
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -153,10 +161,24 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	defer c.Close()
+	// make a call the backend service
+	user, err = i.(pb.UserServiceClient).UpdateUser(ctx, user)
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	fmt.Printf("$$$$$$$$$ %v\n", user)
+	// set header location
+	w.Header().Set("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)
 	return nil
 }
 
+// DeleteHandler ...
 func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
@@ -173,7 +195,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -181,11 +203,18 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	// request a connection to make a call
-	conn := c.Request()
-	defer c.Done(conn)
+	// dial
+	i, err := c.Dial()
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	defer c.Close()
 	// make a call the backend service
-	user, err = conn.Client().(pb.UserServiceClient).DeleteUser(ctx, user)
+	user, err = i.(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -197,6 +226,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	return nil
 }
 
+// GetHandler ...
 func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
@@ -205,7 +235,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value("pluto").(*pluto.Service).Client("user")
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -213,11 +243,18 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	// request a connection to make a call
-	conn := c.Request()
-	defer c.Done(conn)
+	// dial
+	i, err := c.Dial()
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	defer c.Close()
 	// make a call the backend service
-	users, err := conn.Client().(pb.UserServiceClient).FilterUsers(ctx, filter)
+	users, err := i.(pb.UserServiceClient).FilterUsers(ctx, filter)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,

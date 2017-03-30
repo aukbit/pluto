@@ -7,6 +7,7 @@
 
 # Folders
 _obj
+_client
 
 # Architecture specific extensions/prefixes
 *.[568vq]

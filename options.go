@@ -52,7 +52,7 @@ func Servers(srv *server.Server) Option {
 // Clients slice of service clients
 func Clients(clt *client.Client) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.Clients[clt.Config().Name] = clt
+		s.cfg.Clients[clt.Name()] = clt
 		s.cfg.clientsCh <- clt
 	})
 }
