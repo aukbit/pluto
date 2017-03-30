@@ -5,9 +5,7 @@ An implementation of microservices with golang to tackle some of the challenges 
 ### Features
 - Currently supports a multiplexer HTTP router with dynamic paths and still compatible with the standard net/http library.
 - Client/Server implementation with [gRPC](http://www.grpc.io/) for communication between services.
-- Clients support service discover via [Consul](https://www.consul.io/).
-- Clients use a load balancer heap according to the less used service to dispatch requests.
-- Datastore package currently supports [Cassandra](http://cassandra.apache.org/) by using [gocql](https://github.com/gocql/gocql).
+- Datastore package currently supports [Cassandra](http://cassandra.apache.org/) via [gocql](https://github.com/gocql/gocql) and [MongoDB](https://www.mongodb.com/) via [mgo](https://labix.org/mgo).
 - Structured Logs by using [zap](https://github.com/uber-go/zap).
 
 
