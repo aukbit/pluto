@@ -13,6 +13,6 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, "", c.Description)
 	assert.Equal(t, "server", c.Name)
 	assert.Equal(t, "http", c.Format)
-	assert.Equal(t, "1.0.0", c.Version)
+	assert.Equal(t, "1.0.1", c.Version)
 	assert.Equal(t, nil, c.Mux)
 }
