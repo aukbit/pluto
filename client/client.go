@@ -14,7 +14,7 @@ import (
 const (
 	// DefaultName prefix client name
 	DefaultName    = "client"
-	defaultVersion = "v1.0.0"
+	defaultVersion = "1.0.0"
 )
 
 // A Client defines parameters for making calls to an HTTP server.
