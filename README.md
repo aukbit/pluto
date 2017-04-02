@@ -5,6 +5,7 @@ An implementation of microservices with golang to tackle some of the challenges 
 ### Features
 - Currently supports a multiplexer HTTP router with dynamic paths and still compatible with the standard net/http library.
 - Client/Server implementation with [gRPC](http://www.grpc.io/) for communication between services.
+- Service health check.
 - Datastore package currently supports [Cassandra](http://cassandra.apache.org/) via [gocql](https://github.com/gocql/gocql) and [MongoDB](https://www.mongodb.com/) via [mgo](https://labix.org/mgo).
 - Structured Logs by using [zap](https://github.com/uber-go/zap).
 
@@ -17,9 +18,11 @@ Projects that had influence in Pluto design and helped to solve technical barrie
 
 Books
 - [Building Microservices](http://shop.oreilly.com/product/0636920033158.do)
+- [Microservice Architecture](http://shop.oreilly.com/product/0636920050308.do)
 
 Articles
 - [nginx - Introduction to Microservices](https://www.nginx.com/blog/introduction-to-microservices/?utm_source=event-driven-data-management-microservices&utm_medium=blog&utm_campaign=Microservices)
+- [Fault Tolerance in a High Volume, Distributed System](http://techblog.netflix.com/2012/02/fault-tolerance-in-high-volume.html)
 
 ### Examples
 - [User](https://github.com/aukbit/pluto/tree/master/examples/user)
