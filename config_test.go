@@ -11,5 +11,5 @@ func TestConfig(t *testing.T) {
 	assert.Equal(t, true, len(c.ID) > 0)
 	assert.Equal(t, "", c.Description)
 	assert.Equal(t, "pluto", c.Name)
-	assert.Equal(t, "1.0.1", c.Version)
+	assert.Equal(t, "1.1.0", c.Version)
 }
