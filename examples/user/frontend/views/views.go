@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
@@ -123,55 +126,56 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
+	// get context logger
+	logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := ctx.Value("id").(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
-		return &router.HandlerErr{
-			Error:   fmt.Errorf("Id %v not found", id),
-			Message: fmt.Errorf("Id %v not found", id).Error(),
-			Code:    http.StatusNotFound,
-		}
+		return router.NewHandlerErr(
+			fmt.Errorf("Id %v not found", id),
+			http.StatusNotFound,
+			logger,
+		)
 	}
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// unmarshal body
 	if err = jsonpb.Unmarshal(r.Body, user); err != nil {
-		return &router.HandlerErr{
-			Error:   err,
-			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
-		}
+		return router.NewHandlerErr(
+			err,
+			http.StatusInternalServerError,
+			logger,
+		)
 	}
 	// get gRPC client from service
 	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
 	if !ok {
-		return &router.HandlerErr{
-			Error:   errClientUserNotAvailable,
-			Message: errClientUserNotAvailable.Error(),
-			Code:    http.StatusInternalServerError,
-		}
+		return router.NewHandlerErr(
+			errClientUserNotAvailable,
+			http.StatusInternalServerError,
+			logger,
+		)
 	}
 	// dial
 	i, err := c.Dial()
 	if err != nil {
-		return &router.HandlerErr{
-			Error:   err,
-			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
-		}
+		return router.NewHandlerErr(
+			err,
+			http.StatusInternalServerError,
+			logger,
+		)
 	}
 	defer c.Close()
 	// make a call the backend service
 	user, err = i.(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
-		return &router.HandlerErr{
-			Error:   err,
-			Message: err.Error(),
-			Code:    http.StatusInternalServerError,
-		}
+		return router.NewHandlerErr(
+			err,
+			http.StatusInternalServerError,
+			logger,
+		)
 	}
-	fmt.Printf("$$$$$$$$$ %v\n", user)
 	// set header location
 	w.Header().Set("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)

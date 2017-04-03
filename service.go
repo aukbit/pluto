@@ -24,7 +24,7 @@ import (
 
 const (
 	defaultName       = "pluto"
-	defaultVersion    = "1.0.1"
+	defaultVersion    = "1.1.0"
 	defaultHealthAddr = ":9090"
 )
 
@@ -32,10 +32,7 @@ var (
 	ErrDatastoreNotInitialized = errors.New("datastore not initialized")
 )
 
-// Key ...
-type Key string
-
-// Service ...
+// Service representacion of a pluto service
 type Service struct {
 	cfg    Config
 	close  chan bool
@@ -43,6 +40,9 @@ type Service struct {
 	health *health.Server
 	logger *zap.Logger
 }
+
+// Key pluto context keys
+type Key string
 
 // New returns a new pluto service with Options passed in
 func New(opts ...Option) *Service {
@@ -152,6 +152,11 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 		s.logger.Error("Health", zap.String("err", err.Error()))
 	}
 	return hcr
+}
+
+// Name returns service name
+func (s *Service) Name() string {
+	return s.cfg.Name
 }
 
 func (s *Service) setHealthServer() {
@@ -264,7 +269,7 @@ func (s *Service) startClients() {
 
 func (s *Service) startClient(clt *client.Client) {
 	go func(clt *client.Client) {
-		clt.Init()
+		clt.Init(client.Logger(s.logger))
 	}(clt)
 }
 

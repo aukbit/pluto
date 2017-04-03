@@ -25,7 +25,7 @@ import (
 const (
 	// DefaultName server prefix name
 	DefaultName    = "server"
-	defaultVersion = "1.0.1"
+	defaultVersion = "1.1.0"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -39,6 +39,9 @@ type Server struct {
 	grpcServer *grpc.Server
 	health     *health.Server
 }
+
+// Key server context keys
+type Key string
 
 // New returns a new http server with cfg passed in
 func New(opts ...Option) *Server {
@@ -134,6 +137,11 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
+}
+
+// Name returns server name
+func (s *Server) Name() string {
+	return s.cfg.Name
 }
 
 func (s *Server) setHTTPServer() {
