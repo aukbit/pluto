@@ -136,6 +136,11 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
+// Name returns server name
+func (s *Server) Name() string {
+	return s.cfg.Name
+}
+
 func (s *Server) setHTTPServer() {
 	if s.cfg.Mux == nil {
 		s.cfg.Mux = router.New()

@@ -102,6 +102,11 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
+// Name returns client name
+func (c *Client) Name() string {
+	return c.cfg.Name
+}
+
 func (c *Client) healthRPC() {
 	_, err := c.Dial()
 	if err != nil {
@@ -136,9 +141,4 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_NOT_SERVING}
 	}
 	return hcr
-}
-
-// Name returns client name
-func (c *Client) Name() string {
-	return c.cfg.Name
 }

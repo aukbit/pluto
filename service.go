@@ -154,6 +154,11 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
+// Name returns service name
+func (s *Service) Name() string {
+	return s.cfg.Name
+}
+
 func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
