@@ -54,29 +54,34 @@ func (c *Client) WithOptions(opts ...Option) *Client {
 	return d
 }
 
+func (c *Client) applyOptions(opts ...Option) {
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			opt.apply(c)
+		}
+	}
+}
+
 // clone creates a shallow copy client
 func (c *Client) clone() *Client {
 	copy := *c
 	return &copy
 }
 
-func (c *Client) Init() {
+func (c *Client) Init(opts ...Option) {
+	c.applyOptions(opts...)
 	// set logger
 	c.logger = c.logger.With(
 		zap.String("id", c.cfg.ID),
 		zap.String("name", c.cfg.Name),
 		zap.String("format", c.cfg.Format),
 	)
+	// append dial interceptor to grpc client
+	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
 }
 
 func (c *Client) Dial(opts ...Option) (interface{}, error) {
-	// set last configs
-	if len(opts) > 0 {
-		for _, opt := range opts {
-			opt.apply(c)
-		}
-	}
-	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
+	c.applyOptions(opts...)
 	// TODO use TLS
 	conn, err := grpc.Dial(
 		c.cfg.Target,

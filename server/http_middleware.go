@@ -24,7 +24,7 @@ func loggerMiddleware(srv *Server) router.Middleware {
 				zap.String("method", r.Method),
 				zap.String("url", r.URL.String()))
 			// also nice to have a logger available in context
-			ctx = context.WithValue(ctx, "logger", l)
+			ctx = context.WithValue(ctx, Key("logger"), l)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}

@@ -32,10 +32,7 @@ var (
 	ErrDatastoreNotInitialized = errors.New("datastore not initialized")
 )
 
-// Key ...
-type Key string
-
-// Service ...
+// Service representacion of a pluto service
 type Service struct {
 	cfg    Config
 	close  chan bool
@@ -43,6 +40,9 @@ type Service struct {
 	health *health.Server
 	logger *zap.Logger
 }
+
+// Key pluto context keys
+type Key string
 
 // New returns a new pluto service with Options passed in
 func New(opts ...Option) *Service {
@@ -269,7 +269,7 @@ func (s *Service) startClients() {
 
 func (s *Service) startClient(clt *client.Client) {
 	go func(clt *client.Client) {
-		clt.Init()
+		clt.Init(client.Logger(s.logger))
 	}(clt)
 }
 

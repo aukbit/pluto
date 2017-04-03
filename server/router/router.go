@@ -35,6 +35,16 @@ type HandlerErr struct {
 	Error   error
 	Message string
 	Code    int
+	logger  *zap.Logger
+}
+
+func NewHandlerErr(err error, code int, l *zap.Logger) *HandlerErr {
+	return &HandlerErr{
+		Error:   err,
+		Message: err.Error(),
+		Code:    code,
+		logger:  l,
+	}
 }
 
 // WrapErr reduces the repetition of dealing with errors in Handlers
@@ -43,9 +53,9 @@ type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
 
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
-		log, ok := r.Context().Value("logger").(*zap.Logger)
-		if ok {
-			log.Error(e.Error.Error())
+		// initialize logger if nil
+		if e.logger != nil {
+			e.logger.Error(e.Message)
 		}
 		http.Error(w, e.Message, e.Code)
 	}

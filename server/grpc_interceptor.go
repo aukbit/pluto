@@ -39,7 +39,7 @@ func loggerUnaryServerInterceptor(srv *Server) grpc.UnaryServerInterceptor {
 		l.Info("request",
 			zap.String("method", info.FullMethod))
 		// also nice to have a logger available in context
-		ctx = context.WithValue(ctx, "logger", l)
+		ctx = context.WithValue(ctx, Key("logger"), l)
 		return handler(ctx, req)
 	}
 }

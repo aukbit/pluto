@@ -11,6 +11,7 @@ import (
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/server"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ctx.Value("logger").(*zap.Logger)
+	log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get authentication from Authorization Header
 	u, p, ok := r.BasicAuth()
 	if !ok {

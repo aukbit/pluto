@@ -40,6 +40,9 @@ type Server struct {
 	health     *health.Server
 }
 
+// Key server context keys
+type Key string
+
 // New returns a new http server with cfg passed in
 func New(opts ...Option) *Server {
 	return newServer(opts...)
