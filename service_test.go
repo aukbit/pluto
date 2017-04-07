@@ -85,11 +85,13 @@ func TestMain(m *testing.M) {
 	// Define service Discovery
 	// d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
 	// Hook functions
-	fn1 := func(ctx context.Context) {
+	fn1 := func(ctx context.Context) error {
 		log.Print("first run after service starts")
+		return nil
 	}
-	fn2 := func(ctx context.Context) {
+	fn2 := func(ctx context.Context) error {
 		log.Print("second run after service starts")
+		return nil
 	}
 	// Logger
 	logger, _ := zap.NewDevelopment()
