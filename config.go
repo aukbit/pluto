@@ -26,7 +26,7 @@ type Config struct {
 }
 
 // HookFunc hook function type
-type HookFunc func(context.Context)
+type HookFunc func(context.Context) error
 
 func newConfig() Config {
 	return Config{

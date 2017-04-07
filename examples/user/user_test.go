@@ -2,7 +2,6 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -47,11 +46,11 @@ func TestMain(m *testing.M) {
 		go RunBackend()
 		// time.Sleep(time.Millisecond * 2000)
 		go RunFrontend()
-		time.Sleep(time.Millisecond * 1000)
+		time.Sleep(2 * time.Second)
 	}
 	result := m.Run()
 	if !testing.Short() {
-		wg.Wait()
+		// wg.Wait()
 	}
 	os.Exit(result)
 }
@@ -167,7 +166,6 @@ func TestExampleUser(t *testing.T) {
 	}
 
 	for _, test := range tests {
-
 		req, err := http.NewRequest(test.Method, test.Path(user.Id), test.Body)
 		if err != nil {
 			t.Fatal(err)
@@ -212,6 +210,4 @@ func TestExampleUser(t *testing.T) {
 	}
 	assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	fmt.Println(user)
-	// assert.Equal(t, true, len(actualBody) > 0)
 }
