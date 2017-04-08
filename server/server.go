@@ -25,7 +25,7 @@ import (
 const (
 	// DefaultName server prefix name
 	DefaultName    = "server"
-	defaultVersion = "1.2.0"
+	defaultVersion = "1.2.1"
 )
 
 // A Server defines parameters for running an HTTP server.
