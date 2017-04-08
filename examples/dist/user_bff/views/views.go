@@ -12,6 +12,7 @@ import (
 	pb "github.com/aukbit/pluto/examples/dist/user_bff/proto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 )
 
@@ -62,7 +63,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get logger from context
 	log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service
@@ -95,7 +96,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// get logger from context
 	log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	// set proto user
 	user := &pb.User{Id: id}
 	// unmarshal body
@@ -134,7 +135,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get logger from context
 	log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	// set proto user
 	user := &pb.User{Id: id}
 	// get gRPC client from service

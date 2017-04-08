@@ -62,6 +62,13 @@ func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //
+// KEY
+//
+
+// Key router context keys
+type Key string
+
+//
 // ROUTER
 //
 
@@ -326,7 +333,7 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 		return ctx
 	}
 	for i, value := range values {
-		ctx = context.WithValue(ctx, vars[i], value)
+		ctx = context.WithValue(ctx, Key(vars[i]), value)
 	}
 	return ctx
 }

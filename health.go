@@ -7,14 +7,15 @@ import (
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/router"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
-	m := ctx.Value("module").(string)
-	n := ctx.Value("name").(string)
+	m := ctx.Value(router.Key("module")).(string)
+	n := ctx.Value(router.Key("name")).(string)
 	s := ctx.Value(Key("pluto")).(*Service)
 
 	switch m {
