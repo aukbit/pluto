@@ -11,7 +11,7 @@ import (
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ds := ctx.Value("server").(*Server)
+	ds := ctx.Value(Key("server")).(*Server)
 	hcr, err := ds.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: ds.cfg.ID})
 	if err != nil {
@@ -25,7 +25,7 @@ func serverMiddleware(srv *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "server", srv)
+			ctx = context.WithValue(ctx, Key("server"), srv)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}

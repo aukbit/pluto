@@ -77,7 +77,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{
@@ -129,7 +129,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context logger
 	logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return router.NewHandlerErr(
@@ -187,7 +187,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value("id").(string)
+	id := ctx.Value(router.Key("id")).(string)
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{

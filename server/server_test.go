@@ -32,7 +32,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 func Detail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value("id").(string)))
+	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value(router.Key("id")).(string)))
 }
 
 type greeter struct{}
