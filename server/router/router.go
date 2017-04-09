@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"context"
+	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/reply"
 )
