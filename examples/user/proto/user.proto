@@ -10,6 +10,7 @@ service UserService {
     rpc DeleteUser (User) returns (User) {}
     rpc FilterUsers (Filter) returns (Users) {}
     rpc VerifyUser (Credentials) returns (Verification) {}
+    rpc StreamUsers (Filter) returns (stream User) {}
 }
 
 // The request message containing the new user data.

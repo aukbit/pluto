@@ -16,7 +16,7 @@ func serviceContextUnaryServerInterceptor(s *Service) grpc.UnaryServerIntercepto
 	}
 }
 
-// serviceContextUnaryServerInterceptor Interceptor that adds service instance
+// datastoreContextUnaryServerInterceptor Interceptor that adds service instance
 // available in handlers context
 func datastoreContextUnaryServerInterceptor(s *Service) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {

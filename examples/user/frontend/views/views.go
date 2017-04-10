@@ -1,9 +1,11 @@
 package frontend
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -265,6 +267,61 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Message: err.Error(),
 			Code:    http.StatusInternalServerError,
 		}
+	}
+	reply.Json(w, r, http.StatusOK, users)
+	return nil
+}
+
+// GetStreamHandler ...
+func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
+	// get context
+	ctx := r.Context()
+	// get parameters
+	n := r.URL.Query().Get("name")
+	// set proto filter
+	filter := &pb.Filter{Name: n}
+	// get gRPC client from service
+	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	if !ok {
+		return &router.HandlerErr{
+			Error:   errClientUserNotAvailable,
+			Message: errClientUserNotAvailable.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	// dial
+	i, err := c.Dial()
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	defer c.Close()
+	// make call
+	stream, err := i.(pb.UserServiceClient).StreamUsers(context.Background(), filter)
+	if err != nil {
+		return &router.HandlerErr{
+			Error:   err,
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		}
+	}
+	users := &pb.Users{}
+	for {
+		u, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return &router.HandlerErr{
+				Error:   fmt.Errorf("%v.StreamUsers(_) = _, %v", i, err),
+				Message: fmt.Errorf("%v.StreamUsers(_) = _, %v", i, err).Error(),
+				Code:    http.StatusInternalServerError,
+			}
+		}
+		users.Data = append(users.Data, u)
 	}
 	reply.Json(w, r, http.StatusOK, users)
 	return nil

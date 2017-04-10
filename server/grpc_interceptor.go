@@ -34,10 +34,8 @@ func loggerUnaryServerInterceptor(srv *Server) grpc.UnaryServerInterceptor {
 		// get or create unique event id for every request
 		e, ctx := common.GetOrCreateEventID(ctx)
 		// create new log instance with eventID
-		l := srv.logger.With(
-			zap.String("event", e))
-		l.Info("request",
-			zap.String("method", info.FullMethod))
+		l := srv.logger.With(zap.String("event", e))
+		l.Info("request", zap.String("method", info.FullMethod))
 		// also nice to have a logger available in context
 		ctx = context.WithValue(ctx, Key("logger"), l)
 		return handler(ctx, req)

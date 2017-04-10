@@ -227,3 +227,8 @@ func (s *MockUser) VerifyUser(ctx context.Context, nu *pbu.Credentials) (*pbu.Ve
 	// ...
 	return &pbu.Verification{IsValid: true}, nil
 }
+
+func (s *MockUser) StreamUsers(nu *pbu.Filter, stream pbu.UserService_StreamUsersServer) error {
+	// ...
+	return nil
+}

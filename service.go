@@ -24,7 +24,7 @@ import (
 
 const (
 	defaultName       = "pluto"
-	defaultVersion    = "1.2.2"
+	defaultVersion    = "1.3.0"
 	defaultHealthAddr = ":9090"
 )
 
@@ -243,6 +243,10 @@ func (s *Service) startServers() {
 					server.UnaryServerInterceptors(
 						datastoreContextUnaryServerInterceptor(s),
 						serviceContextUnaryServerInterceptor(s),
+					),
+					server.StreamServerInterceptors(
+						datastoreContextStreamServerInterceptor(s),
+						serviceContextStreamServerInterceptore(s),
 					),
 					server.Logger(s.logger),
 				)
