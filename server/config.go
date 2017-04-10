@@ -14,18 +14,19 @@ import (
 
 // Config server configuaration options
 type Config struct {
-	ID                      string
-	Name                    string
-	Description             string
-	Version                 string
-	Addr                    string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format                  string
-	Mux                     *router.Router
-	TLSConfig               *tls.Config // optional TLS config, used by ListenAndServeTLS
-	GRPCRegister            GRPCRegisterServiceFunc
-	Middlewares             []router.Middleware           // http middlewares
-	UnaryServerInterceptors []grpc.UnaryServerInterceptor // gRPC interceptors
-	Discovery               discovery.Discovery
+	ID                       string
+	Name                     string
+	Description              string
+	Version                  string
+	Addr                     string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format                   string
+	Mux                      *router.Router
+	TLSConfig                *tls.Config // optional TLS config, used by ListenAndServeTLS
+	GRPCRegister             GRPCRegisterServiceFunc
+	Middlewares              []router.Middleware            // http middlewares
+	UnaryServerInterceptors  []grpc.UnaryServerInterceptor  // gRPC interceptors
+	StreamServerInterceptors []grpc.StreamServerInterceptor // gRPC interceptors
+	Discovery                discovery.Discovery
 }
 
 // GRPCRegisterServiceFunc grpc

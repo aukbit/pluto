@@ -23,6 +23,7 @@ func Run() error {
 	// Define handlers
 	mux := router.New()
 	mux.Handle("GET", "/user", router.WrapErr(frontend.GetHandler))
+	mux.Handle("GET", "/stream", router.WrapErr(frontend.GetStreamHandler))
 	mux.Handle("POST", "/user", router.WrapErr(frontend.PostHandler))
 	mux.Handle("GET", "/user/:id", router.WrapErr(frontend.GetHandlerDetail))
 	mux.Handle("PUT", "/user/:id", router.WrapErr(frontend.PutHandler))

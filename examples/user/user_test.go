@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestExampleUser(t *testing.T) {
-	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	// defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
 	user := &pb.User{}
 
@@ -190,24 +190,120 @@ func TestExampleUser(t *testing.T) {
 			assert.Equal(t, test.Response(user.Id).String(), user.String())
 		}
 	}
+}
 
-	// ExampleUserFilter
-	user = &pb.User{}
-	req, err := http.NewRequest("GET", URL+"/user?name=Gopher", nil)
+func helperAddUser(name string) error {
+	req, err := http.NewRequest("POST", URL+"/user", strings.NewReader(`{"name":"`+name+`", "email": "gopher@email.com", "password":"123456"}`))
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	// call handler
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
-	// decode body into user struct
-	err = json.NewDecoder(resp.Body).Decode(user)
+	return nil
+}
+
+func helperDeleteUser(id string) error {
+	req, err := http.NewRequest("DELETE", URL+"/user/"+id, strings.NewReader(`{}`))
+	if err != nil {
+		return err
+	}
+	// call handler
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
+
+func TestListUsers(t *testing.T) {
+
+	defer syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+
+	err := helperAddUser("abc")
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	err = helperAddUser("def")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = []struct {
+		Method         string
+		Path           string
+		Response       *pb.Users
+		ResponseHeader func() *http.Header
+		// ResponseError func(string) *pb.User
+		Status int
+	}{
+		{
+			Method: "GET",
+			Path:   URL + "/user?name=abc",
+			Response: &pb.Users{
+				Data: []*pb.User{
+					&pb.User{
+						Name: "abc",
+					},
+				},
+			},
+			ResponseHeader: func() *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "GET",
+			Path:   URL + "/stream?name=abc",
+			Response: &pb.Users{
+				Data: []*pb.User{
+					&pb.User{
+						Name: "abc",
+					},
+				},
+			},
+			ResponseHeader: func() *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				return h
+			},
+			Status: http.StatusOK,
+		},
+	}
+
+	users := &pb.Users{}
+	for _, test := range tests {
+		req, err := http.NewRequest(test.Method, test.Path, strings.NewReader(`{}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// call handler
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// decode body into user struct
+		users = &pb.Users{}
+		err = json.NewDecoder(resp.Body).Decode(users)
+		resp.Body.Close()
+		// assertions
+		assert.Equal(t, test.Status, resp.StatusCode)
+		assert.Equal(t, test.ResponseHeader().Get("Content-Type"), resp.Header.Get("Content-Type"))
+		assert.Equal(t, len(test.Response.Data), len(users.Data))
+		// fmt.Println(users)
+	}
+	// teardown
+	for _, u := range users.Data {
+		err := helperDeleteUser(u.Id)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }

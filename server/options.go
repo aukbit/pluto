@@ -98,6 +98,13 @@ func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) Option {
 	})
 }
 
+// StreamServerInterceptors slice with grpc.StreamServerInterceptor
+func StreamServerInterceptors(i ...grpc.StreamServerInterceptor) Option {
+	return optionFunc(func(s *Server) {
+		s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors, i...)
+	})
+}
+
 // Discovery service discoery
 func Discovery(d discovery.Discovery) Option {
 	return optionFunc(func(s *Server) {

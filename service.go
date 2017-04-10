@@ -244,6 +244,10 @@ func (s *Service) startServers() {
 						datastoreContextUnaryServerInterceptor(s),
 						serviceContextUnaryServerInterceptor(s),
 					),
+					server.StreamServerInterceptors(
+						datastoreContextStreamServerInterceptor(s),
+						serviceContextStreamServerInterceptore(s),
+					),
 					server.Logger(s.logger),
 				)
 				if err == nil {

@@ -98,6 +98,25 @@ func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.V
 	return &pb.Verification{IsValid: challenge == valid}, nil
 }
 
+// StreamUsers implements UserServiceServer
+func (uv *UserViews) StreamUsers(in *pb.Filter, stream pb.UserService_StreamUsersServer) error {
+	ctx := stream.Context()
+	// get db session from context
+	session := ctx.Value(pluto.Key("session")).(*gocql.Session)
+	// filter users
+	iter := session.Query(`SELECT id, name, email FROM users WHERE name = ? ALLOW FILTERING;`, in.Name).Iter()
+	defer iter.Close()
+
+	u := &pb.User{}
+	for iter.Scan(&u.Id, &u.Name, &u.Email) {
+		// stream
+		if err := stream.Send(u); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func hashPassword(password string) string {
 	h := sha256.New()
 	h.Write([]byte(password))
