@@ -3,9 +3,13 @@ package backend
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+
+	"go.uber.org/zap"
 
 	"github.com/aukbit/pluto"
 	pb "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/server"
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
@@ -101,6 +105,7 @@ func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.V
 // StreamUsers implements UserServiceServer
 func (uv *UserViews) StreamUsers(in *pb.Filter, stream pb.UserService_StreamUsersServer) error {
 	ctx := stream.Context()
+	logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get db session from context
 	session := ctx.Value(pluto.Key("session")).(*gocql.Session)
 	// filter users
@@ -109,6 +114,7 @@ func (uv *UserViews) StreamUsers(in *pb.Filter, stream pb.UserService_StreamUser
 
 	u := &pb.User{}
 	for iter.Scan(&u.Id, &u.Name, &u.Email) {
+		logger.Info(fmt.Sprintf("stream %v ", u))
 		// stream
 		if err := stream.Send(u); err != nil {
 			return err
