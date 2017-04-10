@@ -371,6 +371,8 @@ func (s *Server) healthGRPC() {
 func (s *Server) setGRPCServer() {
 	// append logger
 	s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors, loggerUnaryServerInterceptor(s))
+	s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors, loggerStreamServerInterceptor(s))
+
 	// initialize grpc server
 	s.grpcServer = grpc.NewServer(
 		grpc.UnaryInterceptor(WrapperUnaryServer(s.cfg.UnaryServerInterceptors...)),
