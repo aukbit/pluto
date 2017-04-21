@@ -103,7 +103,6 @@ func (c *Client) Dial(opts ...Option) (interface{}, error) {
 
 // Close closes grpc client connection
 func (c *Client) Close() error {
-	c.logger.Info("close")
 	return c.conn.Close()
 }
 
