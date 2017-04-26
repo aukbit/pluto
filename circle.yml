@@ -18,8 +18,6 @@ dependencies:
     - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
   override:
     # './...' is a relative pattern which means all subdirectories
-    - go get -t -d -v ./...
-    - go build -v
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
     # Look at what is using a package
