@@ -24,7 +24,7 @@ dependencies:
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
     # Copy project to gopath
-    -  cp -R . /home/ubuntu/.go_workspace/src/home/ubuntu/pluto
+    -  cp -r . /home/ubuntu/.go_workspace/src/home/ubuntu/pluto
     # Look at what is using a package
     - govendor list -v fmt
 
