@@ -18,13 +18,13 @@ machine:
 dependencies:
   pre:
     - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
+    - cp -R
   override:
     # './...' is a relative pattern which means all subdirectories
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
-    - ls /home/ubuntu/.go_workspace/src
-    # Add existing GOPATH files to vendor.
-    - govendor add +external
+    # Copy project to gopath
+    -  cp -R . /home/ubuntu/.go_workspace/src/home/ubuntu/pluto
     # Look at what is using a package
     - govendor list -v fmt
 
