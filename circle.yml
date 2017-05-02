@@ -14,7 +14,7 @@ machine:
     - go version
     - echo $GOPATH
     - echo $PWD
-    - ls $PWD
+    - ls $PWD/pluto
 
 dependencies:
   pre:
