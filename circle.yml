@@ -4,6 +4,7 @@ machine:
   environment:
     GODIST: "go1.8.linux-amd64.tar.gz"
     GOPATH: "${HOME}/.go_workspace:/usr/local/go_workspace:$HOME/.go_project"
+    PROJECT_PARENT_PATH: ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
     PROJECT_PATH: ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
   pre:
     - go version
@@ -22,10 +23,10 @@ dependencies:
     - go get -u github.com/kardianos/govendor
   override:
     # https://circleci.com/docs/1.0/language-go/#dependencies
-    - mkdir -p ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - mkdir -p ${PROJECT_PARENT_PATH}
     # - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
     # https://subosito.com/posts/golang-circleci/
-    - rsync -avC ${HOME}/${CIRCLE_PROJECT_REPONAME} ${PROJECT_PATH}
+    - rsync -avC ${HOME}/${CIRCLE_PROJECT_REPONAME} ${PROJECT_PARENT_PATH}
     # go to project directory && look at what is using a package
     - cd ${PROJECT_PATH} && govendor list -v fmt
 
