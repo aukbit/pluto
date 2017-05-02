@@ -22,8 +22,7 @@ dependencies:
     # './...' is a relative pattern which means all subdirectories
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
-    - ls /home/ubuntu/.go_workspace
-    - ls /usr/local/go_workspace
+    - ls /home/ubuntu/.go_workspace/src
     # Add existing GOPATH files to vendor.
     - govendor add +external
     # Look at what is using a package
