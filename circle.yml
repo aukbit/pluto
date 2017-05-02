@@ -23,6 +23,8 @@ dependencies:
     - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
+    # go to project directory
+    - cd ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
     # Look at what is using a package
     - govendor list -v fmt
 
