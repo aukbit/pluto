@@ -3,6 +3,7 @@ machine:
     - docker
   environment:
     GODIST: "go1.8.linux-amd64.tar.gz"
+    GOPATH: $GOPATH:$HOME/pluto
   pre:
     - go version
   post:
@@ -12,8 +13,6 @@ machine:
     - sudo rm -rf /usr/local/go
     - sudo tar -C /usr/local -xzf download/${GODIST}
     - go version
-    - echo $GOPATH
-    - export GOPATH=$GOPATH:$PWD/pluto
     - echo $GOPATH
 
 dependencies:
