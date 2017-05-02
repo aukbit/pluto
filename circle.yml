@@ -22,6 +22,8 @@ dependencies:
     # './...' is a relative pattern which means all subdirectories
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
+    # Add existing GOPATH files to vendor.
+    - govendor add +external
     # Look at what is using a package
     - govendor list -v fmt
 
