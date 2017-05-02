@@ -13,6 +13,8 @@ machine:
     - sudo tar -C /usr/local -xzf download/${GODIST}
     - go version
     - echo $GOPATH
+    - ls $GOPATH/src
+    - echo $PWD
 
 dependencies:
   pre:
