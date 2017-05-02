@@ -17,7 +17,10 @@ machine:
 dependencies:
   pre:
     - docker run --name cassandra -d -p 7000:7000 -p 9042:9042 cassandra:3.7
-  post:
+  override:
+    # https://circleci.com/docs/1.0/language-go/#dependencies
+    - mkdir -p ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
     # Install govendor tool
     - go get -u github.com/kardianos/govendor
     # Look at what is using a package
