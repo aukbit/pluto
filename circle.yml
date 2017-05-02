@@ -12,6 +12,7 @@ machine:
     - sudo rm -rf /usr/local/go
     - sudo tar -C /usr/local -xzf download/${GODIST}
     - go version
+    - echo $GOPATH
 
 dependencies:
   pre:
