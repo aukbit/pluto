@@ -13,8 +13,8 @@ machine:
     - sudo tar -C /usr/local -xzf download/${GODIST}
     - go version
     - echo $GOPATH
-    - echo $PWD
-    - ls $PWD/pluto
+    - export GOPATH=$GOPATH:$PWD/pluto
+    - echo $GOPATH
 
 dependencies:
   pre:
