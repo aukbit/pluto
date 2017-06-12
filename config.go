@@ -15,7 +15,6 @@ type Config struct {
 	ID          string
 	Name        string
 	Description string
-	Version     string
 	Servers     map[string]*server.Server
 	Clients     map[string]*client.Client
 	clientsCh   chan *client.Client
@@ -32,7 +31,6 @@ func newConfig() Config {
 	return Config{
 		ID:         common.RandID("plt_", 6),
 		Name:       defaultName,
-		Version:    defaultVersion,
 		Servers:    make(map[string]*server.Server),
 		Clients:    make(map[string]*client.Client),
 		clientsCh:  make(chan *client.Client, 100),

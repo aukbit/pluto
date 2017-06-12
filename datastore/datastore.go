@@ -14,8 +14,7 @@ import (
 
 const (
 	// DefaultName prefix datastore client name
-	defaultName    = "db"
-	defaultVersion = "1.4.0"
+	defaultName = "db"
 )
 
 type Datastore struct {

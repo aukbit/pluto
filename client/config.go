@@ -13,7 +13,6 @@ type Config struct {
 	ID                      string
 	Name                    string
 	Description             string
-	Version                 string
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format                  string
 	GRPCRegister            func(*grpc.ClientConn) interface{}
@@ -31,7 +30,6 @@ func newConfig() *Config {
 		ID:      common.RandID("clt_", 6),
 		Name:    DefaultName,
 		Format:  defaultFormat,
-		Version: defaultVersion,
 		Timeout: 500 * time.Millisecond,
 	}
 }
