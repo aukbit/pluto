@@ -3,7 +3,7 @@ machine:
     - docker
   environment:
     GODIST: "go1.8.linux-amd64.tar.gz"
-    GOPATH: "${HOME}/.go_workspace:/usr/local/go_workspace:$HOME/.go_project"
+    GOPATH: "${HOME}/.go_workspace:$HOME/.go_project"
     PROJECT_PARENT_PATH: ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
     PROJECT_PATH: ${HOME}/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
   pre:

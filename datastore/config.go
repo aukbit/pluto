@@ -9,7 +9,6 @@ import (
 type Config struct {
 	ID        string
 	Name      string
-	Version   string
 	driver    string
 	Cassandra *gocql.ClusterConfig
 	MongoDB   *mgo.DialInfo
@@ -17,8 +16,7 @@ type Config struct {
 
 func newConfig() *Config {
 	return &Config{
-		ID:      common.RandID("db_", 6),
-		Name:    defaultName,
-		Version: defaultVersion,
+		ID:   common.RandID("db_", 6),
+		Name: defaultName,
 	}
 }

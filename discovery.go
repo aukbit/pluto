@@ -13,7 +13,7 @@ func (s *Service) register() error {
 		// define service
 		dse := discovery.Service{
 			Name: s.cfg.Name,
-			Tags: []string{s.cfg.ID, s.cfg.Version},
+			Tags: []string{s.cfg.ID},
 		}
 		// define check
 		dck := discovery.Check{

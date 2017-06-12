@@ -51,7 +51,7 @@ func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*p
 	if err != nil {
 		return &pba.Token{}, err
 	}
-	token, err := jwt.NewToken(cre.Email, pk)
+	token, err := jwt.NewToken(cre.Email, 3650, pk)
 	if err != nil {
 		return &pba.Token{}, err
 	}

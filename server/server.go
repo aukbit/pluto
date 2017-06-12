@@ -24,8 +24,7 @@ import (
 
 const (
 	// DefaultName server prefix name
-	DefaultName    = "server"
-	defaultVersion = "1.4.0"
+	DefaultName = "server"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -298,7 +297,7 @@ func (s *Server) register() error {
 			Name:    s.cfg.Name,
 			Address: common.IPaddress(),
 			Port:    s.cfg.Port(),
-			Tags:    []string{s.cfg.ID, s.cfg.Version},
+			Tags:    []string{s.cfg.ID},
 		}
 		// define check
 		dck := discovery.Check{

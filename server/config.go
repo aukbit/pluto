@@ -17,7 +17,6 @@ type Config struct {
 	ID                       string
 	Name                     string
 	Description              string
-	Version                  string
 	Addr                     string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format                   string
 	Mux                      *router.Router
@@ -39,11 +38,10 @@ var (
 
 func newConfig() *Config {
 	return &Config{
-		ID:      common.RandID("srv_", 6),
-		Name:    DefaultName,
-		Addr:    defaultAddr,
-		Format:  defaultFormat,
-		Version: defaultVersion,
+		ID:     common.RandID("srv_", 6),
+		Name:   DefaultName,
+		Addr:   defaultAddr,
+		Format: defaultFormat,
 	}
 }
 
