@@ -1,0 +1,338 @@
+Version 0.1.0
+ - fix error
+ - remove version
+ - make token expiration as parameter
+ - Merge branch 'release-1.4' into develop
+ - bumped version number to 1.4.0
+ - circleci project path
+ - circleci rsync
+ - circleci run govendor inside .go_project
+ - circleci override dependency to use govendor
+ - circleci remove override dependency
+ - circleci copy project to gopath
+ - circleci copy project to gopath
+ - circleci ls go_workspace/src
+ - circleci ls go_workspace
+ - circleci add existing gopath to vendor
+ - circleci add environment gopath
+ - circleci add local repo to gopath
+ - circleci ls /pluto
+ - circleci ls /Users/paulo/Development/go/src/github.com/aukbit/pluto
+ - circleci print
+ - circleci print /Users/paulo/Development/go/src/github.com/aukbit/pluto
+ - circleci print
+ - update circle ci
+ - update circle ci
+ - add vendor folder using govendor tool
+ - Merge branch 'release-1.3.3' into develop
+ - bumped version number to 1.3.3
+ - do not log client close
+ - Merge branch 'release-1.3.2' into develop
+ - bumped version number to 1.3.2
+ - do not log if health requests
+ - Merge branch 'release-1.3.1' into develop
+ - bumped version number to 1.3.1
+ - stream logger interceptor added
+ - Merge branch 'release-1.3.0' into develop
+ - bumped version number to 1.3.0
+ - add context to stream server via interceptor
+ - Merge branch 'release-1.2.2' into develop
+ - bumped version number to 1.2.2
+ - router golang.org/x/net/context
+ - Merge branch 'release-1.2.1' into develop
+ - bumped version number to 1.2.1
+ - router key context
+ - Merge branch 'release-1.2.0' into develop
+ - bumped version number to 1.2.0
+ - set hookfunc to return error
+ - make logger available in context for hook after start fn
+ - make pluto service available in context for hook after start fn
+ - Merge branch 'release-1.1.0' into develop
+ - bumped version number to 1.1.0
+ - review minor improvements
+ - accessible name service/server/client
+ - Merge branch 'master' into develop
+ - Merge branch 'release-1.0.1'
+ - bumped version number to 1.0.1
+ - remove note from readme
+ - Merge branch 'release-1.0.0' into develop
+ - Merge branch 'release-1.0.0'
+ - bumped version number to 1.0.0
+ - Merge branch 'develop'
+ - update readme
+ - Merge branch 'develop'
+ - Merge branch 'new-client' into develop
+ - update readme
+ - review interceptor and middleware
+ - refactor datastore to support mongodb
+ - refactor datastore
+ - refactor datastore
+ - remove commented test
+ - refactor client remove load balancer
+ - add fibo numbers to timeouts
+ - Merge branch 'develop'
+ - waitUntilStopOrSig sleep 50ms
+ - Merge branch 'develop'
+ - remove pulse msg
+ - close #2
+ - Merge branch 'develop'
+ - check handler method when finding match
+ - Merge branch 'develop'
+ - decrease time
+ - closes #1
+ - Merge branch 'develop'
+ - handle error in views
+ - script language
+ - Merge branch 'develop'
+ - readme features
+ - Merge branch 'develop'
+ - refactor datastore options
+ - hello world example
+ - reply TestReply
+ - Merge branch 'develop'
+ - refactor server options
+ - refactor logger
+ - refactor client options
+ - Merge branch 'develop'
+ - remove flag -u
+ - add flag -u
+ - add examples filter user
+ - rename examples package names
+ - Merge branch 'develop'
+ - run all tests on circle ci
+ - add readme books
+ - update test ports
+ - change ports in examples
+ - add health addr option
+ - Merge branch 'develop'
+ - check go version before install go1.8
+ - refactor service config to options
+ - examples user run tests
+ - Merge branch 'develop'
+ - add certtificate for tests
+ - change package web to main
+ - change test name
+ - test https example
+ - examples compile proto files
+ - Merge branch 'develop'
+ - add logger
+ - add logger to connector
+ - cicle ci status in readme.md
+ - descrive keyspaces
+ - add keyspace default
+ - Merge branch 'develop'
+ - remove build from ircle.yml
+ - update circle.yml
+ - update circle.yml
+ - remove zap logger
+ - remove zap logger
+ - remove zap logger
+ - change github.com/uber/zap to go.uber.org/zap
+ - circle.yml override dependencies
+ - circle.yml override dependencies
+ - circle.yml override dependencies
+ - circle.yml override dependencies
+ - circle.yml override dependencies
+ - circle.yml override dependencies
+ - update circle.yml
+ - update circle.yml
+ - update circle.yml
+ - update circle.yml
+ - Merge branch 'develop'
+ - update readme
+ - add continuos integration set up for circleci
+ - update readme
+ - Merge branch 'develop'
+ - Merge branch 'master' into develop
+ - update readme
+ - Merge branch 'develop'
+ - update readme
+ - Merge branch 'develop' of https://github.com/aukbit/pluto into develop
+ - benchmark router
+ - router setContext
+ - readme update
+ - Merge branch 'develop'
+ - rename repo bitbucket.org to github.com
+ - Merge branch 'develop'
+ - Merge branch 'master' into develop
+ - router tests
+ - valid paths
+ - valid paths
+ - valid paths
+ - router valid paths
+ - remove data file from router
+ - start servers or clients with retry on error
+ - discovery check interval
+ - hooks add looger to context
+ - add hook to run after service starts
+ - add service name as suffix of health_server
+ - metadata initialization resolved
+ - Merge branch 'PLTO-19-effective-unit-tests' into develop
+ - update discovery config func
+ - Refactor consul tests
+ - Refactor consul tests
+ - Refactor consul status
+ - Refactor consul catalog services
+ - Refactor consul tests
+ - Refactor consul agent checks
+ - Refactor consul agent services
+ - Refactor consul agent services
+ - Refactor consul agent services
+ - Refactor consul agent services
+ - Refactor consul node
+ - Merge branch 'PLTO-18-load-balancer' into develop
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - Merge branch 'PLTO-18-load-balancer' into develop
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - PLTO-18-load-balancer
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - Merge branch 'develop' into PLTO-17-health-check
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-17-health-check' into develop
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - PLTO-17-health-check
+ - Merge branch 'PLTO-16-registry' into develop
+ - PLTO-16-registry
+ - Merge branch 'PLTO-16-registry' into develop
+ - PLTO-16-registry
+ - Merge branch 'PLTO-16-registry' into develop
+ - PLTO-16-registry
+ - PLTO-16-registryPLTO-16-registry
+ - PLTO-16-registry
+ - Merge branch 'PLTO-16-registry' into develop
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - PLTO-16-registry
+ - Merge branch 'PLTO-15-default-client-struct' into develop
+ - PLTO-15-default-client-struct
+ - Merge branch 'PLTO-15-default-client-struct' into develop
+ - PLTO-15-default-client-struct
+ - Merge branch 'PLTO-15-default-client-struct' into develop
+ - PLTO-15-default-client-struct
+ - Merge branch 'PLTO-14-correlation-ids' into develop
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - PLTO-14-correlation-ids
+ - Merge branch 'PLTO-13-authentication' into develop
+ - PLTO-13-authentication
+ - PLTO-13-authentication
+ - PLTO-13-authentication
+ - PLTO-13-authentication
+ - Merge branch 'PLTO-12-structered-log' into develop
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - PLTO-12-structered-log
+ - Merge branch 'PLTO-11-refactor-linter' into PLTO-12-structered-log
+ - PLTO-11-refactor-linter
+ - PLTO-11-refactor-linter
+ - PLTO-11-refactor-linter
+ - Merge branch 'PLTO-10-refactor-interfaces' into develop
+ - PLTO-10-refactor-interfaces
+ - Merge branch 'PLTO-10-refactor-interfaces' into develop
+ - PLTO-10-refactor-interfaces
+ - Merge branch 'PLTO-10-refactor-interfaces' into develop
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - PLTO-10-refactor-interfaces
+ - Merge branch 'PLTO-9-https' into develop
+ - PLTO-9-https
+ - PLTO-9-https
+ - PLTO-9-https
+ - Merge branch 'PLTO-8-delete-unknown-id' into develop
+ - PLTO-8-delete-unknown-id
+ - Merge branch 'PLTO-7-flags-in-examples' into develop
+ - PLTO-7-flag-in-examples
+ - Merge branch 'PLTO-6-refactor-imports' into develop
+ - PLTO-6-refactor-imports
+ - spelling errors
+ - Merge branch 'PLTO-5-connect-db' into develop
+ - PLTO-5-connect-db
+ - PLTO-5-connect-db
+ - PLTO-5-connect-db
+ - PLTO-5-connect-db
+ - PLTO-5-connect-db
+ - PLTO-5-connect-db
+ - Merge branch 'PLTO-3-client-interface' into develop
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - Merge branch 'PLTO-4-grpc-server' into PLTO-3-client-interface
+ - PLTO-4-grpc-server
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - PLTO-3-client-interface
+ - Readme
+ - Initial commit
+
