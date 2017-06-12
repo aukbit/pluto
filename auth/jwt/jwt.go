@@ -60,7 +60,7 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 }
 
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(identifier string, pk *rsa.PrivateKey) (string, error) {
+func NewToken(identifier string, expiration int64, pk *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
@@ -68,7 +68,7 @@ func NewToken(identifier string, pk *rsa.PrivateKey) (string, error) {
 	payload := &jws.ClaimSet{
 		Iss: identifier,
 		Aud: "",
-		Exp: 3610,
+		Exp: expiration,
 		Iat: 10,
 	}
 	token, err := jws.Encode(header, payload, pk)
