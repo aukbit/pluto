@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aukbit/pluto/auth/jws"
 )
@@ -60,16 +61,17 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 }
 
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(identifier string, expiration int64, pk *rsa.PrivateKey) (string, error) {
+func NewToken(identifier, target, scope string, expiration int64, pk *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
 	}
 	payload := &jws.ClaimSet{
-		Iss: identifier,
-		Aud: "",
-		Exp: expiration,
-		Iat: 10,
+		Iss:   identifier,
+		Aud:   target,
+		Scope: scope,
+		Exp:   time.Now().Unix() + expiration,
+		Iat:   time.Now().Unix(),
 	}
 	token, err := jws.Encode(header, payload, pk)
 	if err != nil {
