@@ -13,7 +13,7 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token, err := NewToken("identifier", "bearer", "", 3650, pk)
+	token, err := NewToken("identifier", "bearer", "users jobs", 3650, pk)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,5 +33,20 @@ func TestToken(t *testing.T) {
 	err = Verify(token, pubk)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	i := GetIdentifier(token)
+	if i != "identifier" {
+		t.Fatal("invalid identifier")
+	}
+
+	a := GetAudience(token)
+	if a != "bearer" {
+		t.Fatal("invalid audience")
+	}
+
+	s := GetScope(token)
+	if s != "users jobs" {
+		t.Fatal("invalid scope")
 	}
 }
