@@ -1,3 +1,9 @@
+Version 1.7.0:
+ - fix error - test get identifier
+ - fix error - veirfy token expiration key and expiration only
+ - verify token expiration and audience in verify func
+ - Merge branch release-1.6.0
+
 Version 1.6.0:
  - make scope and target available on token
  - Merge branch release-1.5.1
