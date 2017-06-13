@@ -19,8 +19,9 @@ var (
 )
 
 var (
-	ErrExpiredToken    = errors.New("token has expired")
-	ErrInvalidAudience = errors.New("token has invalid audience")
+	ErrExpiredToken      = errors.New("token has expired")
+	ErrInvalidAudience   = errors.New("token has invalid audience")
+	ErrInvalidIdentifier = errors.New("token has invalid identifier")
 )
 
 // LoadPublicKey loads a public key from PEM encoded data.
@@ -88,8 +89,8 @@ func NewToken(identifier, audience, scope string, expiration int64, pk *rsa.Priv
 
 // Verify tests whether the provided JWT token's signature was produced by the private key
 // associated with the supplied public key.
-// Also verifies if Token as expired and comply with audience
-func Verify(audience, token string, key *rsa.PublicKey) error {
+// Also verifies if Token as expired
+func Verify(token string, key *rsa.PublicKey) error {
 	err := jws.Verify(token, key)
 	if err != nil {
 		return err
@@ -101,15 +102,22 @@ func Verify(audience, token string, key *rsa.PublicKey) error {
 	if time.Now().Unix() > c.Exp {
 		return ErrExpiredToken
 	}
-	if audience != c.Aud {
-		return ErrInvalidAudience
-	}
 	return nil
+}
+
+func GetIdentifier(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Iss
 }
 
 func GetScope(token string) string {
 	c, _ := jws.Decode(token)
 	return c.Scope
+}
+
+func GetAudience(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Aud
 }
 
 // BearerAuth returns the token provided in the request's

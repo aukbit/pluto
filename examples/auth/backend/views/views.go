@@ -64,7 +64,7 @@ func (av *AuthViews) Verify(ctx context.Context, t *pba.Token) (*pba.Verificatio
 	if err != nil {
 		return &pba.Verification{IsValid: false}, err
 	}
-	err = jwt.Verify(t.Audience, t.Jwt, pk)
+	err = jwt.Verify(t.Jwt, pk)
 	if err != nil {
 		return &pba.Verification{IsValid: false}, err
 	}

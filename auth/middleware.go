@@ -42,7 +42,7 @@ func MiddlewareBearerAuth() router.Middleware {
 			}
 			defer c.Close()
 			// make a call to the Auth backend service
-			v, err := i.(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t, Audience: "Bearer"})
+			v, err := i.(pba.AuthServiceClient).Verify(ctx, &pba.Token{Jwt: t})
 			if err != nil {
 				reply.Json(w, r, http.StatusUnauthorized, err.Error())
 				return
