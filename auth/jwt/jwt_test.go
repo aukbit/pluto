@@ -36,7 +36,7 @@ func TestToken(t *testing.T) {
 	}
 
 	i := GetIdentifier(token)
-	if i != "bearer" {
+	if i != "identifier" {
 		t.Fatal("invalid identifier")
 	}
 
