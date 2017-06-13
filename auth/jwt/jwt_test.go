@@ -20,7 +20,7 @@ func TestToken(t *testing.T) {
 
 	assert.Equal(t, true, len(token) > 0)
 
-	err = Verify(token, &pk.PublicKey)
+	err = Verify("bearer", token, &pk.PublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = Verify(token, pubk)
+	err = Verify("bearer", token, pubk)
 	if err != nil {
 		t.Fatal(err)
 	}

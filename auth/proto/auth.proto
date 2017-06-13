@@ -17,6 +17,7 @@ message Credentials {
 // The request/response message containing the jwt data
 message Token {
     string jwt = 1;
+    string audience = 2;
 }
 
 // The response message containing the jwt data

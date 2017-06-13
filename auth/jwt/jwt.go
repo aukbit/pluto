@@ -18,6 +18,11 @@ var (
 	pubKeyPath  = "./keys/auth.rsa.pub"
 )
 
+var (
+	ErrExpiredToken    = errors.New("token has expired")
+	ErrInvalidAudience = errors.New("token has invalid audience")
+)
+
 // LoadPublicKey loads a public key from PEM encoded data.
 func LoadPublicKey(path string) (*rsa.PublicKey, error) {
 	if path == "" {
@@ -61,14 +66,14 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 }
 
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(identifier, target, scope string, expiration int64, pk *rsa.PrivateKey) (string, error) {
+func NewToken(identifier, audience, scope string, expiration int64, pk *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
 	}
 	payload := &jws.ClaimSet{
 		Iss:   identifier,
-		Aud:   target,
+		Aud:   audience,
 		Scope: scope,
 		Exp:   time.Now().Unix() + expiration,
 		Iat:   time.Now().Unix(),
@@ -83,8 +88,28 @@ func NewToken(identifier, target, scope string, expiration int64, pk *rsa.Privat
 
 // Verify tests whether the provided JWT token's signature was produced by the private key
 // associated with the supplied public key.
-func Verify(token string, key *rsa.PublicKey) error {
-	return jws.Verify(token, key)
+// Also verifies if Token as expired and comply with audience
+func Verify(audience, token string, key *rsa.PublicKey) error {
+	err := jws.Verify(token, key)
+	if err != nil {
+		return err
+	}
+	c, err := jws.Decode(token)
+	if err != nil {
+		return err
+	}
+	if time.Now().Unix() > c.Exp {
+		return ErrExpiredToken
+	}
+	if audience != c.Aud {
+		return ErrInvalidAudience
+	}
+	return nil
+}
+
+func GetScope(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Scope
 }
 
 // BearerAuth returns the token provided in the request's
