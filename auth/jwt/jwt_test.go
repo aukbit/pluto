@@ -13,7 +13,7 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token, err := NewToken("identifier", 3650, pk)
+	token, err := NewToken("identifier", "bearer", "", 3650, pk)
 	if err != nil {
 		t.Fatal(err)
 	}
