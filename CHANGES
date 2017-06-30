@@ -1,3 +1,9 @@
+Version 2.0.0:
+ - update vendor
+ - Merge branch 'develop' of github.com:aukbit/pluto into develop
+ - fix error concurrent grpc client connection
+ - Merge branch release-1.7.0
+
 Version 1.7.0:
  - fix error - test get identifier
  - fix error - veirfy token expiration key and expiration only
