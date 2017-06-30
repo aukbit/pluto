@@ -24,7 +24,6 @@ import (
 
 const (
 	defaultName       = "pluto"
-	defaultVersion    = "1.3.3"
 	defaultHealthAddr = ":9090"
 )
 

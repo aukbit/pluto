@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aukbit/pluto/auth/jws"
 )
@@ -15,6 +16,12 @@ import (
 var (
 	privKeyPath = "./keys/auth.rsa"
 	pubKeyPath  = "./keys/auth.rsa.pub"
+)
+
+var (
+	ErrExpiredToken      = errors.New("token has expired")
+	ErrInvalidAudience   = errors.New("token has invalid audience")
+	ErrInvalidIdentifier = errors.New("token has invalid identifier")
 )
 
 // LoadPublicKey loads a public key from PEM encoded data.
@@ -60,16 +67,17 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 }
 
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(identifier string, pk *rsa.PrivateKey) (string, error) {
+func NewToken(identifier, audience, scope string, expiration int64, pk *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
 	}
 	payload := &jws.ClaimSet{
-		Iss: identifier,
-		Aud: "",
-		Exp: 3610,
-		Iat: 10,
+		Iss:   identifier,
+		Aud:   audience,
+		Scope: scope,
+		Exp:   time.Now().Unix() + expiration,
+		Iat:   time.Now().Unix(),
 	}
 	token, err := jws.Encode(header, payload, pk)
 	if err != nil {
@@ -81,8 +89,35 @@ func NewToken(identifier string, pk *rsa.PrivateKey) (string, error) {
 
 // Verify tests whether the provided JWT token's signature was produced by the private key
 // associated with the supplied public key.
+// Also verifies if Token as expired
 func Verify(token string, key *rsa.PublicKey) error {
-	return jws.Verify(token, key)
+	err := jws.Verify(token, key)
+	if err != nil {
+		return err
+	}
+	c, err := jws.Decode(token)
+	if err != nil {
+		return err
+	}
+	if time.Now().Unix() > c.Exp {
+		return ErrExpiredToken
+	}
+	return nil
+}
+
+func GetIdentifier(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Iss
+}
+
+func GetScope(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Scope
+}
+
+func GetAudience(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Aud
 }
 
 // BearerAuth returns the token provided in the request's

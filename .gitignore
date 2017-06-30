@@ -31,3 +31,6 @@ examples/https/letsencrypt/
 # coverage
 *.coverage.out
 *.coverage.html
+
+# version script
+bump-version.sh
