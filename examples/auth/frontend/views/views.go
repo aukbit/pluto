@@ -40,15 +40,15 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call to the backend service
-	token, err := i.(pba.AuthServiceClient).Authenticate(ctx, cred)
+	token, err := c.Stub(conn).(pba.AuthServiceClient).Authenticate(ctx, cred)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusUnauthorized, err.Error())

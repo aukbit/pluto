@@ -33,14 +33,14 @@ func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*p
 		return &pba.Token{}, errClientUserNotAvailable
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		return &pba.Token{}, err
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call to user backend service for credentials verification
 	nCred := &pbu.Credentials{Email: cre.Email, Password: cre.Password}
-	v, err := i.(pbu.UserServiceClient).VerifyUser(ctx, nCred)
+	v, err := c.Stub(conn).(pbu.UserServiceClient).VerifyUser(ctx, nCred)
 	if err != nil {
 		return &pba.Token{}, err
 	}

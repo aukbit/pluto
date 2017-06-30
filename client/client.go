@@ -21,7 +21,6 @@ const (
 // The zero value for Client is a valid configuration.
 type Client struct {
 	cfg    *Config
-	conn   *grpc.ClientConn // grpc connection to communicate with the server
 	health *health.Server
 	logger *zap.Logger // client logger
 }
@@ -68,6 +67,7 @@ func (c *Client) clone() *Client {
 	return &copy
 }
 
+// Init initialize logger and interceptors
 func (c *Client) Init(opts ...Option) {
 	c.applyOptions(opts...)
 	// set logger
@@ -80,7 +80,8 @@ func (c *Client) Init(opts ...Option) {
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
 }
 
-func (c *Client) Dial(opts ...Option) (interface{}, error) {
+// Dial create a gRPC channel to communicate with the server
+func (c *Client) Dial(opts ...Option) (*grpc.ClientConn, error) {
 	c.applyOptions(opts...)
 	// TODO use TLS
 	conn, err := grpc.Dial(
@@ -96,14 +97,17 @@ func (c *Client) Dial(opts ...Option) (interface{}, error) {
 	default:
 		return nil, err
 	}
-	c.conn = conn
-	// register proto client to get a stub to perform RPCs
-	return c.cfg.GRPCRegister(conn), nil
+	return conn, nil
 }
 
-// Close closes grpc client connection
+// Stub to perform RPCs
+func (c *Client) Stub(conn *grpc.ClientConn) interface{} {
+	return c.cfg.GRPCRegister(conn)
+}
+
+// Close not implemented
 func (c *Client) Close() error {
-	return c.conn.Close()
+	return nil
 }
 
 // Name returns client name
@@ -112,15 +116,15 @@ func (c *Client) Name() string {
 }
 
 func (c *Client) healthRPC() {
-	_, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		c.logger.Error("healthRPC", zap.String("err", err.Error()))
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
-	defer c.Close()
+	defer conn.Close()
 
-	h := healthpb.NewHealthClient(c.conn)
+	h := healthpb.NewHealthClient(conn)
 	hcr, err := h.Check(context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
 		c.logger.Error("healthRPC", zap.String("err", err.Error()))

@@ -49,7 +49,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(2 * time.Second))
+	conn, err := c.Dial(client.Timeout(2 * time.Second))
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -57,9 +57,9 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make call
-	user, err := i.(pb.UserServiceClient).CreateUser(ctx, nu)
+	user, err := c.Stub(conn).(pb.UserServiceClient).CreateUser(ctx, nu)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -100,7 +100,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		}
 	}
 	// dial
-	i, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -108,9 +108,9 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).ReadUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).ReadUser(ctx, user)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -160,7 +160,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		)
 	}
 	// dial
-	i, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		return router.NewHandlerErr(
 			err,
@@ -168,9 +168,9 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			logger,
 		)
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).UpdateUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
 		return router.NewHandlerErr(
 			err,
@@ -210,7 +210,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	// dial
-	i, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -218,9 +218,9 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).DeleteUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -250,7 +250,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	// dial
-	i, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -258,9 +258,9 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call the backend service
-	users, err := i.(pb.UserServiceClient).FilterUsers(ctx, filter)
+	users, err := c.Stub(conn).(pb.UserServiceClient).FilterUsers(ctx, filter)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -290,7 +290,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		}
 	}
 	// dial
-	i, err := c.Dial()
+	conn, err := c.Dial()
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -298,9 +298,9 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make call
-	stream, err := i.(pb.UserServiceClient).StreamUsers(context.Background(), filter)
+	stream, err := c.Stub(conn).(pb.UserServiceClient).StreamUsers(context.Background(), filter)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,
@@ -316,8 +316,8 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		}
 		if err != nil {
 			return &router.HandlerErr{
-				Error:   fmt.Errorf("%v.StreamUsers(_) = _, %v", i, err),
-				Message: fmt.Errorf("%v.StreamUsers(_) = _, %v", i, err).Error(),
+				Error:   fmt.Errorf("%v.StreamUsers(_) = _, %v", c.Stub(conn), err),
+				Message: fmt.Errorf("%v.StreamUsers(_) = _, %v", c.Stub(conn), err).Error(),
 				Code:    http.StatusInternalServerError,
 			}
 		}

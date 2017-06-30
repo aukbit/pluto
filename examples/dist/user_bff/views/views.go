@@ -40,15 +40,15 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
-	defer c.Close()
+	defer conn.Close()
 	// make a call the backend service
-	user, err := i.(pb.UserServiceClient).CreateUser(ctx, newUser)
+	user, err := c.Stub(conn).(pb.UserServiceClient).CreateUser(ctx, newUser)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -74,14 +74,15 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).ReadUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).ReadUser(ctx, user)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -113,14 +114,15 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).UpdateUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -146,14 +148,15 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+	defer conn.Close()
 	// make a call the backend service
-	user, err = i.(pb.UserServiceClient).DeleteUser(ctx, user)
+	user, err = c.Stub(conn).(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
@@ -179,14 +182,15 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// dial
-	i, err := c.Dial(client.Timeout(5 * time.Second))
+	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+	defer conn.Close()
 	// make a call the backend service
-	users, err := i.(pb.UserServiceClient).FilterUsers(ctx, filter)
+	users, err := c.Stub(conn).(pb.UserServiceClient).FilterUsers(ctx, filter)
 	if err != nil {
 		log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
