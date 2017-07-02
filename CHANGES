@@ -1,3 +1,8 @@
+Version 2.1.0:
+ - fix error jwt backend example
+ - refactor jwt
+ - Merge branch release-2.0.0
+
 Version 2.0.0:
  - update vendor
  - Merge branch 'develop' of github.com:aukbit/pluto into develop

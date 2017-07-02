@@ -13,12 +13,20 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token, err := NewToken("identifier", "bearer", "users jobs", 3650, pk)
+	cs := &ClaimSet{
+		Identifier: "identifier",
+		Audience:   "bearer",
+		Scope:      "users jobs",
+		Jti:        "123",
+		Principal:  "principal",
+		Expiration: 3650,
+	}
+	token, err := NewToken(cs, pk)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, true, len(token) > 0)
+	assert.Equal(t, true, token != "")
 
 	err = Verify(token, &pk.PublicKey)
 	if err != nil {
@@ -35,18 +43,28 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	i := GetIdentifier(token)
+	i := Identifier(token)
 	if i != "identifier" {
 		t.Fatal("invalid identifier")
 	}
 
-	a := GetAudience(token)
+	a := Audience(token)
 	if a != "bearer" {
 		t.Fatal("invalid audience")
 	}
 
-	s := GetScope(token)
+	s := Scope(token)
 	if s != "users jobs" {
+		t.Fatal("invalid scope")
+	}
+
+	j := Jti(token)
+	if j != "123" {
+		t.Fatal("invalid scope")
+	}
+
+	p := Principal(token)
+	if p != "principal" {
 		t.Fatal("invalid scope")
 	}
 }

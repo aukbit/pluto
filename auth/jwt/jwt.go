@@ -66,29 +66,36 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 	return priv, nil
 }
 
+type ClaimSet struct {
+	Identifier, Audience, Scope, Jti, Principal string
+	Expiration                                  int64
+}
+
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(identifier, audience, scope string, expiration int64, pk *rsa.PrivateKey) (string, error) {
+func NewToken(cs *ClaimSet, pk *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
 	}
 	payload := &jws.ClaimSet{
-		Iss:   identifier,
-		Aud:   audience,
-		Scope: scope,
-		Exp:   time.Now().Unix() + expiration,
+		Iss:   cs.Identifier,
+		Aud:   cs.Audience,
+		Scope: cs.Scope,
+		Exp:   time.Now().Unix() + cs.Expiration,
 		Iat:   time.Now().Unix(),
+		Sub:   cs.Jti,
+		Prn:   cs.Principal,
 	}
-	token, err := jws.Encode(header, payload, pk)
+	t, err := jws.Encode(header, payload, pk)
 	if err != nil {
 		return "", err
 	}
 
-	return token, nil
+	return t, nil
 }
 
-// Verify tests whether the provided JWT token's signature was produced by the private key
-// associated with the supplied public key.
+// Verify tests whether the provided JWT token's signature was produced by the
+// private key associated with the supplied public key.
 // Also verifies if Token as expired
 func Verify(token string, key *rsa.PublicKey) error {
 	err := jws.Verify(token, key)
@@ -105,19 +112,35 @@ func Verify(token string, key *rsa.PublicKey) error {
 	return nil
 }
 
-func GetIdentifier(token string) string {
+// Identifier the "iss" (issuer) claim identifies the principal that issued the JWT.
+func Identifier(token string) string {
 	c, _ := jws.Decode(token)
 	return c.Iss
 }
 
-func GetScope(token string) string {
+// Scope space-delimited list of the permissions the application requests.
+func Scope(token string) string {
 	c, _ := jws.Decode(token)
 	return c.Scope
 }
 
-func GetAudience(token string) string {
+// Audience The "aud" (audience) claim identifies the audience that the JWT is
+// intended for.
+func Audience(token string) string {
 	c, _ := jws.Decode(token)
 	return c.Aud
+}
+
+// Principal The "prn" (principal) claim identifies the subject of the JWT.
+func Principal(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Prn
+}
+
+// Jti The "jti" (JWT ID) claim provides a unique identifier for the JWT.
+func Jti(token string) string {
+	c, _ := jws.Decode(token)
+	return c.Sub
 }
 
 // BearerAuth returns the token provided in the request's
