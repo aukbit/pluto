@@ -51,7 +51,12 @@ func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*p
 	if err != nil {
 		return &pba.Token{}, err
 	}
-	token, err := jwt.NewToken(cre.Email, "bearer", "", 3650, pk)
+	cs := &jwt.ClaimSet{
+		Identifier: cre.Email,
+		Audience:   "bearer",
+		Expiration: 3650,
+	}
+	token, err := jwt.NewToken(cs, pk)
 	if err != nil {
 		return &pba.Token{}, err
 	}
