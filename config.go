@@ -1,8 +1,6 @@
 package pluto
 
 import (
-	"sync"
-
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/client"
@@ -14,7 +12,6 @@ import (
 
 // Config pluto service config
 type Config struct {
-	mu          sync.Mutex // ensures atomic writes; protects the following fields
 	ID          string
 	Name        string
 	Description string

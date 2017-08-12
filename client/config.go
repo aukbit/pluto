@@ -1,7 +1,6 @@
 package client
 
 import (
-	"sync"
 	"time"
 
 	"github.com/aukbit/pluto/common"
@@ -11,7 +10,6 @@ import (
 
 // Config client configuaration options
 type Config struct {
-	mu                      sync.Mutex // ensures atomic writes; protects the following fields
 	ID                      string
 	Name                    string
 	Description             string
@@ -27,8 +25,8 @@ var (
 	defaultFormat = "grpc"
 )
 
-func newConfig() *Config {
-	return &Config{
+func newConfig() Config {
+	return Config{
 		ID:      common.RandID("clt_", 6),
 		Name:    DefaultName,
 		Format:  defaultFormat,

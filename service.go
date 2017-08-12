@@ -33,9 +33,10 @@ var (
 
 // Service representacion of a pluto service
 type Service struct {
+	close chan bool
+
 	mu     sync.Mutex // ensures atomic writes; protects the following fields
 	cfg    Config
-	close  chan bool
 	wg     *sync.WaitGroup
 	health *health.Server
 	logger *zap.Logger
@@ -83,6 +84,8 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 
 // Run starts service
 func (s *Service) Run() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// set logger
 	s.logger = s.logger.With(
 		zap.String("id", s.cfg.ID),
@@ -112,8 +115,8 @@ func (s *Service) Stop() {
 
 // Push allows to start additional options while service is running
 func (s *Service) Push(opts ...Option) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	for _, opt := range opts {
 		opt.apply(s)
 	}
@@ -121,8 +124,8 @@ func (s *Service) Push(opts ...Option) {
 
 // Server returns a server instance by name if initialized in service
 func (s *Service) Server(name string) (srv *server.Server, ok bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	name = common.SafeName(name, server.DefaultName)
 	if srv, ok = s.cfg.Servers[name]; !ok {
 		return
@@ -132,8 +135,8 @@ func (s *Service) Server(name string) (srv *server.Server, ok bool) {
 
 // Client returns a client instance by name if initialized in service
 func (s *Service) Client(name string) (clt *client.Client, ok bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
@@ -143,8 +146,8 @@ func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 
 // Datastore returns the datastore instance in initialize in service
 func (s *Service) Datastore() (*datastore.Datastore, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	if s.cfg.Datastore != nil {
 		return s.cfg.Datastore, nil
 	}
@@ -153,8 +156,8 @@ func (s *Service) Datastore() (*datastore.Datastore, error) {
 
 // Health ...
 func (s *Service) Health() *healthpb.HealthCheckResponse {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
@@ -165,14 +168,14 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 
 // Name returns service name
 func (s *Service) Name() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	return s.cfg.Name
 }
 
 func (s *Service) setHealthServer() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
 	mux := router.New()
@@ -209,8 +212,8 @@ func (s *Service) start() error {
 }
 
 func (s *Service) hookAfterStart() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 	hooks, ok := s.cfg.Hooks["after_start"]
 	if !ok {
 		return nil

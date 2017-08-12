@@ -24,8 +24,6 @@ func (f optionFunc) apply(s *Service) {
 // ID service id
 func ID(id string) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.ID = id
 	})
 }
@@ -33,8 +31,6 @@ func ID(id string) Option {
 // Name service name
 func Name(n string) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Name = common.SafeName(n, defaultName)
 	})
 }
@@ -42,8 +38,6 @@ func Name(n string) Option {
 // Description service description
 func Description(d string) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Description = d
 	})
 }
@@ -51,8 +45,6 @@ func Description(d string) Option {
 // Servers slice of service servers
 func Servers(srv *server.Server) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Servers[srv.Name()] = srv
 	})
 }
@@ -60,8 +52,6 @@ func Servers(srv *server.Server) Option {
 // Clients slice of service clients
 func Clients(clt *client.Client) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Clients[clt.Name()] = clt
 		s.cfg.clientsCh <- clt
 	})
@@ -70,8 +60,6 @@ func Clients(clt *client.Client) Option {
 // Datastore to persist data
 func Datastore(d *datastore.Datastore) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Datastore = d
 	})
 }
@@ -79,8 +67,6 @@ func Datastore(d *datastore.Datastore) Option {
 // Discovery service discoery
 func Discovery(d discovery.Discovery) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Discovery = d
 	})
 }
@@ -88,8 +74,6 @@ func Discovery(d discovery.Discovery) Option {
 // HookAfterStart execute functions after service starts
 func HookAfterStart(fn ...HookFunc) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.Hooks["after_start"] = append(s.cfg.Hooks["after_start"], fn...)
 	})
 }
@@ -105,8 +89,6 @@ func Logger(l *zap.Logger) Option {
 // HealthAddr health server address
 func HealthAddr(a string) Option {
 	return optionFunc(func(s *Service) {
-		s.cfg.mu.Lock()
-		defer s.cfg.mu.Unlock()
 		s.cfg.HealthAddr = a
 	})
 }

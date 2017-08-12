@@ -30,8 +30,10 @@ const (
 // A Server defines parameters for running an HTTP server.
 // The zero value for Server is a valid configuration.
 type Server struct {
-	cfg        *Config
-	close      chan bool
+	close chan bool
+
+	mu         sync.Mutex // ensures atomic writes; protects the following fields
+	cfg        Config
 	wg         *sync.WaitGroup
 	logger     *zap.Logger
 	httpServer *http.Server
@@ -65,27 +67,25 @@ func newServer(opts ...Option) *Server {
 // WithOptions clones the current Client, applies the supplied Options, and
 // returns the resulting Client. It's safe to use concurrently.
 func (s *Server) WithOptions(opts ...Option) *Server {
-	d := s.clone()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for _, opt := range opts {
-		opt.apply(d)
+		opt.apply(s)
 	}
-	return d
-}
-
-// clone creates a shallow copy client
-func (s *Server) clone() *Server {
-	copy := *s
-	return &copy
+	return s
 }
 
 // Run Server
 func (s *Server) Run(opts ...Option) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// set last configs
 	if len(opts) > 0 {
 		for _, opt := range opts {
 			opt.apply(s)
 		}
 	}
+
 	// register at service discovery
 	if err := s.register(); err != nil {
 		return err

@@ -5,7 +5,6 @@ import (
 	"log"
 	"regexp"
 	"strconv"
-	"sync"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -15,7 +14,6 @@ import (
 
 // Config server configuaration options
 type Config struct {
-	mu                       sync.Mutex // ensures atomic writes; protects the following fields
 	ID                       string
 	Name                     string
 	Description              string
@@ -38,8 +36,8 @@ var (
 	defaultFormat = "http"
 )
 
-func newConfig() *Config {
-	return &Config{
+func newConfig() Config {
+	return Config{
 		ID:     common.RandID("srv_", 6),
 		Name:   DefaultName,
 		Addr:   defaultAddr,
@@ -48,7 +46,7 @@ func newConfig() *Config {
 }
 
 // Convert string Addr to int Port
-func (c *Config) Port() int {
+func (c Config) Port() int {
 	// support only numeric
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {

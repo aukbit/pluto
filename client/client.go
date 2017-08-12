@@ -19,7 +19,7 @@ const (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type Client struct {
-	cfg    *Config
+	cfg    Config
 	health *health.Server
 	logger *zap.Logger // client logger
 }
