@@ -97,13 +97,13 @@ func (s *Service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	s.logger.Info("exit")
+	s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops service
 func (s *Service) Stop() {
-	s.logger.Info("stop")
+	s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
 	s.close <- true
 }
 
@@ -176,7 +176,7 @@ func (s *Service) setHealthServer() {
 }
 
 func (s *Service) start() error {
-	s.logger.Info(fmt.Sprintf("%s starting...", s.Name()),
+	s.logger.Info(fmt.Sprintf("%s starting", s.Name()),
 		zap.String("ip4", common.IPaddress()),
 		zap.Int("servers", len(s.cfg.Servers)),
 		zap.Int("clients", len(s.cfg.Clients)))
@@ -192,7 +192,7 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
-	s.logger.Info(fmt.Sprintf("pluto %s started", s.Name()))
+	s.logger.Info(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 

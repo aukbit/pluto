@@ -111,12 +111,11 @@ func (s *Server) Run(opts ...Option) error {
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *Server) Stop() {
-	s.logger.Info(fmt.Sprintf("%s stopping...", s.Name()))
+	s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
 	// set health as not serving
 	s.health.SetServingStatus(s.cfg.ID, 2)
 	// close listener
 	s.close <- true
-	s.logger.Info(fmt.Sprintf("%s stopped", s.Name()))
 }
 
 func (s *Server) Config() *Config {
@@ -172,7 +171,7 @@ func (s *Server) setHTTPServer() {
 }
 
 func (s *Server) start() (err error) {
-	s.logger.Info(fmt.Sprintf("%s starting...", s.Name()))
+	s.logger.Info(fmt.Sprintf("%s starting", s.Name()))
 	var ln net.Listener
 
 	switch s.cfg.Format {

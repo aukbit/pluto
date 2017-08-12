@@ -66,7 +66,7 @@ func (ds *Datastore) Init(opts ...Option) error {
 	}
 	// set logger
 	ds.setLogger()
-	ds.logger.Info("init")
+	ds.logger.Info(fmt.Sprintf("%s initiated", ds.Name()))
 	s, err := ds.NewSession()
 	if err != nil {
 		return err
