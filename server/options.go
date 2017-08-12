@@ -26,6 +26,8 @@ func (f optionFunc) apply(s *Server) {
 // ID server id
 func ID(id string) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.ID = id
 	})
 }
@@ -33,6 +35,8 @@ func ID(id string) Option {
 // Name server name
 func Name(n string) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Name = common.SafeName(n, DefaultName)
 	})
 }
@@ -40,6 +44,8 @@ func Name(n string) Option {
 // Description server description
 func Description(d string) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Description = d
 	})
 }
@@ -47,6 +53,8 @@ func Description(d string) Option {
 // Addr server address
 func Addr(a string) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Addr = a
 	})
 }
@@ -54,6 +62,8 @@ func Addr(a string) Option {
 // Mux server multiplexer
 func Mux(m *router.Router) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Mux = m
 	})
 }
@@ -61,6 +71,8 @@ func Mux(m *router.Router) Option {
 // TLSConfig server multiplexer
 func TLSConfig(certFile, keyFile string) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		cer, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
 			log.Printf("ERROR tls.LoadX509KeyPair %v", err)
@@ -79,6 +91,8 @@ func TLSConfig(certFile, keyFile string) Option {
 // GRPCRegister register client gRPC function
 func GRPCRegister(fn GRPCRegisterServiceFunc) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.GRPCRegister = fn
 		s.cfg.Format = "grpc"
 	})
@@ -87,6 +101,8 @@ func GRPCRegister(fn GRPCRegisterServiceFunc) Option {
 // Middlewares slice with router.Middleware
 func Middlewares(m ...router.Middleware) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Middlewares = append(s.cfg.Middlewares, m...)
 	})
 }
@@ -94,6 +110,8 @@ func Middlewares(m ...router.Middleware) Option {
 // UnaryServerInterceptors slice with grpc.UnaryServerInterceptor
 func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors, i...)
 	})
 }
@@ -101,6 +119,8 @@ func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) Option {
 // StreamServerInterceptors slice with grpc.StreamServerInterceptor
 func StreamServerInterceptors(i ...grpc.StreamServerInterceptor) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors, i...)
 	})
 }
@@ -108,6 +128,8 @@ func StreamServerInterceptors(i ...grpc.StreamServerInterceptor) Option {
 // Discovery service discoery
 func Discovery(d discovery.Discovery) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Discovery = d
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"sync"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -14,6 +15,7 @@ import (
 
 // Config server configuaration options
 type Config struct {
+	mu                       sync.Mutex // ensures atomic writes; protects the following fields
 	ID                       string
 	Name                     string
 	Description              string
