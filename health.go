@@ -47,7 +47,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = db.Health()
 	case "pluto":
-		if n != s.Config().Name {
+		if n != s.Name() {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}
