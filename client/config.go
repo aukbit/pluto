@@ -1,6 +1,7 @@
 package client
 
 import (
+	"sync"
 	"time"
 
 	"github.com/aukbit/pluto/common"
@@ -10,6 +11,7 @@ import (
 
 // Config client configuaration options
 type Config struct {
+	mu                      sync.Mutex // ensures atomic writes; protects the following fields
 	ID                      string
 	Name                    string
 	Description             string

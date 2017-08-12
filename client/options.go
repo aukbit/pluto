@@ -23,6 +23,8 @@ func (f optionFunc) apply(s *Client) {
 // ID client id
 func ID(id string) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.ID = id
 	})
 }
@@ -30,6 +32,8 @@ func ID(id string) Option {
 // Name client name
 func Name(n string) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.Name = common.SafeName(n, DefaultName)
 	})
 }
@@ -37,6 +41,8 @@ func Name(n string) Option {
 // Description client description
 func Description(d string) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.Description = d
 	})
 }
@@ -44,6 +50,8 @@ func Description(d string) Option {
 // Target server address
 func Target(t string) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.Target = t
 	})
 }
@@ -51,6 +59,8 @@ func Target(t string) Option {
 // GRPCRegister register client gRPC function
 func GRPCRegister(fn func(*grpc.ClientConn) interface{}) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.GRPCRegister = fn
 	})
 }
@@ -58,6 +68,8 @@ func GRPCRegister(fn func(*grpc.ClientConn) interface{}) Option {
 // UnaryClientInterceptors ...
 func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, uci...)
 	})
 }
@@ -74,6 +86,8 @@ func Logger(l *zap.Logger) Option {
 // initially. This is valid if and only if WithBlock() is present.
 func Timeout(d time.Duration) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.Timeout = d
 	})
 }
