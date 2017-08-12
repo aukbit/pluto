@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/http/httputil"
 
 	"go.uber.org/zap"
 
@@ -24,9 +26,10 @@ func loggerMiddleware(srv *Server) router.Middleware {
 			case "/_health":
 				break
 			default:
-				l.Info("request",
-					zap.String("method", r.Method),
-					zap.String("url", r.URL.String()))
+				request, _ := httputil.DumpRequest(r, true)
+				l.Info(fmt.Sprintf("%v %v %v %v", srv.Name(), r.Method, r.URL, r.Proto),
+					zap.Any("request", request),
+				)
 			}
 			// also nice to have a logger available in context
 			ctx = context.WithValue(ctx, Key("logger"), l)
