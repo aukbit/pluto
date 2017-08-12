@@ -2,18 +2,14 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/server/router"
 )
-
-var methods = map[string]bool{"PUT": true, "POST": true, "PATCH": true}
 
 // loggerMiddleware Middleware that adds logger instance
 // available in handlers context and logs request
@@ -29,17 +25,12 @@ func loggerMiddleware(srv *Server) router.Middleware {
 			case "/_health":
 				break
 			default:
-				var b zapcore.ObjectMarshaler
-				if _, ok := methods[r.Method]; ok {
-					json.NewDecoder(r.Body).Decode(b)
-				}
 				l.Info(fmt.Sprintf("%v %v %v %v", srv.Name(), r.Method, r.URL, r.Proto),
 					zap.String("method", r.Method),
 					zap.String("url", r.URL.String()),
 					zap.String("proto", r.Proto),
 					zap.String("remote_addr", r.RemoteAddr),
 					zap.Any("header", r.Header),
-					zap.Object("body", b),
 				)
 			}
 			// also nice to have a logger available in context
