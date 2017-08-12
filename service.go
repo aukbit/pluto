@@ -110,11 +110,6 @@ func (s *Service) Stop() {
 	s.close <- true
 }
 
-// // Config service configration options
-// func (s *Service) Config() Config {
-// 	return s.cfg
-// }
-
 // Push allows to start additional options while service is running
 func (s *Service) Push(opts ...Option) {
 	s.mu.Lock()
@@ -189,7 +184,7 @@ func (s *Service) setHealthServer() {
 		server.Mux(mux),
 		server.Logger(s.logger),
 	)
-	s.cfg.Servers[srv.Config().Name] = srv
+	s.cfg.Servers[srv.Name()] = srv
 }
 
 func (s *Service) start() error {
@@ -271,7 +266,7 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Config().Name, err.Error()))
+				s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)

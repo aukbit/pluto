@@ -53,7 +53,7 @@ func Servers(srv *server.Server) Option {
 	return optionFunc(func(s *Service) {
 		s.cfg.mu.Lock()
 		defer s.cfg.mu.Unlock()
-		s.cfg.Servers[srv.Config().Name] = srv
+		s.cfg.Servers[srv.Name()] = srv
 	})
 }
 

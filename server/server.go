@@ -118,10 +118,6 @@ func (s *Server) Stop() {
 	s.close <- true
 }
 
-func (s *Server) Config() *Config {
-	return s.cfg
-}
-
 func (s *Server) Health() *healthpb.HealthCheckResponse {
 	switch s.cfg.Format {
 	case "grpc":
