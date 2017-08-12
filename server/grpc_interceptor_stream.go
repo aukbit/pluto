@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/aukbit/pluto/common"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -68,7 +70,7 @@ func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 		e, ctx := common.GetOrCreateEventID(ctx)
 		// create new log instance with eventID
 		l := s.logger.With(zap.String("event", e))
-		l.Info("request", zap.String("method", info.FullMethod))
+		l.Info(fmt.Sprintf("%s request %s", s.Name(), info.FullMethod), zap.String("method", info.FullMethod))
 		// also nice to have a logger available in context
 		ctx = context.WithValue(ctx, Key("logger"), l)
 		// wrap context

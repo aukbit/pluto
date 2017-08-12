@@ -2,6 +2,8 @@ package client
 
 // loggerUnaryClientInterceptor ...
 import (
+	"fmt"
+
 	"github.com/aukbit/pluto/common"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
@@ -17,7 +19,7 @@ func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 		l := clt.logger.With(
 			zap.String("event", e),
 		)
-		l.Info("dial",
+		l.Info(fmt.Sprintf("%s call %s", clt.Name(), method),
 			zap.String("method", method),
 		)
 		return invoker(ctx, method, req, reply, cc, opts...)
