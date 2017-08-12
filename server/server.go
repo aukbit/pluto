@@ -105,17 +105,18 @@ func (s *Server) Run(opts ...Option) error {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// wait for go routines to finish
 	s.wg.Wait()
-	s.logger.Info("exit")
+	s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *Server) Stop() {
-	s.logger.Info("stop")
+	s.logger.Info(fmt.Sprintf("%s stopping...", s.Name()))
 	// set health as not serving
 	s.health.SetServingStatus(s.cfg.ID, 2)
 	// close listener
 	s.close <- true
+	s.logger.Info(fmt.Sprintf("%s stopped", s.Name()))
 }
 
 func (s *Server) Config() *Config {
@@ -171,7 +172,7 @@ func (s *Server) setHTTPServer() {
 }
 
 func (s *Server) start() (err error) {
-	s.logger.Info("start")
+	s.logger.Info(fmt.Sprintf("%s starting...", s.Name()))
 	var ln net.Listener
 
 	switch s.cfg.Format {
@@ -205,6 +206,7 @@ func (s *Server) start() (err error) {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStop(ln)
+	s.logger.Info(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 

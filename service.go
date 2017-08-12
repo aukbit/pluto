@@ -176,11 +176,10 @@ func (s *Service) setHealthServer() {
 }
 
 func (s *Service) start() error {
-	s.logger.Info("start",
+	s.logger.Info(fmt.Sprintf("%s starting...", s.Name()),
 		zap.String("ip4", common.IPaddress()),
 		zap.Int("servers", len(s.cfg.Servers)),
 		zap.Int("clients", len(s.cfg.Clients)))
-
 	// connect to db
 	err := s.initDatastore()
 	if err != nil {
@@ -193,6 +192,7 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
+	s.logger.Info(fmt.Sprintf("pluto %s started", s.Name()))
 	return nil
 }
 
