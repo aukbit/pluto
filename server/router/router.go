@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"go.uber.org/zap"
-
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/reply"
@@ -35,15 +33,15 @@ type HandlerErr struct {
 	Error   error
 	Message string
 	Code    int
-	logger  *zap.Logger
+	// logger  *zap.Logger
 }
 
-func NewHandlerErr(err error, code int, l *zap.Logger) *HandlerErr {
+func NewHandlerErr(err error, code int, l interface{}) *HandlerErr {
 	return &HandlerErr{
 		Error:   err,
 		Message: err.Error(),
 		Code:    code,
-		logger:  l,
+		// logger:  l,
 	}
 }
 
@@ -54,9 +52,9 @@ type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
 		// initialize logger if nil
-		if e.logger != nil {
-			e.logger.Error(e.Message)
-		}
+		// if e.logger != nil {
+		// 	e.logger.Error(e.Message)
+		// }
 		http.Error(w, e.Message, e.Code)
 	}
 }

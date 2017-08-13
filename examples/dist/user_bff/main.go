@@ -14,13 +14,22 @@ import (
 	"github.com/aukbit/pluto/server/router"
 )
 
-var httpPort = flag.String("http_port", ":8080", "backend for frontend http port")
-var name = flag.String("name", "user_bff", "service name instance")
-var target = flag.String("target_name", "user_backend:65060", "target server name instance")
-var consulAddr = flag.String("consul_addr", "192.168.99.100:8500", "consul agent address")
+var (
+	httpPort   string
+	name       string
+	target     string
+	consulAddr string
+)
+
+func init() {
+	flag.StringVar(&httpPort, "http_port", ":8080", "backend for frontend http port")
+	flag.StringVar(&name, "name", "user_bff", "service name instance")
+	flag.StringVar(&target, "target_name", "user_backend:65060", "target server name instance")
+	flag.StringVar(&consulAddr, "consul_addr", "192.168.99.100:8500", "consul agent address")
+	flag.Parse()
+}
 
 func main() {
-	flag.Parse()
 	// run frontend service
 	if err := service(); err != nil {
 		log.Fatal(err)
@@ -39,21 +48,21 @@ func service() error {
 
 	// Define http server
 	srv := server.New(
-		server.Name(*name),
-		server.Addr(*httpPort),
+		server.Name(name),
+		server.Addr(httpPort),
 		server.Mux(mux))
 
 	// Define grpc Client
 	clt := client.New(
-		client.Name(*name),
+		client.Name(name),
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.Target(*target))
+		client.Target(target))
 
 	// Define Pluto service
 	s := pluto.New(
-		pluto.Name(*name),
+		pluto.Name(name),
 		pluto.Description("User backend for frontend service is responsible to parse all json data from http requests"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),

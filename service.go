@@ -3,14 +3,11 @@ package pluto
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/aukbit/fibonacci"
 	"github.com/aukbit/pluto/client"
@@ -33,13 +30,11 @@ var (
 
 // Service representacion of a pluto service
 type Service struct {
-	close chan bool
-
-	mu     sync.Mutex // ensures atomic writes; protects the following fields
+	close  chan bool
 	cfg    Config
 	wg     *sync.WaitGroup
 	health *health.Server
-	logger *zap.Logger
+	// logger *zap.Logger
 }
 
 // Key pluto context keys
@@ -57,7 +52,7 @@ func newService(opts ...Option) *Service {
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
-	s.logger, _ = zap.NewProduction()
+	// s.logger, _ = zap.NewProduction()
 	if len(opts) > 0 {
 		s = s.WithOptions(opts...)
 	}
@@ -67,30 +62,19 @@ func newService(opts ...Option) *Service {
 // WithOptions clones the current Service, applies the supplied Options, and
 // returns the resulting Service. It's safe to use concurrently.
 func (s *Service) WithOptions(opts ...Option) *Service {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	// c := s.clone()
 	for _, opt := range opts {
 		opt.apply(s)
 	}
 	return s
 }
 
-// // clone creates a shallow copy service
-// func (s *Service) clone() *Service {
-// 	copy := *s
-// 	return &copy
-// }
-
 // Run starts service
 func (s *Service) Run() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	// set logger
-	s.logger = s.logger.With(
-		zap.String("id", s.cfg.ID),
-		zap.String("name", s.cfg.Name),
-	)
+	// s.logger = s.logger.With(
+	// 	zap.String("id", s.cfg.ID),
+	// 	zap.String("name", s.cfg.Name),
+	// )
 	// set health server
 	s.setHealthServer()
 	// start service
@@ -103,20 +87,18 @@ func (s *Service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
+	// s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops service
 func (s *Service) Stop() {
-	s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
+	// s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
 	s.close <- true
 }
 
 // Push allows to start additional options while service is running
 func (s *Service) Push(opts ...Option) {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	for _, opt := range opts {
 		opt.apply(s)
 	}
@@ -124,8 +106,6 @@ func (s *Service) Push(opts ...Option) {
 
 // Server returns a server instance by name if initialized in service
 func (s *Service) Server(name string) (srv *server.Server, ok bool) {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	name = common.SafeName(name, server.DefaultName)
 	if srv, ok = s.cfg.Servers[name]; !ok {
 		return
@@ -135,8 +115,6 @@ func (s *Service) Server(name string) (srv *server.Server, ok bool) {
 
 // Client returns a client instance by name if initialized in service
 func (s *Service) Client(name string) (clt *client.Client, ok bool) {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	name = common.SafeName(name, client.DefaultName)
 	if clt, ok = s.cfg.Clients[name]; !ok {
 		return
@@ -146,8 +124,6 @@ func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 
 // Datastore returns the datastore instance in initialize in service
 func (s *Service) Datastore() (*datastore.Datastore, error) {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	if s.cfg.Datastore != nil {
 		return s.cfg.Datastore, nil
 	}
@@ -156,26 +132,20 @@ func (s *Service) Datastore() (*datastore.Datastore, error) {
 
 // Health ...
 func (s *Service) Health() *healthpb.HealthCheckResponse {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		s.logger.Error("Health", zap.String("err", err.Error()))
+		// s.logger.Error("Health", zap.String("err", err.Error()))
 	}
 	return hcr
 }
 
 // Name returns service name
 func (s *Service) Name() string {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	return s.cfg.Name
 }
 
 func (s *Service) setHealthServer() {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
 	mux := router.New()
@@ -185,16 +155,16 @@ func (s *Service) setHealthServer() {
 		server.Name(s.cfg.Name+"_health"),
 		server.Addr(s.cfg.HealthAddr),
 		server.Mux(mux),
-		server.Logger(s.logger),
+		// server.Logger(s.logger),
 	)
 	s.cfg.Servers[srv.Name()] = srv
 }
 
 func (s *Service) start() error {
-	s.logger.Info(fmt.Sprintf("%s starting", s.Name()),
-		zap.String("ip4", common.IPaddress()),
-		zap.Int("servers", len(s.cfg.Servers)),
-		zap.Int("clients", len(s.cfg.Clients)))
+	// s.logger.Info(fmt.Sprintf("%s starting", s.Name()),
+	// 	zap.String("ip4", common.IPaddress()),
+	// 	zap.Int("servers", len(s.cfg.Servers)),
+	// 	zap.Int("clients", len(s.cfg.Clients)))
 	// connect to db
 	err := s.initDatastore()
 	if err != nil {
@@ -207,20 +177,18 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
-	s.logger.Info(fmt.Sprintf("%s started", s.Name()))
+	// s.logger.Info(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
 func (s *Service) hookAfterStart() error {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	hooks, ok := s.cfg.Hooks["after_start"]
 	if !ok {
 		return nil
 	}
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, Key("pluto"), s)
-	ctx = context.WithValue(ctx, Key("logger"), s.logger)
+	// ctx = context.WithValue(ctx, Key("logger"), s.logger)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
 			return err
@@ -235,7 +203,7 @@ func (s *Service) initDatastore() error {
 		return nil
 	}
 	err = db.Init(
-		datastore.Logger(s.logger),
+	// datastore.Logger(s.logger),
 	)
 	if err != nil {
 		return err
@@ -264,12 +232,12 @@ func (s *Service) startServers() {
 						datastoreContextStreamServerInterceptor(s),
 						serviceContextStreamServerInterceptore(s),
 					),
-					server.Logger(s.logger),
+					// server.Logger(s.logger),
 				)
 				if err == nil {
 					return
 				}
-				s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
+				// s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)
@@ -296,7 +264,7 @@ func (s *Service) startClients() {
 
 func (s *Service) startClient(clt *client.Client) {
 	go func(clt *client.Client) {
-		clt.Init(client.Logger(s.logger))
+		// clt.Init(client.Logger(s.logger))
 	}(clt)
 }
 
@@ -317,10 +285,10 @@ outer:
 			s.closeClients()
 			s.stopServers()
 			break outer
-		case sig := <-sigch:
+		case <-sigch:
 			// Waits for signal to stop
-			s.logger.Info("signal received",
-				zap.String("signal", sig.String()))
+			// s.logger.Info("signal received",
+			// 	zap.String("signal", sig.String()))
 			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()

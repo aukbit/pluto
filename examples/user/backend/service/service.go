@@ -9,39 +9,44 @@ import (
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/server"
 	"github.com/gocql/gocql"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
-var db_addr = flag.String("db_addr", "127.0.0.1", "cassandra address")
-var grpc_port = flag.String("grpc_port", ":65087", "grpc listening port")
+var (
+	dbAddr   string
+	grpcPort string
+)
+
+func init() {
+	flag.StringVar(&dbAddr, "db_addr", "127.0.0.1", "cassandra address")
+	flag.StringVar(&grpcPort, "grpc_port", ":65087", "grpc listening port")
+	flag.Parse()
+}
 
 func Run() error {
-	flag.Parse()
-
 	// Define Pluto Server
 	srv := server.New(
-		server.Addr(*grpc_port),
+		server.Addr(grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &backend.UserViews{})
 		}),
 	)
 	// db connection
-	cfg := gocql.NewCluster(*db_addr)
+	cfg := gocql.NewCluster(dbAddr)
 	cfg.Keyspace = "examples_user_backend"
 	cfg.ProtoVersion = 3
 	db := datastore.New(
 		datastore.Cassandra(cfg),
 	)
 	// logger
-	logger, _ := zap.NewDevelopment()
+	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
-		pluto.Logger(logger),
+		// pluto.Logger(logger),
 		pluto.HealthAddr(":9096"),
 	)
 

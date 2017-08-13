@@ -7,7 +7,6 @@ import (
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/gocql/gocql"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -18,8 +17,8 @@ const (
 )
 
 type Datastore struct {
-	cfg    *Config
-	logger *zap.Logger
+	cfg *Config
+	// logger *zap.Logger
 	health *health.Server
 }
 
@@ -66,7 +65,7 @@ func (ds *Datastore) Init(opts ...Option) error {
 	}
 	// set logger
 	ds.setLogger()
-	ds.logger.Info(fmt.Sprintf("%s initiated", ds.Name()))
+	// ds.logger.Info(fmt.Sprintf("%s initiated", ds.Name()))
 	s, err := ds.NewSession()
 	if err != nil {
 		return err
@@ -120,7 +119,7 @@ func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: ds.cfg.ID},
 	)
 	if err != nil {
-		ds.logger.Error("Health", zap.String("err", err.Error()))
+		// ds.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{
 			Status: healthpb.HealthCheckResponse_NOT_SERVING,
 		}
@@ -129,11 +128,11 @@ func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
 }
 
 func (ds *Datastore) setLogger() {
-	ds.logger = ds.logger.With(
-		zap.String("id", ds.cfg.ID),
-		zap.String("name", ds.cfg.Name),
-		zap.String("driver", ds.cfg.driver),
-	)
+	// ds.logger = ds.logger.With(
+	// 	zap.String("id", ds.cfg.ID),
+	// 	zap.String("name", ds.cfg.Name),
+	// 	zap.String("driver", ds.cfg.driver),
+	// )
 }
 
 // Name returns datastore name
