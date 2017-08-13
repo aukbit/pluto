@@ -1,3 +1,8 @@
+Version 3.1.1:
+ - update vendor
+ - refactor router context
+ - Merge branch release-3.0.0
+
 Version 3.0.0:
  - remove logger comment
  - update vendor
