@@ -38,3 +38,4 @@ test:
     # - go test -v ./...
     # go to project directory && test your repository only
     - cd ${PROJECT_PATH} && govendor test -v +local
+    - cd ${PROJECT_PATH} && govendor test -v -race +local
