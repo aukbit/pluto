@@ -276,7 +276,7 @@ func (s *Service) startClients() {
 
 func (s *Service) startClient(clt *client.Client) {
 	go func(clt *client.Client) {
-		// clt.Init(client.Logger(s.logger))
+		clt.Init(client.Logger(s.logger))
 	}(clt)
 }
 

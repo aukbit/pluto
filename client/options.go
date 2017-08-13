@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/aukbit/pluto/common"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
 
@@ -62,12 +63,11 @@ func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 }
 
 // Logger sets a shallow copy from an input logger
-// func Logger(l *zap.Logger) Option {
-// 	return optionFunc(func(c *Client) {
-// 		copy := *l
-// 		c.logger = &copy
-// 	})
-// }
+func Logger(l zerolog.Logger) Option {
+	return optionFunc(func(c *Client) {
+		c.logger = l
+	})
+}
 
 // Timeout returns an Option that configures a timeout for dialing a ClientConn
 // initially. This is valid if and only if WithBlock() is present.
