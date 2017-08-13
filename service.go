@@ -192,7 +192,6 @@ func (s *Service) hookAfterStart() error {
 	}
 	ctx := context.Background()
 	ctx = s.WithContext(ctx)
-	// ctx = context.WithValue(ctx, Key("logger"), s.logger)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
 			return err
