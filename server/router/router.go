@@ -6,11 +6,10 @@ import (
 	"regexp"
 	"strings"
 
-	"go.uber.org/zap"
-
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/reply"
+	"github.com/rs/zerolog/log"
 )
 
 //
@@ -35,15 +34,13 @@ type HandlerErr struct {
 	Error   error
 	Message string
 	Code    int
-	logger  *zap.Logger
 }
 
-func NewHandlerErr(err error, code int, l *zap.Logger) *HandlerErr {
+func NewHandlerErr(err error, code int) *HandlerErr {
 	return &HandlerErr{
 		Error:   err,
 		Message: err.Error(),
 		Code:    code,
-		logger:  l,
 	}
 }
 
@@ -53,10 +50,7 @@ type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
 
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
-		// initialize logger if nil
-		if e.logger != nil {
-			e.logger.Error(e.Message)
-		}
+		log.Ctx(r.Context()).Error().Msg(e.Message)
 		http.Error(w, e.Message, e.Code)
 	}
 }
@@ -65,8 +59,8 @@ func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // KEY
 //
 
-// Key router context keys
-type Key string
+// contextKey router context keys
+type contextKey string
 
 //
 // ROUTER
@@ -333,9 +327,14 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 		return ctx
 	}
 	for i, value := range values {
-		ctx = context.WithValue(ctx, Key(vars[i]), value)
+		ctx = context.WithValue(ctx, contextKey(vars[i]), value)
 	}
 	return ctx
+}
+
+// FromContext returns router key value from a context
+func FromContext(ctx context.Context, key string) string {
+	return ctx.Value(contextKey(key)).(string)
 }
 
 // Middleware wraps an http.HandlerFunc with additional

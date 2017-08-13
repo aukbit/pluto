@@ -81,16 +81,28 @@
 			"revisionTime": "2017-02-20T21:33:09Z"
 		},
 		{
+			"checksumSHA1": "qKGkyo5ZwSs2SH8w0FozF3Tldq8=",
+			"path": "github.com/rs/zerolog",
+			"revision": "2ed2f2c974489526d10329dae76d0f175684109a",
+			"revisionTime": "2017-08-06T03:45:41Z"
+		},
+		{
+			"checksumSHA1": "AREhk6LKIp2I/4Njd756bqU6JSQ=",
+			"path": "github.com/rs/zerolog/internal/json",
+			"revision": "2ed2f2c974489526d10329dae76d0f175684109a",
+			"revisionTime": "2017-08-06T03:45:41Z"
+		},
+		{
+			"checksumSHA1": "FG7zw1b6t0e8ZaCI8oVr3jeoR2M=",
+			"path": "github.com/rs/zerolog/log",
+			"revision": "2ed2f2c974489526d10329dae76d0f175684109a",
+			"revisionTime": "2017-08-06T03:45:41Z"
+		},
+		{
 			"checksumSHA1": "6NS7FWJl1FobB+Xfe4SzBGD+75g=",
 			"path": "go.uber.org/atomic",
 			"revision": "3b8db5e93c4c02efbc313e17b2e796b0914a01fb",
 			"revisionTime": "2016-12-15T19:56:52Z"
-		},
-		{
-			"checksumSHA1": "J3LHSAvMptYBOEp88kpHAPqMC+I=",
-			"path": "go.uber.org/zap",
-			"revision": "ed01b7b57e0bb0d81c1f013cb57eda0fc784c8d0",
-			"revisionTime": "2017-03-10T15:51:20Z"
 		},
 		{
 			"checksumSHA1": "3S+mwcCDqfnHXPCwtw6Y95SQSPs=",

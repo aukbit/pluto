@@ -2,34 +2,67 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
-	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/rs/zerolog"
 )
+
+func serverMiddleware(s *Server) router.Middleware {
+	return func(h router.HandlerFunc) router.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := s.WithContext(r.Context())
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
+}
+
+// eidMiddleware sets eid in outgoing metadata context
+func eidMiddleware(s *Server) router.Middleware {
+	return func(h router.HandlerFunc) router.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			eid := common.RandID("", 16)
+			ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("eid", common.RandID("", 16)))
+			w.Header().Set("X-PLUTO-EID", eid)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
+}
 
 // loggerMiddleware Middleware that adds logger instance
 // available in handlers context and logs request
-func loggerMiddleware(srv *Server) router.Middleware {
+func loggerMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			// get or create unique event id for every request
-			e, ctx := common.GetOrCreateEventID(r.Context())
-			// create new log instance with eventID
-			l := srv.logger.With(
-				zap.String("event", e))
+			ctx := r.Context()
+			e := eidFromOutgoingContext(ctx)
+			// sets new logger instance with eid
+			sublogger := s.logger.With().Str("eid", e).Logger()
 			switch r.URL.Path {
 			case "/_health":
 				break
 			default:
-				l.Info("request",
-					zap.String("method", r.Method),
-					zap.String("url", r.URL.String()))
+				sublogger.Info().Msg(fmt.Sprintf("%v %v %v %v", s.Name(), r.Method, r.URL, r.Proto))
+				if e := s.logger.Debug(); e.Enabled() {
+					h := zerolog.Dict()
+					for k, v := range r.Header {
+						h.Strs(k, v)
+					}
+					s.logger.Debug().Str("method", r.Method).
+						Str("url", r.URL.String()).
+						Str("proto", r.Proto).
+						Str("remote_addr", r.RemoteAddr).
+						Dict("header", h).
+						Msg(fmt.Sprintf("%v %v %v %v", s.Name(), r.Method, r.URL, r.Proto))
+				}
 			}
 			// also nice to have a logger available in context
-			ctx = context.WithValue(ctx, Key("logger"), l)
+			ctx = sublogger.WithContext(ctx)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
@@ -44,4 +77,22 @@ func strictSecurityHeaderMiddleware() router.Middleware {
 			h.ServeHTTP(w, r)
 		}
 	}
+}
+
+// --- Helper functions
+
+func eidFromOutgoingContext(ctx context.Context) string {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		s := FromContext(ctx)
+		s.Logger().Warn().Msg(fmt.Sprintf("%s metadata not available in outgoing context", s.Name()))
+		return ""
+	}
+	_, ok = md["eid"]
+	if !ok {
+		s := FromContext(ctx)
+		s.Logger().Warn().Msg(fmt.Sprintf("%s eid not available in metadata", s.Name()))
+		return ""
+	}
+	return md["eid"][0]
 }

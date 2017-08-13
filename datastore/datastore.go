@@ -3,11 +3,12 @@ package datastore
 import (
 	"context"
 	"fmt"
+	"os"
 
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/gocql/gocql"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -18,9 +19,9 @@ const (
 )
 
 type Datastore struct {
-	cfg    *Config
-	logger *zap.Logger
+	cfg    Config
 	health *health.Server
+	logger zerolog.Logger
 }
 
 // New creates a default datatore
@@ -34,7 +35,7 @@ func newDatastore(opts ...Option) *Datastore {
 		cfg:    newConfig(),
 		health: health.NewServer(),
 	}
-	// d.logger, _ = zap.NewProduction()
+	d.logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 	if len(opts) > 0 {
 		d = d.WithOptions(opts...)
 	}
@@ -58,15 +59,15 @@ func (ds *Datastore) clone() *Datastore {
 }
 
 func (ds *Datastore) Init(opts ...Option) error {
+	ds.logger = ds.logger.With().Str("id", ds.cfg.ID).
+		Str("name", ds.cfg.Name).
+		Str("driver", ds.cfg.driver).Logger()
 	// set last configs
 	if len(opts) > 0 {
 		for _, opt := range opts {
 			opt.apply(ds)
 		}
 	}
-	// set logger
-	ds.setLogger()
-	ds.logger.Info("init")
 	s, err := ds.NewSession()
 	if err != nil {
 		return err
@@ -74,6 +75,7 @@ func (ds *Datastore) Init(opts ...Option) error {
 	defer ds.Close(s)
 	// set health
 	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
+	ds.logger.Info().Msg(fmt.Sprintf("%s initialized", ds.Name()))
 	return nil
 }
 
@@ -120,20 +122,12 @@ func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: ds.cfg.ID},
 	)
 	if err != nil {
-		ds.logger.Error("Health", zap.String("err", err.Error()))
+		ds.logger.Error().Msg(fmt.Sprintf("%s Health() %v", ds.Name(), err.Error()))
 		return &healthpb.HealthCheckResponse{
 			Status: healthpb.HealthCheckResponse_NOT_SERVING,
 		}
 	}
 	return hcr
-}
-
-func (ds *Datastore) setLogger() {
-	ds.logger = ds.logger.With(
-		zap.String("id", ds.cfg.ID),
-		zap.String("name", ds.cfg.Name),
-		zap.String("driver", ds.cfg.driver),
-	)
 }
 
 // Name returns datastore name

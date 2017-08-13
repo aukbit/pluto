@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
-
 	"google.golang.org/grpc"
 
 	"github.com/aukbit/pluto/reply"
@@ -32,7 +30,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 func Detail(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", ctx.Value(router.Key("id")).(string)))
+	reply.Json(w, r, http.StatusOK, fmt.Sprintf("Hello Room %s", router.FromContext(ctx, "id")))
 }
 
 type greeter struct{}
@@ -49,16 +47,13 @@ func TestMain(m *testing.M) {
 	mux.GET("/home/:id", Detail)
 
 	// Create pluto server
-	sLogger, _ := zap.NewDevelopment()
 	s := server.New(
 		server.Name("http"),
 		server.Description("gopher super server"),
 		server.Addr(":8085"),
 		server.Mux(mux),
-		server.Logger(sLogger),
 	)
 	// Create grpc pluto server
-	gLogger, _ := zap.NewDevelopment()
 	g := server.New(
 		server.Name("grpc"),
 		server.Description("grpc super server"),
@@ -66,7 +61,6 @@ func TestMain(m *testing.M) {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}),
-		server.Logger(gLogger),
 	)
 
 	if !testing.Short() {

@@ -14,13 +14,22 @@ import (
 	"google.golang.org/grpc"
 )
 
-var grpcPort = flag.String("grpc_port", ":65060", "grpc listening port")
-var db = flag.String("db", "cassandra", "datastore service instance")
-var keyspace = flag.String("keyspace", "pluto_user_backend", "datastore keyspace")
-var name = flag.String("name", "user_backend", "service name instance")
+var (
+	grpcPort string
+	db       string
+	keyspace string
+	name     string
+)
+
+func init() {
+	flag.StringVar(&grpcPort, "grpc_port", ":65060", "grpc listening port")
+	flag.StringVar(&db, "db", "cassandra", "datastore service instance")
+	flag.StringVar(&keyspace, "keyspace", "pluto_user_backend", "datastore keyspace")
+	flag.StringVar(&name, "name", "user_backend", "service name instance")
+	flag.Parse()
+}
 
 func main() {
-	flag.Parse()
 	// run service
 	if err := service(); err != nil {
 		log.Fatal(err)
@@ -31,24 +40,24 @@ func service() error {
 
 	// Define Pluto Server
 	srv := server.New(
-		server.Name(*name),
-		server.Addr(*grpcPort),
+		server.Name(name),
+		server.Addr(grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &views.UserViews{})
 		}))
 
-	cfg := gocql.NewCluster(*db)
-	cfg.Keyspace = *keyspace
+	cfg := gocql.NewCluster(db)
+	cfg.Keyspace = keyspace
 	cfg.ProtoVersion = 3
 	// Define db connection
 	db := datastore.New(
-		datastore.Name(*name),
+		datastore.Name(name),
 		datastore.Cassandra(cfg),
 	)
 
 	// Define Pluto Service
 	s := pluto.New(
-		pluto.Name(*name),
+		pluto.Name(name),
 		pluto.Description("User backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),

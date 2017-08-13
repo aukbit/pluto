@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/aukbit/pluto/common"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
 
@@ -58,15 +58,16 @@ func GRPCRegister(fn func(*grpc.ClientConn) interface{}) Option {
 // UnaryClientInterceptors ...
 func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, uci...)
 	})
 }
 
 // Logger sets a shallow copy from an input logger
-func Logger(l *zap.Logger) Option {
+func Logger(l zerolog.Logger) Option {
 	return optionFunc(func(c *Client) {
-		copy := *l
-		c.logger = &copy
+		c.logger = l
 	})
 }
 

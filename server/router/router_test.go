@@ -33,31 +33,31 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 }
 func GetDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := map[string]string{"message": "Hello World", "id": ctx.Value(router.Key("id")).(string)}
+	data := map[string]string{"message": "Hello World", "id": router.FromContext(ctx, "id")}
 	reply.Json(w, r, http.StatusOK, data)
 }
 func PutDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := map[string]string{"message": "Hello World", "id": ctx.Value(router.Key("id")).(string)}
+	data := map[string]string{"message": "Hello World", "id": router.FromContext(ctx, "id")}
 	reply.Json(w, r, http.StatusOK, data)
 }
 func DeleteDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := map[string]string{"message": "deleted", "id": ctx.Value(router.Key("id")).(string)}
+	data := map[string]string{"message": "deleted", "id": router.FromContext(ctx, "id")}
 	reply.Json(w, r, http.StatusOK, data)
 }
 
 func GetRoomHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	data := map[string]string{"message": "Hello World", "id": ctx.Value(router.Key("id")).(string)}
+	data := map[string]string{"message": "Hello World", "id": router.FromContext(ctx, "id")}
 	reply.Json(w, r, http.StatusOK, data)
 }
 
 func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	data := map[string]string{"message": "Hello World",
-		"id":       ctx.Value(router.Key("id")).(string),
-		"category": ctx.Value(router.Key("category")).(string),
+		"id":       router.FromContext(ctx, "id"),
+		"category": router.FromContext(ctx, "category"),
 	}
 	reply.Json(w, r, http.StatusOK, data)
 }

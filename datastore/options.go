@@ -3,7 +3,7 @@ package datastore
 import (
 	"github.com/aukbit/pluto/common"
 	"github.com/gocql/gocql"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -34,10 +34,9 @@ func Name(n string) Option {
 }
 
 // Logger sets a shallow copy from an input logger
-func Logger(l *zap.Logger) Option {
+func Logger(l zerolog.Logger) Option {
 	return optionFunc(func(d *Datastore) {
-		copy := *l
-		d.logger = &copy
+		d.logger = l
 	})
 }
 

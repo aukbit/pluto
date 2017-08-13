@@ -14,8 +14,8 @@ type Config struct {
 	MongoDB   *mgo.DialInfo
 }
 
-func newConfig() *Config {
-	return &Config{
+func newConfig() Config {
+	return Config{
 		ID:   common.RandID("db_", 6),
 		Name: defaultName,
 	}

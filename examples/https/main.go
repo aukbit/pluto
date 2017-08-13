@@ -5,15 +5,20 @@ import (
 	"log"
 	"net/http"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
 )
 
-var httpsPort = flag.String("https_port", ":8443", "https port")
+var (
+	httpsPort string
+)
+
+func init() {
+	flag.StringVar(&httpsPort, "https_port", ":8443", "https port")
+	flag.Parse()
+}
 
 func main() {
 	// run frontend service
@@ -31,18 +36,18 @@ func run() error {
 	// Create new http server
 	srv := server.New(server.Name("api"),
 		server.TLSConfig("server.crt", "private.key"),
-		server.Addr(*httpsPort),
+		server.Addr(httpsPort),
 		server.Mux(mux),
 	)
 
 	// Logger
-	logger, _ := zap.NewDevelopment()
+	// logger, _ := zap.NewDevelopment()
 	// Init service
 	s := pluto.New(
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
 		pluto.Servers(srv),
-		pluto.Logger(logger),
+		// pluto.Logger(logger),
 		pluto.HealthAddr(":9098"),
 	)
 

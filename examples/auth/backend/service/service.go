@@ -3,8 +3,6 @@ package backend
 import (
 	"flag"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/client"
@@ -15,13 +13,18 @@ import (
 )
 
 var (
-	userTarget = flag.String("user_target", "127.0.0.1:65080", "user backend address")
-	grpcPort   = flag.String("grpc_port", ":65081", "grpc listening port")
+	userTarget string
+	grpcPort   string
 )
+
+func init() {
+	flag.StringVar(&userTarget, "user_target", "127.0.0.1:65080", "user backend address")
+	flag.StringVar(&grpcPort, "grpc_port", ":65081", "grpc listening port")
+	flag.Parse()
+}
 
 // Run runs auth backend service
 func Run() error {
-	flag.Parse()
 
 	// Define user Client
 	clt := client.New(
@@ -29,25 +32,25 @@ func Run() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pbu.NewUserServiceClient(cc)
 		}),
-		client.Target(*userTarget),
+		client.Target(userTarget),
 	)
 
 	// Define Pluto Server
 	srv := server.New(
-		server.Addr(*grpcPort),
+		server.Addr(grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pba.RegisterAuthServiceServer(g, &backend.AuthViews{})
 		}),
 	)
 	// Logger
-	logger, _ := zap.NewDevelopment()
+	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("auth_backend"),
 		pluto.Description("Backend service issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Logger(logger),
+		// pluto.Logger(logger),
 		pluto.HealthAddr(":9092"),
 	)
 

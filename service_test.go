@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/gocql/gocql"
 	"github.com/paulormart/assert"
 
@@ -94,7 +92,7 @@ func TestMain(m *testing.M) {
 		return nil
 	}
 	// Logger
-	logger, _ := zap.NewDevelopment()
+	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := New(
 		Name(serviceName),
@@ -104,7 +102,7 @@ func TestMain(m *testing.M) {
 		HookAfterStart(fn1, fn2),
 		Datastore(db),
 		HealthAddr(":9091"),
-		Logger(logger),
+		// Logger(logger),
 	)
 
 	if !testing.Short() {

@@ -1,9 +1,11 @@
 package client
 
 import (
-	"go.uber.org/zap"
+	"fmt"
+	"os"
 
 	g "github.com/aukbit/pluto/client/grpc"
+	"github.com/rs/zerolog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -19,9 +21,9 @@ const (
 // A Client defines parameters for making calls to an HTTP server.
 // The zero value for Client is a valid configuration.
 type Client struct {
-	cfg    *Config
+	cfg    Config
 	health *health.Server
-	logger *zap.Logger // client logger
+	logger zerolog.Logger
 }
 
 // New create a new client
@@ -35,7 +37,7 @@ func newClient(opts ...Option) *Client {
 		cfg:    newConfig(),
 		health: health.NewServer(),
 	}
-	c.logger, _ = zap.NewProduction()
+	c.logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 	if len(opts) > 0 {
 		c = c.WithOptions(opts...)
 	}
@@ -45,37 +47,27 @@ func newClient(opts ...Option) *Client {
 // WithOptions clones the current Client, applies the supplied Options, and
 // returns the resulting Client. It's safe to use concurrently.
 func (c *Client) WithOptions(opts ...Option) *Client {
-	d := c.clone()
 	for _, opt := range opts {
-		opt.apply(d)
+		opt.apply(c)
 	}
-	return d
+	return c
 }
 
 func (c *Client) applyOptions(opts ...Option) {
-	if len(opts) > 0 {
-		for _, opt := range opts {
-			opt.apply(c)
-		}
+	for _, opt := range opts {
+		opt.apply(c)
 	}
-}
-
-// clone creates a shallow copy client
-func (c *Client) clone() *Client {
-	copy := *c
-	return &copy
 }
 
 // Init initialize logger and interceptors
 func (c *Client) Init(opts ...Option) {
+	c.logger = c.logger.With().Str("id", c.cfg.ID).
+		Str("name", c.cfg.Name).
+		Str("format", c.cfg.Format).Logger()
 	c.applyOptions(opts...)
-	// set logger
-	c.logger = c.logger.With(
-		zap.String("id", c.cfg.ID),
-		zap.String("name", c.cfg.Name),
-		zap.String("format", c.cfg.Format),
-	)
 	// append dial interceptor to grpc client
+	c.cfg.mu.Lock()
+	defer c.cfg.mu.Unlock()
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
 }
 
@@ -83,6 +75,8 @@ func (c *Client) Init(opts ...Option) {
 func (c *Client) Dial(opts ...Option) (*grpc.ClientConn, error) {
 	c.applyOptions(opts...)
 	// TODO use TLS
+	c.cfg.mu.Lock()
+	defer c.cfg.mu.Unlock()
 	conn, err := grpc.Dial(
 		c.cfg.Target,
 		grpc.WithInsecure(),
@@ -117,7 +111,7 @@ func (c *Client) Name() string {
 func (c *Client) healthRPC() {
 	conn, err := c.Dial()
 	if err != nil {
-		c.logger.Error("healthRPC", zap.String("err", err.Error()))
+		c.logger.Error().Msg(fmt.Sprintf("%s healthRPC() %v", c.Name(), err.Error()))
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -126,7 +120,7 @@ func (c *Client) healthRPC() {
 	h := healthpb.NewHealthClient(conn)
 	hcr, err := h.Check(context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
-		c.logger.Error("healthRPC", zap.String("err", err.Error()))
+		c.logger.Error().Msg(fmt.Sprintf("%s healthRPC() %v", c.Name(), err.Error()))
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -144,7 +138,7 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: c.cfg.ID},
 	)
 	if err != nil {
-		c.logger.Error("Health", zap.String("err", err.Error()))
+		c.logger.Error().Msg(fmt.Sprintf("%s Health() %v", c.Name(), err.Error()))
 		return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_NOT_SERVING}
 	}
 	return hcr

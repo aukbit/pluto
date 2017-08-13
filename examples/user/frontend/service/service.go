@@ -3,8 +3,6 @@ package frontend
 import (
 	"flag"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/examples/user/frontend/views"
@@ -14,12 +12,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-var target = flag.String("target", "127.0.0.1:65087", "backend address")
-var http_port = flag.String("http_port", ":8087", "frontend http port")
+var target, httpPort string
+
+func init() {
+	flag.StringVar(&target, "target", "127.0.0.1:65087", "backend address")
+	flag.StringVar(&httpPort, "http_port", ":8087", "frontend http port")
+	flag.Parse()
+}
 
 func Run() error {
-	flag.Parse()
-
 	// Define handlers
 	mux := router.New()
 	mux.Handle("GET", "/user", router.WrapErr(frontend.GetHandler))
@@ -32,7 +33,7 @@ func Run() error {
 	// define http server
 	srv := server.New(
 		server.Name("api"),
-		server.Addr(*http_port),
+		server.Addr(httpPort),
 		server.Mux(mux),
 	)
 	// Define grpc Client
@@ -41,18 +42,18 @@ func Run() error {
 		client.GRPCRegister(func(cc *grpc.ClientConn) interface{} {
 			return pb.NewUserServiceClient(cc)
 		}),
-		client.Target(*target),
+		client.Target(target),
 	)
 
 	// Logger
-	logger, _ := zap.NewDevelopment()
+	// logger, _ := zap.NewDevelopment()
 	// Define Pluto service
 	s := pluto.New(
 		pluto.Name("frontend"),
 		pluto.Description("Frontend service is responsible to parse all json data to regarding users to internal services"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		pluto.Logger(logger),
+		// pluto.Logger(logger),
 		pluto.HealthAddr(":9097"),
 	)
 

@@ -1,9 +1,9 @@
 package pluto
 
 import (
-	"context"
 	"net/http"
 
+	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server/router"
 )
 
@@ -12,11 +12,9 @@ import (
 func serviceContextMiddleware(s *Service) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			// get context
-			ctx := r.Context()
 			// Note: service instance is always available in handlers context
 			// under the general name > pluto
-			ctx = context.WithValue(ctx, Key("pluto"), s)
+			ctx := s.WithContext(r.Context())
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
@@ -39,10 +37,7 @@ func datastoreContextMiddleware(s *Service) router.Middleware {
 				return
 			}
 			defer db.Close(session) // clean up
-			// get context
-			ctx := r.Context()
-			// save it in the router context
-			ctx = context.WithValue(ctx, Key("session"), session)
+			ctx := datastore.WithContextSession(r.Context(), session)
 			// pass execution to the original handler
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}

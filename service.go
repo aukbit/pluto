@@ -10,14 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/fibonacci"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -33,15 +32,25 @@ var (
 
 // Service representacion of a pluto service
 type Service struct {
-	cfg    Config
 	close  chan bool
+	cfg    Config
 	wg     *sync.WaitGroup
 	health *health.Server
-	logger *zap.Logger
+	logger zerolog.Logger
 }
 
-// Key pluto context keys
-type Key string
+func init() {
+	zerolog.TimestampFieldName = "timestamp"
+	zerolog.LevelFieldName = "severity"
+	zerolog.MessageFieldName = "message"
+	switch os.Getenv("LOGGER_LEVEL") {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+}
 
 // New returns a new pluto service with Options passed in
 func New(opts ...Option) *Service {
@@ -55,7 +64,7 @@ func newService(opts ...Option) *Service {
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
-	s.logger, _ = zap.NewProduction()
+	s.logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 	if len(opts) > 0 {
 		s = s.WithOptions(opts...)
 	}
@@ -65,26 +74,15 @@ func newService(opts ...Option) *Service {
 // WithOptions clones the current Service, applies the supplied Options, and
 // returns the resulting Service. It's safe to use concurrently.
 func (s *Service) WithOptions(opts ...Option) *Service {
-	c := s.clone()
 	for _, opt := range opts {
-		opt.apply(c)
+		opt.apply(s)
 	}
-	return c
-}
-
-// clone creates a shallow copy service
-func (s *Service) clone() *Service {
-	copy := *s
-	return &copy
+	return s
 }
 
 // Run starts service
 func (s *Service) Run() error {
-	// set logger
-	s.logger = s.logger.With(
-		zap.String("id", s.cfg.ID),
-		zap.String("name", s.cfg.Name),
-	)
+	s.logger = s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name).Logger()
 	// set health server
 	s.setHealthServer()
 	// start service
@@ -97,19 +95,14 @@ func (s *Service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	s.logger.Info("exit")
+	s.logger.Warn().Msg(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops service
 func (s *Service) Stop() {
-	s.logger.Info("stop")
+	s.logger.Info().Msg(fmt.Sprintf("%s stopping", s.Name()))
 	s.close <- true
-}
-
-// Config service configration options
-func (s *Service) Config() Config {
-	return s.cfg
 }
 
 // Push allows to start additional options while service is running
@@ -150,7 +143,7 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		s.logger.Error("Health", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s Health() %v", s.Name(), err.Error()))
 	}
 	return hcr
 }
@@ -170,18 +163,13 @@ func (s *Service) setHealthServer() {
 		server.Name(s.cfg.Name+"_health"),
 		server.Addr(s.cfg.HealthAddr),
 		server.Mux(mux),
-		server.Logger(s.logger),
+		// server.Logger(s.logger),
 	)
-	s.cfg.Servers[srv.Config().Name] = srv
+	s.cfg.Servers[srv.Name()] = srv
 }
 
 func (s *Service) start() error {
-	s.logger.Info("start",
-		zap.String("ip4", common.IPaddress()),
-		zap.Int("servers", len(s.cfg.Servers)),
-		zap.Int("clients", len(s.cfg.Clients)))
-
-	// connect to db
+	s.logger.Info().Str("ip4", common.IPaddress()).Int("servers", len(s.cfg.Servers)).Int("clients", len(s.cfg.Clients)).Msg(fmt.Sprintf("%s starting", s.Name()))
 	err := s.initDatastore()
 	if err != nil {
 		return err
@@ -193,6 +181,7 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
+	s.logger.Info().Msg(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
@@ -202,8 +191,7 @@ func (s *Service) hookAfterStart() error {
 		return nil
 	}
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, Key("pluto"), s)
-	ctx = context.WithValue(ctx, Key("logger"), s.logger)
+	ctx = s.WithContext(ctx)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
 			return err
@@ -252,7 +240,7 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Config().Name, err.Error()))
+				srv.Logger().Error().Msg(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)
@@ -302,8 +290,7 @@ outer:
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
-			s.logger.Info("signal received",
-				zap.String("signal", sig.String()))
+			s.logger.Info().Msg(fmt.Sprintf("%s signal %v received", s.Name(), sig))
 			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()

@@ -14,9 +14,9 @@ import (
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
-	m := ctx.Value(router.Key("module")).(string)
-	n := ctx.Value(router.Key("name")).(string)
-	s := ctx.Value(Key("pluto")).(*Service)
+	m := router.FromContext(ctx, "module")
+	n := router.FromContext(ctx, "name")
+	s := FromContext(ctx)
 
 	switch m {
 	case "server":
@@ -47,7 +47,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		hcr = db.Health()
 	case "pluto":
-		if n != s.Config().Name {
+		if n != s.Name() {
 			reply.Json(w, r, http.StatusNotFound, hcr)
 			return
 		}

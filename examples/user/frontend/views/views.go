@@ -9,16 +9,15 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
-	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -40,7 +39,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	}
 	defer r.Body.Close()
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -67,7 +66,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-
+	zerolog.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
 	reply.Json(w, r, http.StatusCreated, user)
@@ -79,7 +78,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{
@@ -91,7 +90,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -118,6 +117,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET user %s", user.Id))
 	// set header location
 	w.Header().Add("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)
@@ -128,16 +128,13 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
-	// get context logger
-	logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return router.NewHandlerErr(
 			fmt.Errorf("Id %v not found", id),
 			http.StatusNotFound,
-			logger,
 		)
 	}
 	// set proto user
@@ -147,16 +144,14 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
 		)
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return router.NewHandlerErr(
 			errClientUserNotAvailable,
 			http.StatusInternalServerError,
-			logger,
 		)
 	}
 	// dial
@@ -165,7 +160,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
 		)
 	}
 	defer conn.Close()
@@ -175,9 +169,9 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
 		)
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("PUT user %s updated", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)
@@ -189,7 +183,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{
@@ -201,7 +195,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -228,6 +222,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("DELETE user %s deleted", user.Id))
 	reply.Json(w, r, http.StatusOK, user)
 	return nil
 }
@@ -241,7 +236,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -268,6 +263,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET users %v", users))
 	reply.Json(w, r, http.StatusOK, users)
 	return nil
 }
@@ -281,7 +277,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -323,6 +319,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		}
 		users.Data = append(users.Data, u)
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET Stream users %v", users))
 	reply.Json(w, r, http.StatusOK, users)
 	return nil
 }
