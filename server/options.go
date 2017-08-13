@@ -7,6 +7,7 @@ import (
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
 
@@ -112,9 +113,8 @@ func Discovery(d discovery.Discovery) Option {
 }
 
 // Logger sets a shallow copy from an input logger
-// func Logger(l *zap.Logger) Option {
-// 	return optionFunc(func(s *Server) {
-// 		copy := *l
-// 		s.logger = &copy
-// 	})
-// }
+func Logger(l zerolog.Logger) Option {
+	return optionFunc(func(s *Server) {
+		s.logger = l
+	})
+}

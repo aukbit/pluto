@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/aukbit/pluto/common"
 	"golang.org/x/net/context"
 
@@ -64,40 +66,16 @@ func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
 		// get or create unique event id for every request
-		_, ctx = common.GetOrCreateEventID(ctx)
-		// create new log instance with eventID
-		// l := s.logger.With(zap.String("event", e))
-		// l.Info(fmt.Sprintf("%s request %s", s.Name(), info.FullMethod), zap.String("method", info.FullMethod))
+		e, ctx := common.GetOrCreateEventID(ctx)
+		// sets new logger instance with eventID
+		sublogger := s.logger.With().Str("event", e).Logger()
+		sublogger.Info().Str("method", info.FullMethod).
+			Msg(fmt.Sprintf("%s request %s", s.Name(), info.FullMethod))
 		// also nice to have a logger available in context
-		// ctx = context.WithValue(ctx, Key("logger"), l)
+		ctx = sublogger.WithContext(ctx)
 		// wrap context
 		wrapped := WrapServerStreamWithContext(ss)
 		wrapped.SetContext(ctx)
 		return handler(srv, wrapped)
 	}
 }
-
-// func AuthUnaryInterceptor(
-// 	ctx context.Context,
-// 	req interface{},
-// 	info *grpc.UnaryServerInfo,
-// 	handler grpc.UnaryHandler,
-// ) (interface{}, error) {
-//
-// 	// retrieve metadata from context
-// 	md, ok := metadata.FromContext(ctx)
-//
-// 	// validate 'authorization' metadata
-// 	// like headers, the value is an slice []string
-// 	uid, err := MyValidationFunc(md["authorization"])
-// 	if err != nil {
-// 		return nil, grpc.Errorf(codes.Unauthenticated, "authentication required")
-// 	}
-//
-// 	// add user ID to the context
-// 	newCtx := context.WithValue(ctx, "user_id", uid)
-//
-// 	// handle scopes?
-// 	// ...
-// 	return handler(newCtx, req)
-// }

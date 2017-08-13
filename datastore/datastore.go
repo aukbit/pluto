@@ -18,9 +18,6 @@ const (
 	defaultName = "db"
 )
 
-// contextKey datstore context keys
-type contextKey string
-
 type Datastore struct {
 	cfg    Config
 	health *health.Server
@@ -62,7 +59,9 @@ func (ds *Datastore) clone() *Datastore {
 }
 
 func (ds *Datastore) Init(opts ...Option) error {
-	ds.logger.With().Str("id", ds.cfg.ID).Str("name", ds.cfg.Name).Str("driver", ds.cfg.driver)
+	ds.logger = ds.logger.With().Str("id", ds.cfg.ID).
+		Str("name", ds.cfg.Name).
+		Str("driver", ds.cfg.driver).Logger()
 	// set last configs
 	if len(opts) > 0 {
 		for _, opt := range opts {
@@ -105,16 +104,6 @@ func (ds *Datastore) NewSession() (session interface{}, err error) {
 		return nil, fmt.Errorf("datastore driver not available")
 	}
 	return session, nil
-}
-
-// WithContext add session to existing context
-func WithContext(ctx context.Context, session interface{}) context.Context {
-	return context.WithValue(ctx, contextKey("session"), session)
-}
-
-// FromContext returns datastore session instance from a context
-func FromContext(ctx context.Context) interface{} {
-	return ctx.Value(contextKey("session"))
 }
 
 func (ds *Datastore) setHealth() {

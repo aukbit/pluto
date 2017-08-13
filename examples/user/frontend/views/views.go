@@ -16,6 +16,8 @@ import (
 	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -26,6 +28,8 @@ var (
 func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
+	zerolog.Ctx(ctx).Info().Msg("TESTE 4") // missing event key
+
 	// new user
 	nu := &pb.NewUser{}
 	if err := json.NewDecoder(r.Body).Decode(nu); err != nil {
@@ -64,7 +68,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-
+	log.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
 	reply.Json(w, r, http.StatusCreated, user)
@@ -115,6 +119,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET user %s", user.Id))
 	// set header location
 	w.Header().Add("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)
@@ -125,8 +130,6 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
-	// get context logger
-	// logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
@@ -134,7 +137,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			fmt.Errorf("Id %v not found", id),
 			http.StatusNotFound,
-			nil,
 		)
 	}
 	// set proto user
@@ -144,7 +146,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			nil,
 		)
 	}
 	// get gRPC client from service
@@ -153,7 +154,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			errClientUserNotAvailable,
 			http.StatusInternalServerError,
-			nil,
 		)
 	}
 	// dial
@@ -162,7 +162,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			nil,
 		)
 	}
 	defer conn.Close()
@@ -172,9 +171,9 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			nil,
 		)
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("PUT user %s updated", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path)
 	reply.Json(w, r, http.StatusOK, user)
@@ -225,6 +224,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("DELETE user %s deleted", user.Id))
 	reply.Json(w, r, http.StatusOK, user)
 	return nil
 }
@@ -265,6 +265,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET users %v", users))
 	reply.Json(w, r, http.StatusOK, users)
 	return nil
 }
@@ -320,6 +321,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		}
 		users.Data = append(users.Data, u)
 	}
+	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET Stream users %v", users))
 	reply.Json(w, r, http.StatusOK, users)
 	return nil
 }

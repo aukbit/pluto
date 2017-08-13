@@ -9,6 +9,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/reply"
+	"github.com/rs/zerolog/log"
 )
 
 //
@@ -33,15 +34,13 @@ type HandlerErr struct {
 	Error   error
 	Message string
 	Code    int
-	// logger  *zap.Logger
 }
 
-func NewHandlerErr(err error, code int, l interface{}) *HandlerErr {
+func NewHandlerErr(err error, code int) *HandlerErr {
 	return &HandlerErr{
 		Error:   err,
 		Message: err.Error(),
 		Code:    code,
-		// logger:  l,
 	}
 }
 
@@ -51,10 +50,7 @@ type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
 
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
-		// initialize logger if nil
-		// if e.logger != nil {
-		// 	e.logger.Error(e.Message)
-		// }
+		log.Ctx(r.Context()).Error().Msg(e.Message)
 		http.Error(w, e.Message, e.Code)
 	}
 }

@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/rs/zerolog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -30,17 +32,13 @@ const (
 type Server struct {
 	close chan bool
 
-	// mu  sync.Mutex // ensures atomic writes; protects the following fields
-	cfg Config
-	wg  *sync.WaitGroup
-	// logger     *zap.Logger
+	cfg        Config
+	wg         *sync.WaitGroup
 	httpServer *http.Server
 	grpcServer *grpc.Server
 	health     *health.Server
+	logger     zerolog.Logger
 }
-
-// Key server context keys
-type Key string
 
 // New returns a new http server with cfg passed in
 func New(opts ...Option) *Server {
@@ -55,7 +53,7 @@ func newServer(opts ...Option) *Server {
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
-	// s.logger, _ = zap.NewProduction()
+	s.logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 	if len(opts) > 0 {
 		s = s.WithOptions(opts...)
 	}
@@ -65,8 +63,6 @@ func newServer(opts ...Option) *Server {
 // WithOptions clones the current Client, applies the supplied Options, and
 // returns the resulting Client. It's safe to use concurrently.
 func (s *Server) WithOptions(opts ...Option) *Server {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
 	for _, opt := range opts {
 		opt.apply(s)
 	}
@@ -75,26 +71,19 @@ func (s *Server) WithOptions(opts ...Option) *Server {
 
 // Run Server
 func (s *Server) Run(opts ...Option) error {
-	// s.mu.Lock()
-	// defer s.mu.Unlock()
+	s.logger = s.logger.With().Str("id", s.cfg.ID).
+		Str("name", s.cfg.Name).
+		Str("format", s.cfg.Format).
+		Str("port", s.cfg.Addr).Logger()
 	// set last configs
-	if len(opts) > 0 {
-		for _, opt := range opts {
-			opt.apply(s)
-		}
+	for _, opt := range opts {
+		opt.apply(s)
 	}
 
 	// register at service discovery
 	if err := s.register(); err != nil {
 		return err
 	}
-	// set logger
-	// s.logger = s.logger.With(
-	// 	zap.String("id", s.cfg.ID),
-	// 	zap.String("name", s.cfg.Name),
-	// 	zap.String("format", s.cfg.Format),
-	// 	zap.String("port", s.cfg.Addr),
-	// )
 	// start server
 	if err := s.start(); err != nil {
 		return err
@@ -103,13 +92,13 @@ func (s *Server) Run(opts ...Option) error {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// wait for go routines to finish
 	s.wg.Wait()
-	// s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
+	s.logger.Warn().Msg(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *Server) Stop() {
-	// s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("%s stopping", s.Name()))
 	// set health as not serving
 	s.health.SetServingStatus(s.cfg.ID, 2)
 	// close listener
@@ -126,7 +115,7 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		// s.logger.Error("Health", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s Health() %v", s.Name(), err.Error()))
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
@@ -135,6 +124,11 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 // Name returns server name
 func (s *Server) Name() string {
 	return s.cfg.Name
+}
+
+// Logger returns server logger
+func (s *Server) Logger() zerolog.Logger {
+	return s.logger
 }
 
 func (s *Server) setHTTPServer() {
@@ -199,7 +193,7 @@ func (s *Server) start() (err error) {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStop(ln)
-	// s.logger.Info(fmt.Sprintf("%s started", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
@@ -255,7 +249,7 @@ func (s *Server) serve(ln net.Listener) error {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			// s.logger.Error("Serve(ln)", zap.String("err", err.Error()))
+			s.logger.Error().Msg(fmt.Sprintf("%s Serve(ln) %v", s.Name(), err.Error()))
 			return
 		}
 	}(s.httpServer)
@@ -279,7 +273,7 @@ func (s *Server) waitUntilStop(ln net.Listener) {
 		s.grpcServer.GracefulStop()
 	default:
 		if err := ln.Close(); err != nil {
-			// s.logger.Error("Close()", zap.String("err", err.Error()))
+			s.logger.Error().Msg(fmt.Sprintf("%s Close() %v", s.Name(), err.Error()))
 		}
 	}
 }
@@ -324,20 +318,20 @@ func (s *Server) unregister() error {
 func (s *Server) healthHTTP() {
 	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health`, s.cfg.Port()))
 	if err != nil {
-		// s.logger.Error("healthHttp", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		// s.logger.Error("healthHttp", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
 	defer r.Body.Close()
 	hcr := &healthpb.HealthCheckResponse{}
 	if err := json.Unmarshal(b, hcr); err != nil {
-		// s.logger.Error("healthHttp", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -347,7 +341,7 @@ func (s *Server) healthHTTP() {
 func (s *Server) healthGRPC() {
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", s.cfg.Port()), grpc.WithInsecure())
 	if err != nil {
-		// s.logger.Error("healthGRPC", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s healthGRPC) %v", s.Name(), err.Error()))
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -355,7 +349,7 @@ func (s *Server) healthGRPC() {
 	c := healthpb.NewHealthClient(conn)
 	hcr, err := c.Check(context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		// s.logger.Error("healthGRPC", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s healthGRPC) %v", s.Name(), err.Error()))
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -389,7 +383,7 @@ func (s *Server) serveGRPC(ln net.Listener) (err error) {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			// s.logger.Error("Serve(ln)", zap.String("err", err.Error()))
+			s.logger.Error().Msg(fmt.Sprintf("%s serveGRPC(ln) %v", s.Name(), err.Error()))
 			return
 		}
 	}(s.grpcServer)

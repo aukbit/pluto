@@ -39,9 +39,6 @@ type Service struct {
 	logger zerolog.Logger
 }
 
-// contextKey pluto context keys
-type contextKey string
-
 func init() {
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "severity"
@@ -85,7 +82,7 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 
 // Run starts service
 func (s *Service) Run() error {
-	s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name)
+	s.logger = s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name).Logger()
 	// set health server
 	s.setHealthServer()
 	// start service
@@ -156,11 +153,6 @@ func (s *Service) Name() string {
 	return s.cfg.Name
 }
 
-// FromContext returns pluto instance from a context
-func FromContext(ctx context.Context) *Service {
-	return ctx.Value(contextKey("pluto")).(*Service)
-}
-
 func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
@@ -199,7 +191,7 @@ func (s *Service) hookAfterStart() error {
 		return nil
 	}
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, contextKey("pluto"), s)
+	ctx = s.WithContext(ctx)
 	// ctx = context.WithValue(ctx, Key("logger"), s.logger)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
