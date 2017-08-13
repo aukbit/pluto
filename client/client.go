@@ -1,8 +1,6 @@
 package client
 
 import (
-	"go.uber.org/zap"
-
 	g "github.com/aukbit/pluto/client/grpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -21,7 +19,7 @@ const (
 type Client struct {
 	cfg    Config
 	health *health.Server
-	logger *zap.Logger // client logger
+	// logger *zap.Logger // client logger
 }
 
 // New create a new client
@@ -35,7 +33,7 @@ func newClient(opts ...Option) *Client {
 		cfg:    newConfig(),
 		health: health.NewServer(),
 	}
-	c.logger, _ = zap.NewProduction()
+	// c.logger, _ = zap.NewProduction()
 	if len(opts) > 0 {
 		c = c.WithOptions(opts...)
 	}
@@ -70,11 +68,11 @@ func (c *Client) clone() *Client {
 func (c *Client) Init(opts ...Option) {
 	c.applyOptions(opts...)
 	// set logger
-	c.logger = c.logger.With(
-		zap.String("id", c.cfg.ID),
-		zap.String("name", c.cfg.Name),
-		zap.String("format", c.cfg.Format),
-	)
+	// c.logger = c.logger.With(
+	// 	zap.String("id", c.cfg.ID),
+	// 	zap.String("name", c.cfg.Name),
+	// 	zap.String("format", c.cfg.Format),
+	// )
 	// append dial interceptor to grpc client
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
 }
@@ -117,7 +115,7 @@ func (c *Client) Name() string {
 func (c *Client) healthRPC() {
 	conn, err := c.Dial()
 	if err != nil {
-		c.logger.Error("healthRPC", zap.String("err", err.Error()))
+		// c.logger.Error("healthRPC", zap.String("err", err.Error()))
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -126,7 +124,7 @@ func (c *Client) healthRPC() {
 	h := healthpb.NewHealthClient(conn)
 	hcr, err := h.Check(context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
-		c.logger.Error("healthRPC", zap.String("err", err.Error()))
+		// c.logger.Error("healthRPC", zap.String("err", err.Error()))
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -144,7 +142,7 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: c.cfg.ID},
 	)
 	if err != nil {
-		c.logger.Error("Health", zap.String("err", err.Error()))
+		// c.logger.Error("Health", zap.String("err", err.Error()))
 		return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_NOT_SERVING}
 	}
 	return hcr

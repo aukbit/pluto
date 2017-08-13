@@ -1,14 +1,12 @@
 package main
 
 import (
-	"flag"
 	"log"
 
 	"github.com/aukbit/pluto/examples/user/backend/service"
 )
 
 func main() {
-	flag.Parse()
 
 	// run backend service
 	if err := backend.Run(); err != nil {

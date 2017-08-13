@@ -9,13 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/client"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/reply"
-	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
@@ -129,7 +126,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
 	// get context logger
-	logger := ctx.Value(server.Key("logger")).(*zap.Logger)
+	// logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := ctx.Value(router.Key("id")).(string)
 	validID, err := uuid.Parse(id)
@@ -137,7 +134,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			fmt.Errorf("Id %v not found", id),
 			http.StatusNotFound,
-			logger,
+			nil,
 		)
 	}
 	// set proto user
@@ -147,7 +144,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
+			nil,
 		)
 	}
 	// get gRPC client from service
@@ -156,7 +153,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			errClientUserNotAvailable,
 			http.StatusInternalServerError,
-			logger,
+			nil,
 		)
 	}
 	// dial
@@ -165,7 +162,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
+			nil,
 		)
 	}
 	defer conn.Close()
@@ -175,7 +172,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		return router.NewHandlerErr(
 			err,
 			http.StatusInternalServerError,
-			logger,
+			nil,
 		)
 	}
 	// set header location
