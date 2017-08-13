@@ -16,7 +16,6 @@ import (
 	"github.com/aukbit/pluto/server/router"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -66,7 +65,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	zerolog.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
+	log.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
 	reply.Json(w, r, http.StatusCreated, user)

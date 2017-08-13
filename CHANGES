@@ -1,3 +1,7 @@
+Version 3.1.2:
+ - update vendor - enable examples user tests
+ - Merge branch release-3.1.1
+
 Version 3.1.1:
  - update vendor
  - refactor router context
