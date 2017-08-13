@@ -153,6 +153,11 @@ func (s *Service) Name() string {
 	return s.cfg.Name
 }
 
+// Logger returns service logger
+func (s *Service) Logger() zerolog.Logger {
+	return s.logger
+}
+
 func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
