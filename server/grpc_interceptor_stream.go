@@ -61,6 +61,17 @@ func wrapStream(uh grpc.StreamHandler, info *grpc.StreamServerInfo, interceptors
 	return uh
 }
 
+func serverStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		ctx := ss.Context()
+		ctx = s.WithContext(ctx)
+		// wrap context
+		wrapped := WrapServerStreamWithContext(ss)
+		wrapped.SetContext(ctx)
+		return handler(srv, wrapped)
+	}
+}
+
 func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()

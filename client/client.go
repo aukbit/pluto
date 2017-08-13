@@ -66,6 +66,8 @@ func (c *Client) Init(opts ...Option) {
 		Str("format", c.cfg.Format).Logger()
 	c.applyOptions(opts...)
 	// append dial interceptor to grpc client
+	c.cfg.mu.Lock()
+	defer c.cfg.mu.Unlock()
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
 }
 
@@ -73,6 +75,8 @@ func (c *Client) Init(opts ...Option) {
 func (c *Client) Dial(opts ...Option) (*grpc.ClientConn, error) {
 	c.applyOptions(opts...)
 	// TODO use TLS
+	c.cfg.mu.Lock()
+	defer c.cfg.mu.Unlock()
 	conn, err := grpc.Dial(
 		c.cfg.Target,
 		grpc.WithInsecure(),

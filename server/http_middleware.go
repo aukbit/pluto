@@ -25,9 +25,9 @@ func serverMiddleware(s *Server) router.Middleware {
 func eidMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 			eid := common.RandID("", 16)
-			ctx := metadata.NewOutgoingContext(r.Context(),
-				metadata.Pairs("eid", common.RandID("", 16)))
+			ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("eid", common.RandID("", 16)))
 			w.Header().Set("X-PLUTO-EID", eid)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}

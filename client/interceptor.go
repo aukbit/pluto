@@ -13,11 +13,12 @@ import (
 
 func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		// get or create unique event id for every request
 		e, ctx := eidFromOutgoingContext(ctx)
 		// sets new logger instance with eventID
-		sublogger := clt.logger.With().Str("event", e).Logger()
+		sublogger := clt.logger.With().Str("eid", e).Logger()
 		sublogger.Info().Str("method", method).Msg(fmt.Sprintf("%s called %s", clt.Name(), method))
+		// also nice to have a logger available in context
+		ctx = sublogger.WithContext(ctx)
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }

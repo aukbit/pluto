@@ -236,12 +236,12 @@ func (s *Service) startServers() {
 						datastoreContextStreamServerInterceptor(s),
 						serviceContextStreamServerInterceptore(s),
 					),
-					// server.Logger(s.logger),
+					server.Logger(s.logger),
 				)
 				if err == nil {
 					return
 				}
-				s.logger.Error().Msg(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
+				srv.Logger().Error().Msg(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)

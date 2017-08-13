@@ -1,6 +1,7 @@
 package client
 
 import (
+	"sync"
 	"time"
 
 	"github.com/aukbit/pluto/common"
@@ -16,8 +17,9 @@ type Config struct {
 	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Format                  string
 	GRPCRegister            func(*grpc.ClientConn) interface{}
-	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
 	Timeout                 time.Duration
+	mu                      sync.Mutex
+	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
 }
 
 var (

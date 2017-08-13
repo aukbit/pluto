@@ -58,6 +58,8 @@ func GRPCRegister(fn func(*grpc.ClientConn) interface{}) Option {
 // UnaryClientInterceptors ...
 func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
 		c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, uci...)
 	})
 }

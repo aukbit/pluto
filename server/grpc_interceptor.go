@@ -30,6 +30,13 @@ func wrap(uh grpc.UnaryHandler, info *grpc.UnaryServerInfo, interceptors ...grpc
 	return uh
 }
 
+func serverUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		ctx = s.WithContext(ctx)
+		return handler(ctx, req)
+	}
+}
+
 func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		e := eidFromIncomingContext(ctx)

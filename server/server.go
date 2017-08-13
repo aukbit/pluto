@@ -98,7 +98,6 @@ func (s *Server) Run(opts ...Option) error {
 
 // Stop stops server by sending a message to close the listener via channel
 func (s *Server) Stop() {
-	s.logger.Info().Msg(fmt.Sprintf("%s stopping", s.Name()))
 	// set health as not serving
 	s.health.SetServingStatus(s.cfg.ID, 2)
 	// close listener
@@ -360,8 +359,12 @@ func (s *Server) healthGRPC() {
 
 func (s *Server) setGRPCServer() {
 	// append logger
-	s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors, loggerUnaryServerInterceptor(s))
-	s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors, loggerStreamServerInterceptor(s))
+	s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors,
+		loggerUnaryServerInterceptor(s),
+		serverUnaryServerInterceptor(s))
+	s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors,
+		loggerStreamServerInterceptor(s),
+		serverStreamServerInterceptor(s))
 
 	// initialize grpc server
 	s.grpcServer = grpc.NewServer(
