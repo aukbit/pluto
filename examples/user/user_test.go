@@ -88,81 +88,81 @@ func TestExampleUser(t *testing.T) {
 			},
 			Status: http.StatusCreated,
 		},
-		// {
-		// 	Method: "GET",
-		// 	Path:   func(id string) string { return URL + "/user/" + id },
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{
-		// 			Id:    id,
-		// 			Name:  "Gopher",
-		// 			Email: "gopher@email.com",
-		// 		}
-		// 	},
-		// 	ResponseHeader: func(id string) *http.Header {
-		// 		h := &http.Header{}
-		// 		h.Set("Content-Type", "application/json")
-		// 		h.Set("Location", "/user/"+id)
-		// 		return h
-		// 	},
-		// 	Status: http.StatusOK,
-		// },
-		// {
-		// 	Method: "GET",
-		// 	Path:   func(id string) string { return URL + "/user/abc" },
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{}
-		// 	},
-		// 	Status: http.StatusNotFound,
-		// },
-		// {
-		// 	Method: "PUT",
-		// 	Path:   func(id string) string { return URL + "/user/" + id },
-		// 	Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{
-		// 			Id:    id,
-		// 			Name:  "Super Gopher house",
-		// 			Email: "gopher@email.com",
-		// 		}
-		// 	},
-		// 	ResponseHeader: func(id string) *http.Header {
-		// 		h := &http.Header{}
-		// 		h.Set("Content-Type", "application/json")
-		// 		h.Set("Location", "/user/"+id)
-		// 		return h
-		// 	},
-		// 	Status: http.StatusOK,
-		// },
-		// {
-		// 	Method: "PUT",
-		// 	Path:   func(id string) string { return URL + "/user/abc" },
-		// 	Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{}
-		// 	},
-		// 	Status: http.StatusNotFound,
-		// },
-		// {
-		// 	Method: "DELETE",
-		// 	Path:   func(id string) string { return URL + "/user/" + id },
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{}
-		// 	},
-		// 	ResponseHeader: func(id string) *http.Header {
-		// 		h := &http.Header{}
-		// 		h.Set("Content-Type", "application/json")
-		// 		return h
-		// 	},
-		// 	Status: http.StatusOK,
-		// },
-		// {
-		// 	Method: "DELETE",
-		// 	Path:   func(id string) string { return URL + "/user/abc" },
-		// 	Response: func(id string) *pb.User {
-		// 		return &pb.User{}
-		// 	},
-		// 	Status: http.StatusNotFound,
-		// },
+		{
+			Method: "GET",
+			Path:   func(id string) string { return URL + "/user/" + id },
+			Response: func(id string) *pb.User {
+				return &pb.User{
+					Id:    id,
+					Name:  "Gopher",
+					Email: "gopher@email.com",
+				}
+			},
+			ResponseHeader: func(id string) *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				h.Set("Location", "/user/"+id)
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "GET",
+			Path:   func(id string) string { return URL + "/user/abc" },
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			Status: http.StatusNotFound,
+		},
+		{
+			Method: "PUT",
+			Path:   func(id string) string { return URL + "/user/" + id },
+			Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
+			Response: func(id string) *pb.User {
+				return &pb.User{
+					Id:    id,
+					Name:  "Super Gopher house",
+					Email: "gopher@email.com",
+				}
+			},
+			ResponseHeader: func(id string) *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				h.Set("Location", "/user/"+id)
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "PUT",
+			Path:   func(id string) string { return URL + "/user/abc" },
+			Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			Status: http.StatusNotFound,
+		},
+		{
+			Method: "DELETE",
+			Path:   func(id string) string { return URL + "/user/" + id },
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			ResponseHeader: func(id string) *http.Header {
+				h := &http.Header{}
+				h.Set("Content-Type", "application/json")
+				return h
+			},
+			Status: http.StatusOK,
+		},
+		{
+			Method: "DELETE",
+			Path:   func(id string) string { return URL + "/user/abc" },
+			Response: func(id string) *pb.User {
+				return &pb.User{}
+			},
+			Status: http.StatusNotFound,
+		},
 	}
 
 	for _, test := range tests {
