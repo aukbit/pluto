@@ -37,7 +37,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	}
 	defer r.Body.Close()
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -76,7 +76,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{
@@ -88,7 +88,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -128,7 +128,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context logger
 	// logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return router.NewHandlerErr(
@@ -148,7 +148,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		)
 	}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return router.NewHandlerErr(
 			errClientUserNotAvailable,
@@ -186,7 +186,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
 	// get id context
-	id := ctx.Value(router.Key("id")).(string)
+	id := router.FromContext(ctx, "id")
 	validID, err := uuid.Parse(id)
 	if err != nil {
 		return &router.HandlerErr{
@@ -198,7 +198,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto user
 	user := &pb.User{Id: validID.String()}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -238,7 +238,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,
@@ -278,7 +278,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	// set proto filter
 	filter := &pb.Filter{Name: n}
 	// get gRPC client from service
-	c, ok := ctx.Value(pluto.Key("pluto")).(*pluto.Service).Client("user")
+	c, ok := pluto.FromContext(ctx).Client("user")
 	if !ok {
 		return &router.HandlerErr{
 			Error:   errClientUserNotAvailable,

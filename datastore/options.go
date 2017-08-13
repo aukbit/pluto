@@ -3,6 +3,7 @@ package datastore
 import (
 	"github.com/aukbit/pluto/common"
 	"github.com/gocql/gocql"
+	"github.com/rs/zerolog"
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -33,12 +34,11 @@ func Name(n string) Option {
 }
 
 // Logger sets a shallow copy from an input logger
-// func Logger(l *zap.Logger) Option {
-// 	return optionFunc(func(d *Datastore) {
-// 		copy := *l
-// 		d.logger = &copy
-// 	})
-// }
+func Logger(l zerolog.Logger) Option {
+	return optionFunc(func(d *Datastore) {
+		d.logger = l
+	})
+}
 
 // Cassandra sets cassandra cluster configuration
 func Cassandra(cfg *gocql.ClusterConfig) Option {

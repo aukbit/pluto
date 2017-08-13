@@ -3,6 +3,7 @@ package pluto
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -34,11 +36,24 @@ type Service struct {
 	cfg    Config
 	wg     *sync.WaitGroup
 	health *health.Server
-	// logger *zap.Logger
+	logger zerolog.Logger
 }
 
-// Key pluto context keys
-type Key string
+// contextKey pluto context keys
+type contextKey string
+
+func init() {
+	zerolog.TimestampFieldName = "timestamp"
+	zerolog.LevelFieldName = "severity"
+	zerolog.MessageFieldName = "message"
+	switch os.Getenv("LOGGER_LEVEL") {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+}
 
 // New returns a new pluto service with Options passed in
 func New(opts ...Option) *Service {
@@ -52,7 +67,7 @@ func newService(opts ...Option) *Service {
 		wg:     &sync.WaitGroup{},
 		health: health.NewServer(),
 	}
-	// s.logger, _ = zap.NewProduction()
+	s.logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 	if len(opts) > 0 {
 		s = s.WithOptions(opts...)
 	}
@@ -70,11 +85,7 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 
 // Run starts service
 func (s *Service) Run() error {
-	// set logger
-	// s.logger = s.logger.With(
-	// 	zap.String("id", s.cfg.ID),
-	// 	zap.String("name", s.cfg.Name),
-	// )
+	s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name)
 	// set health server
 	s.setHealthServer()
 	// start service
@@ -87,13 +98,13 @@ func (s *Service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	// s.logger.Warn(fmt.Sprintf("%s finished", s.Name()))
+	s.logger.Warn().Msg(fmt.Sprintf("%s finished", s.Name()))
 	return nil
 }
 
 // Stop stops service
 func (s *Service) Stop() {
-	// s.logger.Info(fmt.Sprintf("%s stopping", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("%s stopping", s.Name()))
 	s.close <- true
 }
 
@@ -135,7 +146,7 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		// s.logger.Error("Health", zap.String("err", err.Error()))
+		s.logger.Error().Msg(fmt.Sprintf("%s Health() %v", s.Name(), err.Error()))
 	}
 	return hcr
 }
@@ -143,6 +154,11 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 // Name returns service name
 func (s *Service) Name() string {
 	return s.cfg.Name
+}
+
+// FromContext returns pluto instance from a context
+func FromContext(ctx context.Context) *Service {
+	return ctx.Value(contextKey("pluto")).(*Service)
 }
 
 func (s *Service) setHealthServer() {
@@ -161,11 +177,7 @@ func (s *Service) setHealthServer() {
 }
 
 func (s *Service) start() error {
-	// s.logger.Info(fmt.Sprintf("%s starting", s.Name()),
-	// 	zap.String("ip4", common.IPaddress()),
-	// 	zap.Int("servers", len(s.cfg.Servers)),
-	// 	zap.Int("clients", len(s.cfg.Clients)))
-	// connect to db
+	s.logger.Info().Str("ip4", common.IPaddress()).Int("servers", len(s.cfg.Servers)).Int("clients", len(s.cfg.Clients)).Msg(fmt.Sprintf("%s starting", s.Name()))
 	err := s.initDatastore()
 	if err != nil {
 		return err
@@ -177,7 +189,7 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
-	// s.logger.Info(fmt.Sprintf("%s started", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
@@ -187,7 +199,7 @@ func (s *Service) hookAfterStart() error {
 		return nil
 	}
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, Key("pluto"), s)
+	ctx = context.WithValue(ctx, contextKey("pluto"), s)
 	// ctx = context.WithValue(ctx, Key("logger"), s.logger)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
@@ -203,7 +215,7 @@ func (s *Service) initDatastore() error {
 		return nil
 	}
 	err = db.Init(
-	// datastore.Logger(s.logger),
+		datastore.Logger(s.logger),
 	)
 	if err != nil {
 		return err
@@ -237,7 +249,7 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				// s.logger.Error(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
+				s.logger.Error().Msg(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)
@@ -285,10 +297,9 @@ outer:
 			s.closeClients()
 			s.stopServers()
 			break outer
-		case <-sigch:
+		case sig := <-sigch:
 			// Waits for signal to stop
-			// s.logger.Info("signal received",
-			// 	zap.String("signal", sig.String()))
+			s.logger.Info().Msg(fmt.Sprintf("%s signal %v received", s.Name(), sig))
 			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()

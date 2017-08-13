@@ -63,8 +63,8 @@ func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // KEY
 //
 
-// Key router context keys
-type Key string
+// contextKey router context keys
+type contextKey string
 
 //
 // ROUTER
@@ -331,9 +331,14 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 		return ctx
 	}
 	for i, value := range values {
-		ctx = context.WithValue(ctx, Key(vars[i]), value)
+		ctx = context.WithValue(ctx, contextKey(vars[i]), value)
 	}
 	return ctx
+}
+
+// FromContext returns router key value from a context
+func FromContext(ctx context.Context, key string) string {
+	return ctx.Value(contextKey(key)).(string)
 }
 
 // Middleware wraps an http.HandlerFunc with additional

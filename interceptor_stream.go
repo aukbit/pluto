@@ -1,6 +1,7 @@
 package pluto
 
 import (
+	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -13,7 +14,7 @@ func serviceContextStreamServerInterceptore(s *Service) grpc.StreamServerInterce
 		ctx := ss.Context()
 		// Note: service instance is always available in handlers context
 		// under the general name > pluto
-		ctx = context.WithValue(ctx, Key("pluto"), s)
+		ctx = context.WithValue(ctx, contextKey("pluto"), s)
 		// wrap context
 		wrapped := server.WrapServerStreamWithContext(ss)
 		wrapped.SetContext(ctx)
@@ -37,8 +38,9 @@ func datastoreContextStreamServerInterceptor(s *Service) grpc.StreamServerInterc
 			return err
 		}
 		defer db.Close(session) // clean up
-		// save it in the router context
-		ctx = context.WithValue(ctx, Key("session"), session)
+		ctx = datastore.WithContext(ctx, session)
+		// // save it in the router context
+		// ctx = context.WithValue(ctx, contextKey("session"), session)
 		// wrap context
 		wrapped := server.WrapServerStreamWithContext(ss)
 		wrapped.SetContext(ctx)
