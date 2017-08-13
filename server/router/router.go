@@ -9,7 +9,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/reply"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 //
@@ -50,17 +50,10 @@ type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
 
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
-		log.Ctx(r.Context()).Error().Msg(e.Message)
+		zerolog.Ctx(r.Context()).Error().Msg(e.Message)
 		http.Error(w, e.Message, e.Code)
 	}
 }
-
-//
-// KEY
-//
-
-// contextKey router context keys
-type contextKey string
 
 //
 // ROUTER
@@ -327,14 +320,9 @@ func setContext(ctx context.Context, vars, values []string) context.Context {
 		return ctx
 	}
 	for i, value := range values {
-		ctx = context.WithValue(ctx, contextKey(vars[i]), value)
+		ctx = context.WithValue(ctx, contextKey{vars[i]}, value)
 	}
 	return ctx
-}
-
-// FromContext returns router key value from a context
-func FromContext(ctx context.Context, key string) string {
-	return ctx.Value(contextKey(key)).(string)
 }
 
 // Middleware wraps an http.HandlerFunc with additional
