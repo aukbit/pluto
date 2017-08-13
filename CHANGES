@@ -1,3 +1,29 @@
+Version 3.0.0:
+ - remove logger comment
+ - update vendor
+ - refactor eid contexts
+ - add eid as x-pluto-eid in http header response
+ - refactor event id
+ - refactor pluto and server context keys
+ - set client logger
+ - fix error context keys
+ - refactor add zerolog - context keys and context methods
+ - Merge branch 'nologger' into develop
+ - circle to test race detector
+ - remove zap.logger to avoid race detections
+ - refactor mutexs - add only on service and server structs
+ - add mutex client config
+ - add mutux server config
+ - remove config func
+ - add mutex for pluto service and config
+ - refactor grpc log
+ - refactor http log - remove body
+ - refactor log http requests
+ - refactor http log request
+ - refactor log messages
+ - refactor logging messages
+ - Merge branch release-2.1.0
+
 Version 2.1.0:
  - fix error jwt backend example
  - refactor jwt
