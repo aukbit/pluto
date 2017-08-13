@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 
-	"github.com/aukbit/pluto/common"
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
@@ -65,10 +64,9 @@ func wrapStream(uh grpc.StreamHandler, info *grpc.StreamServerInfo, interceptors
 func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
-		// get or create unique event id for every request
-		e, ctx := common.GetOrCreateEventID(ctx)
+		e := eidFromIncomingContext(ctx)
 		// sets new logger instance with eventID
-		sublogger := s.logger.With().Str("event", e).Logger()
+		sublogger := s.logger.With().Str("eid", e).Logger()
 		sublogger.Info().Str("method", info.FullMethod).
 			Msg(fmt.Sprintf("%s request %s", s.Name(), info.FullMethod))
 		// also nice to have a logger available in context

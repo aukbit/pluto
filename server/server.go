@@ -136,9 +136,11 @@ func (s *Server) setHTTPServer() {
 		s.cfg.Mux = router.New()
 	}
 	// set health check handler
-	s.cfg.Mux.GET("/_health", router.Wrap(healthHandler, serverMiddleware(s)))
+	s.cfg.Mux.GET("/_health", router.Wrap(healthHandler))
 	// append logger
-	s.cfg.Middlewares = append(s.cfg.Middlewares, loggerMiddleware(s))
+	s.cfg.Middlewares = append(s.cfg.Middlewares,
+		loggerMiddleware(s), eidMiddleware(s), serverMiddleware(s),
+	)
 	// wrap Middlewares
 	s.cfg.Mux.WrapperMiddleware(s.cfg.Middlewares...)
 	// initialize http server

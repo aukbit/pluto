@@ -28,8 +28,6 @@ var (
 func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	// get context
 	ctx := r.Context()
-	zerolog.Ctx(ctx).Info().Msg("TESTE 4") // missing event key
-
 	// new user
 	nu := &pb.NewUser{}
 	if err := json.NewDecoder(r.Body).Decode(nu); err != nil {
@@ -68,7 +66,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 			Code:    http.StatusInternalServerError,
 		}
 	}
-	log.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
+	zerolog.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
 	reply.Json(w, r, http.StatusCreated, user)
