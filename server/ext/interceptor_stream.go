@@ -10,10 +10,10 @@ import (
 )
 
 // CassandraStreamServerInterceptor creates a Cassandra session and wraps it to context
-func CassandraStreamServerInterceptor(name string, cfg gocql.ClusterConfig) grpc.StreamServerInterceptor {
+func CassandraStreamServerInterceptor(name string, cfg *gocql.ClusterConfig) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
-		s, err := gocql.NewSession(cfg)
+		s, err := gocql.NewSession(*cfg)
 		defer s.Close()
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Msg(err.Error())
@@ -28,10 +28,10 @@ func CassandraStreamServerInterceptor(name string, cfg gocql.ClusterConfig) grpc
 }
 
 // MongoDBStreamServerInterceptor reates a MongoDB session and wraps it to context
-func MongoDBStreamServerInterceptor(name string, cfg mgo.DialInfo) grpc.StreamServerInterceptor {
+func MongoDBStreamServerInterceptor(name string, cfg *mgo.DialInfo) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
-		s, err := mgo.DialWithInfo(&cfg)
+		s, err := mgo.DialWithInfo(cfg)
 		defer s.Close()
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Msg(err.Error())

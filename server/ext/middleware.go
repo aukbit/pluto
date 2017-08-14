@@ -12,10 +12,10 @@ import (
 )
 
 // CassandraMiddleware creates a Cassandra session and add it to the context
-func CassandraMiddleware(name string, cfg gocql.ClusterConfig) router.Middleware {
+func CassandraMiddleware(name string, cfg *gocql.ClusterConfig) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			s, err := gocql.NewSession(cfg)
+			s, err := gocql.NewSession(*cfg)
 			defer s.Close()
 			if err != nil {
 				zerolog.Ctx(r.Context()).Error().Msg(err.Error())
@@ -30,10 +30,10 @@ func CassandraMiddleware(name string, cfg gocql.ClusterConfig) router.Middleware
 }
 
 // MongoDBMiddleware creates a MongoDB session and add it to the context
-func MongoDBMiddleware(name string, cfg mgo.DialInfo) router.Middleware {
+func MongoDBMiddleware(name string, cfg *mgo.DialInfo) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			s, err := mgo.DialWithInfo(&cfg)
+			s, err := mgo.DialWithInfo(cfg)
 			defer s.Close()
 			if err != nil {
 				zerolog.Ctx(r.Context()).Error().Msg(err.Error())

@@ -11,9 +11,9 @@ import (
 )
 
 // CassandraUnaryServerInterceptor creates a Cassandra session and add it to the context
-func CassandraUnaryServerInterceptor(name string, cfg gocql.ClusterConfig) grpc.UnaryServerInterceptor {
+func CassandraUnaryServerInterceptor(name string, cfg *gocql.ClusterConfig) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		s, err := gocql.NewSession(cfg)
+		s, err := gocql.NewSession(*cfg)
 		defer s.Close()
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Msg(err.Error())
@@ -25,9 +25,9 @@ func CassandraUnaryServerInterceptor(name string, cfg gocql.ClusterConfig) grpc.
 }
 
 // MongoDBUnaryServerInterceptor creates a MongoDB session and add it to the context
-func MongoDBUnaryServerInterceptor(name string, cfg mgo.DialInfo) grpc.UnaryServerInterceptor {
+func MongoDBUnaryServerInterceptor(name string, cfg *mgo.DialInfo) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		s, err := mgo.DialWithInfo(&cfg)
+		s, err := mgo.DialWithInfo(cfg)
 		defer s.Close()
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Msg(err.Error())
