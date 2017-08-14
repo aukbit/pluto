@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -72,7 +73,8 @@ type ClaimSet struct {
 }
 
 // NewToken returns a JWT token signed with the given RSA private key.
-func NewToken(cs *ClaimSet, pk *rsa.PrivateKey) (string, error) {
+func NewToken(ctx context.Context, cs *ClaimSet) (string, error) {
+	prv := PrivateKeyFromContext(ctx)
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
@@ -86,7 +88,7 @@ func NewToken(cs *ClaimSet, pk *rsa.PrivateKey) (string, error) {
 		Sub:   cs.Jti,
 		Prn:   cs.Principal,
 	}
-	t, err := jws.Encode(header, payload, pk)
+	t, err := jws.Encode(header, payload, prv)
 	if err != nil {
 		return "", err
 	}
@@ -97,8 +99,9 @@ func NewToken(cs *ClaimSet, pk *rsa.PrivateKey) (string, error) {
 // Verify tests whether the provided JWT token's signature was produced by the
 // private key associated with the supplied public key.
 // Also verifies if Token as expired
-func Verify(token string, key *rsa.PublicKey) error {
-	err := jws.Verify(token, key)
+func Verify(ctx context.Context, token string) error {
+	pub := PublicKeyFromContext(ctx)
+	err := jws.Verify(token, pub)
 	if err != nil {
 		return err
 	}
