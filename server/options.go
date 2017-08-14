@@ -87,6 +87,8 @@ func GRPCRegister(fn GRPCRegisterServiceFunc) Option {
 // Middlewares slice with router.Middleware
 func Middlewares(m ...router.Middleware) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.Middlewares = append(s.cfg.Middlewares, m...)
 	})
 }
@@ -94,6 +96,8 @@ func Middlewares(m ...router.Middleware) Option {
 // UnaryServerInterceptors slice with grpc.UnaryServerInterceptor
 func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors, i...)
 	})
 }
@@ -101,6 +105,8 @@ func UnaryServerInterceptors(i ...grpc.UnaryServerInterceptor) Option {
 // StreamServerInterceptors slice with grpc.StreamServerInterceptor
 func StreamServerInterceptors(i ...grpc.StreamServerInterceptor) Option {
 	return optionFunc(func(s *Server) {
+		s.cfg.mu.Lock()
+		defer s.cfg.mu.Unlock()
 		s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors, i...)
 	})
 }

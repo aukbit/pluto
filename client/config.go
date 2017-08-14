@@ -18,7 +18,7 @@ type Config struct {
 	Format                   string
 	GRPCRegister             func(*grpc.ClientConn) interface{}
 	Timeout                  time.Duration
-	mu                       sync.Mutex
+	mu                       sync.Mutex                     // ensures atomic writes; protects the following fields
 	UnaryClientInterceptors  []grpc.UnaryClientInterceptor  // gRPC interceptors
 	StreamClientInterceptors []grpc.StreamClientInterceptor // gRPC interceptors
 }

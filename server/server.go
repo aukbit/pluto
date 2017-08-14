@@ -137,12 +137,15 @@ func (s *Server) setHTTPServer() {
 	}
 	// set health check handler
 	s.cfg.Mux.GET("/_health", router.Wrap(healthHandler))
+
+	s.cfg.mu.Lock()
 	// append logger
 	s.cfg.Middlewares = append(s.cfg.Middlewares,
 		loggerMiddleware(s), eidMiddleware(s), serverMiddleware(s),
 	)
 	// wrap Middlewares
 	s.cfg.Mux.WrapperMiddleware(s.cfg.Middlewares...)
+	s.cfg.mu.Unlock()
 	// initialize http server
 	s.httpServer = &http.Server{
 		// handler to invoke, http.DefaultServeMux if nil
@@ -167,7 +170,9 @@ func (s *Server) start() (err error) {
 	switch s.cfg.Format {
 	case "https":
 		// append strict security header
+		s.cfg.mu.Lock()
 		s.cfg.Middlewares = append(s.cfg.Middlewares, strictSecurityHeaderMiddleware())
+		s.cfg.mu.Unlock()
 		ln, err = s.listenTLS()
 		if err != nil {
 			return err
@@ -241,19 +246,18 @@ func (s *Server) listenTLS() (net.Listener, error) {
 // Accepted connections are configured to enable TCP keep-alives.
 // serve always returns a non-nil error.
 func (s *Server) serve(ln net.Listener) error {
-
 	// add go routine to WaitGroup
 	s.wg.Add(1)
-	go func(srv *http.Server) {
+	go func(s *Server, ln net.Listener) {
 		defer s.wg.Done()
-		if err := srv.Serve(ln); err != nil {
+		if err := s.httpServer.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
 			s.logger.Error().Msg(err.Error())
 			return
 		}
-	}(s.httpServer)
+	}(s, ln)
 	return nil
 }
 
@@ -358,10 +362,13 @@ func (s *Server) healthGRPC() {
 }
 
 func (s *Server) setGRPCServer() {
-	// append logger
+
+	s.cfg.mu.Lock()
+	// add default interceptors
 	s.cfg.UnaryServerInterceptors = append(s.cfg.UnaryServerInterceptors,
 		loggerUnaryServerInterceptor(s),
 		serverUnaryServerInterceptor(s))
+
 	s.cfg.StreamServerInterceptors = append(s.cfg.StreamServerInterceptors,
 		loggerStreamServerInterceptor(s),
 		serverStreamServerInterceptor(s))
@@ -371,6 +378,8 @@ func (s *Server) setGRPCServer() {
 		grpc.UnaryInterceptor(WrapperUnaryServer(s.cfg.UnaryServerInterceptors...)),
 		grpc.StreamInterceptor(WrapperStreamServer(s.cfg.StreamServerInterceptors...)),
 	)
+	s.cfg.mu.Unlock()
+
 	// register grpc internal health handlers
 	healthpb.RegisterHealthServer(s.grpcServer, s.health)
 	// register grpc handlers
@@ -382,15 +391,15 @@ func (s *Server) serveGRPC(ln net.Listener) (err error) {
 
 	// add go routine to WaitGroup
 	s.wg.Add(1)
-	go func(srv *grpc.Server) {
+	go func(s *Server, ln net.Listener) {
 		defer s.wg.Done()
-		if err := srv.Serve(ln); err != nil {
+		if err := s.grpcServer.Serve(ln); err != nil {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
 			s.logger.Error().Msg(err.Error())
 			return
 		}
-	}(s.grpcServer)
+	}(s, ln)
 	return nil
 }

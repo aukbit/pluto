@@ -230,7 +230,7 @@ func (s *Service) startServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(srv *server.Server) {
+		go func(s *Service, srv *server.Server) {
 			defer s.wg.Done()
 			f := fibonacci.F()
 			for {
@@ -255,7 +255,7 @@ func (s *Service) startServers() {
 				srv.Logger().Error().Msg(fmt.Sprintf("%v failed to start, error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
-		}(srv)
+		}(s, srv)
 	}
 }
 
@@ -332,9 +332,9 @@ func (s *Service) stopServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
 		s.wg.Add(1)
-		go func(srv *server.Server) {
+		go func(s *Service, srv *server.Server) {
 			defer s.wg.Done()
 			srv.Stop()
-		}(srv)
+		}(s, srv)
 	}
 }
