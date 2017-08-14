@@ -1,3 +1,18 @@
+Version 4.0.0:
+ - update vendor
+ - datastore package removed
+ - run tests with datastore interceptors
+ - set as external configurations as pointers
+ - refactor server/external package to server/ext - add context
+ - refactor external middlewares, interceptords to server/external package
+ - add interceptors, middlewares to quickly handle external datastore drivers
+ - protect maps in server to prevent race collisions
+ - refactor log messages
+ - add client stream interceptor - refactor grpc interceptors
+ - remove zap traces
+ - fix error in tests for examples/auth
+ - Merge branch release-3.2.2
+
 Version 3.2.2:
  - default log timestamp as RFC3339Nano
  - Merge branch release-3.2.1
