@@ -3,7 +3,6 @@ package pluto
 import (
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server"
 	"github.com/rs/zerolog"
@@ -54,13 +53,6 @@ func Clients(clt *client.Client) Option {
 	return optionFunc(func(s *Service) {
 		s.cfg.Clients[clt.Name()] = clt
 		s.cfg.clientsCh <- clt
-	})
-}
-
-// Datastore to persist data
-func Datastore(d *datastore.Datastore) Option {
-	return optionFunc(func(s *Service) {
-		s.cfg.Datastore = d
 	})
 }
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server"
 )
@@ -16,7 +15,6 @@ type Config struct {
 	Name        string
 	Description string
 	clientsCh   chan *client.Client
-	Datastore   *datastore.Datastore
 	Discovery   discovery.Discovery
 	HealthAddr  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
 	Servers     map[string]*server.Server

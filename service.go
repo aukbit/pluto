@@ -13,7 +13,6 @@ import (
 	"github.com/aukbit/fibonacci"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/server"
 	"github.com/aukbit/pluto/server/router"
 	"github.com/rs/zerolog"
@@ -131,14 +130,6 @@ func (s *Service) Client(name string) (clt *client.Client, ok bool) {
 	return clt, true
 }
 
-// Datastore returns the datastore instance in initialize in service
-func (s *Service) Datastore() (*datastore.Datastore, error) {
-	if s.cfg.Datastore != nil {
-		return s.cfg.Datastore, nil
-	}
-	return nil, ErrDatastoreNotInitialized
-}
-
 // Health ...
 func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
@@ -179,10 +170,6 @@ func (s *Service) start() error {
 		Int("servers", len(s.cfg.Servers)).
 		Int("clients", len(s.cfg.Clients)).
 		Msg(fmt.Sprintf("starting %s, servers: %d clients: %d", s.Name(), len(s.cfg.Servers), len(s.cfg.Clients)))
-	err := s.initDatastore()
-	if err != nil {
-		return err
-	}
 	// run servers
 	s.startServers()
 	// dial clients
@@ -212,20 +199,6 @@ func (s *Service) hookAfterStart() error {
 	return nil
 }
 
-func (s *Service) initDatastore() error {
-	db, err := s.Datastore()
-	if err == ErrDatastoreNotInitialized {
-		return nil
-	}
-	err = db.Init(
-		datastore.Logger(s.logger),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *Service) startServers() {
 	for _, srv := range s.cfg.Servers {
 		// add go routine to WaitGroup
@@ -236,15 +209,12 @@ func (s *Service) startServers() {
 			for {
 				err := srv.Run(
 					server.Middlewares(
-						datastoreContextMiddleware(s),
 						serviceContextMiddleware(s),
 					),
 					server.UnaryServerInterceptors(
-						datastoreContextUnaryServerInterceptor(s),
 						serviceContextUnaryServerInterceptor(s),
 					),
 					server.StreamServerInterceptors(
-						datastoreContextStreamServerInterceptor(s),
 						serviceContextStreamServerInterceptore(s),
 					),
 					server.Logger(s.logger),
