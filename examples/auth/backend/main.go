@@ -3,13 +3,26 @@ package main
 import (
 	"log"
 
-	"github.com/aukbit/pluto/examples/user/backend/service"
+	"github.com/aukbit/pluto/auth/jwt"
+	"github.com/aukbit/pluto/examples/auth/backend/service"
+)
+
+var (
+	privKeyPath = "./keys/auth.rsa"
+	pubKeyPath  = "./keys/auth.rsa.pub"
 )
 
 func main() {
-
+	prv, err := jwt.LoadPrivateKey(privKeyPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pub, err := jwt.LoadPublicKey(pubKeyPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// run backend service
-	if err := backend.Run(); err != nil {
+	if err := backend.Run(pub, prv); err != nil {
 		log.Fatal(err)
 	}
 }

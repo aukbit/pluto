@@ -1,9 +1,11 @@
 package backend
 
 import (
+	"crypto/rsa"
 	"flag"
 
 	"github.com/aukbit/pluto"
+	"github.com/aukbit/pluto/auth/jwt"
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/client"
 	"github.com/aukbit/pluto/examples/auth/backend/views"
@@ -24,7 +26,7 @@ func init() {
 }
 
 // Run runs auth backend service
-func Run() error {
+func Run(pub *rsa.PublicKey, prv *rsa.PrivateKey) error {
 
 	// Define user Client
 	clt := client.New(
@@ -41,6 +43,7 @@ func Run() error {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pba.RegisterAuthServiceServer(g, &backend.AuthViews{})
 		}),
+		server.UnaryServerInterceptors(jwt.RsaUnaryServerInterceptor(pub, prv)),
 	)
 	// Logger
 	// logger, _ := zap.NewDevelopment()

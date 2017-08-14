@@ -19,6 +19,7 @@ import (
 
 	"github.com/aukbit/pluto"
 	"github.com/aukbit/pluto/auth"
+	"github.com/aukbit/pluto/auth/jwt"
 	pba "github.com/aukbit/pluto/auth/proto"
 	"github.com/aukbit/pluto/examples/auth/backend/service"
 	"github.com/aukbit/pluto/examples/auth/frontend/service"
@@ -36,6 +37,11 @@ type Error struct {
 const (
 	USER_URL = "http://localhost:8088"
 	AUTH_URL = "http://localhost:8089"
+)
+
+var (
+	privKeyPath = "./keys/auth.rsa"
+	pubKeyPath  = "./keys/auth.rsa.pub"
 )
 
 var wg sync.WaitGroup
@@ -113,7 +119,15 @@ func TestExampleAuth(t *testing.T) {
 
 func RunAuthBackend() {
 	defer wg.Done()
-	if err := backend.Run(); err != nil {
+	prv, err := jwt.LoadPrivateKey(privKeyPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pub, err := jwt.LoadPublicKey(pubKeyPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := backend.Run(pub, prv); err != nil {
 		log.Fatal(err)
 	}
 }
