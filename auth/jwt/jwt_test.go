@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"testing"
 
 	"github.com/paulormart/assert"
@@ -8,10 +9,12 @@ import (
 
 func TestToken(t *testing.T) {
 
-	pk, err := LoadPrivateKey("")
+	prv, err := LoadPrivateKey("")
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, PrivateKeyContextKey, prv)
 
 	cs := &ClaimSet{
 		Identifier: "identifier",
@@ -21,24 +24,20 @@ func TestToken(t *testing.T) {
 		Principal:  "principal",
 		Expiration: 3650,
 	}
-	token, err := NewToken(cs, pk)
+	token, err := NewToken(ctx, cs)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, true, token != "")
 
-	err = Verify(token, &pk.PublicKey)
+	pub, err := LoadPublicKey("")
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx = context.WithValue(ctx, PublicKeyContextKey, pub)
 
-	pubk, err := LoadPublicKey("")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = Verify(token, pubk)
+	err = Verify(ctx, token)
 	if err != nil {
 		t.Fatal(err)
 	}
