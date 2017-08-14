@@ -41,6 +41,7 @@ type Service struct {
 
 func init() {
 	zerolog.TimestampFieldName = "timestamp"
+	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zerolog.LevelFieldName = "severity"
 	zerolog.MessageFieldName = "message"
 	switch os.Getenv("LOGGER_LEVEL") {
