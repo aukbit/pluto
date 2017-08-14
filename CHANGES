@@ -1,3 +1,7 @@
+Version 3.2.0:
+ - refactor jwt with context keys
+ - Merge branch release-3.1.4
+
 Version 3.1.4:
  - make logger directly available in hook funcs context
  - Merge branch release-3.1.3
