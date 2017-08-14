@@ -1,4 +1,4 @@
-package external
+package ext
 
 import (
 	"net/http"

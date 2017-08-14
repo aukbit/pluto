@@ -1,4 +1,4 @@
-package pluto
+package ext
 
 import (
 	"github.com/aukbit/pluto/server"
