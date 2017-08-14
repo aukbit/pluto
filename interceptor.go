@@ -12,7 +12,6 @@ func serviceContextUnaryServerInterceptor(s *Service) grpc.UnaryServerIntercepto
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// Note: service instance is always available in handlers context
 		// under the general name > pluto
-		// ctx = context.WithValue(ctx, contextKey("pluto"), s)
 		ctx = s.WithContext(ctx)
 		return handler(ctx, req)
 	}

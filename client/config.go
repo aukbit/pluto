@@ -11,15 +11,16 @@ import (
 
 // Config client configuaration options
 type Config struct {
-	ID                      string
-	Name                    string
-	Description             string
-	Target                  string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
-	Format                  string
-	GRPCRegister            func(*grpc.ClientConn) interface{}
-	Timeout                 time.Duration
-	mu                      sync.Mutex
-	UnaryClientInterceptors []grpc.UnaryClientInterceptor // gRPC interceptors
+	ID                       string
+	Name                     string
+	Description              string
+	Target                   string // TCP address (e.g. localhost:8000) to listen on, ":http" if empty
+	Format                   string
+	GRPCRegister             func(*grpc.ClientConn) interface{}
+	Timeout                  time.Duration
+	mu                       sync.Mutex
+	UnaryClientInterceptors  []grpc.UnaryClientInterceptor  // gRPC interceptors
+	StreamClientInterceptors []grpc.StreamClientInterceptor // gRPC interceptors
 }
 
 var (

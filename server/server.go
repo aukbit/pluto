@@ -71,15 +71,13 @@ func (s *Server) WithOptions(opts ...Option) *Server {
 
 // Run Server
 func (s *Server) Run(opts ...Option) error {
-	s.logger = s.logger.With().Str("id", s.cfg.ID).
-		Str("name", s.cfg.Name).
-		Str("format", s.cfg.Format).
-		Str("port", s.cfg.Addr).Logger()
 	// set last configs
 	for _, opt := range opts {
 		opt.apply(s)
 	}
-
+	s.logger = s.logger.With().Str(s.cfg.ID, s.cfg.Name).
+		Str("format", s.cfg.Format).
+		Str("port", s.cfg.Addr).Logger()
 	// register at service discovery
 	if err := s.register(); err != nil {
 		return err
@@ -92,7 +90,7 @@ func (s *Server) Run(opts ...Option) error {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// wait for go routines to finish
 	s.wg.Wait()
-	s.logger.Warn().Msg(fmt.Sprintf("%s finished", s.Name()))
+	s.logger.Warn().Msg(fmt.Sprintf("%s has just exited", s.Name()))
 	return nil
 }
 
@@ -114,7 +112,7 @@ func (s *Server) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s Health() %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		return &healthpb.HealthCheckResponse{Status: 2}
 	}
 	return hcr
@@ -160,7 +158,7 @@ func (s *Server) setHTTPServer() {
 }
 
 func (s *Server) start() (err error) {
-	// s.logger.Info(fmt.Sprintf("%s starting", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("starting %s %s, listening on %s", s.cfg.Format, s.Name(), s.cfg.Addr))
 	var ln net.Listener
 
 	switch s.cfg.Format {
@@ -194,7 +192,6 @@ func (s *Server) start() (err error) {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStop(ln)
-	s.logger.Info().Msg(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
@@ -250,7 +247,7 @@ func (s *Server) serve(ln net.Listener) error {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			s.logger.Error().Msg(fmt.Sprintf("%s Serve(ln) %v", s.Name(), err.Error()))
+			s.logger.Error().Msg(err.Error())
 			return
 		}
 	}(s.httpServer)
@@ -274,7 +271,7 @@ func (s *Server) waitUntilStop(ln net.Listener) {
 		s.grpcServer.GracefulStop()
 	default:
 		if err := ln.Close(); err != nil {
-			s.logger.Error().Msg(fmt.Sprintf("%s Close() %v", s.Name(), err.Error()))
+			s.logger.Error().Msg(err.Error())
 		}
 	}
 }
@@ -319,20 +316,20 @@ func (s *Server) unregister() error {
 func (s *Server) healthHTTP() {
 	r, err := http.Get(fmt.Sprintf(`http://localhost:%d/_health`, s.cfg.Port()))
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
 	defer r.Body.Close()
 	hcr := &healthpb.HealthCheckResponse{}
 	if err := json.Unmarshal(b, hcr); err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s healthHTTP) %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -342,7 +339,7 @@ func (s *Server) healthHTTP() {
 func (s *Server) healthGRPC() {
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", s.cfg.Port()), grpc.WithInsecure())
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s healthGRPC) %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -350,7 +347,7 @@ func (s *Server) healthGRPC() {
 	c := healthpb.NewHealthClient(conn)
 	hcr, err := c.Check(context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s healthGRPC) %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 		s.health.SetServingStatus(s.cfg.ID, 2)
 		return
 	}
@@ -388,7 +385,7 @@ func (s *Server) serveGRPC(ln net.Listener) (err error) {
 			if err.Error() == errClosing(ln).Error() {
 				return
 			}
-			s.logger.Error().Msg(fmt.Sprintf("%s serveGRPC(ln) %v", s.Name(), err.Error()))
+			s.logger.Error().Msg(err.Error())
 			return
 		}
 	}(s.grpcServer)

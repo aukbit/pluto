@@ -83,7 +83,7 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 
 // Run starts service
 func (s *Service) Run() error {
-	s.logger = s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name).Logger()
+	s.logger = s.logger.With().Str(s.cfg.ID, s.cfg.Name).Logger()
 	// set health server
 	s.setHealthServer()
 	// start service
@@ -96,13 +96,13 @@ func (s *Service) Run() error {
 	}
 	// wait for all go routines to finish
 	s.wg.Wait()
-	s.logger.Warn().Msg(fmt.Sprintf("%s finished", s.Name()))
+	s.logger.Warn().Msg(fmt.Sprintf("%s has just exited", s.Name()))
 	return nil
 }
 
 // Stop stops service
 func (s *Service) Stop() {
-	s.logger.Info().Msg(fmt.Sprintf("%s stopping", s.Name()))
+	s.logger.Info().Msg(fmt.Sprintf("shutting down %s", s.Name()))
 	s.close <- true
 }
 
@@ -144,7 +144,7 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 	hcr, err := s.health.Check(
 		context.Background(), &healthpb.HealthCheckRequest{Service: s.cfg.ID})
 	if err != nil {
-		s.logger.Error().Msg(fmt.Sprintf("%s Health() %v", s.Name(), err.Error()))
+		s.logger.Error().Msg(err.Error())
 	}
 	return hcr
 }
@@ -175,7 +175,10 @@ func (s *Service) setHealthServer() {
 }
 
 func (s *Service) start() error {
-	s.logger.Info().Str("ip4", common.IPaddress()).Int("servers", len(s.cfg.Servers)).Int("clients", len(s.cfg.Clients)).Msg(fmt.Sprintf("%s starting", s.Name()))
+	s.logger.Info().Str("ip4", common.IPaddress()).
+		Int("servers", len(s.cfg.Servers)).
+		Int("clients", len(s.cfg.Clients)).
+		Msg(fmt.Sprintf("starting %s, servers: %d clients: %d", s.Name(), len(s.cfg.Servers), len(s.cfg.Clients)))
 	err := s.initDatastore()
 	if err != nil {
 		return err
@@ -187,7 +190,6 @@ func (s *Service) start() error {
 	// add go routine to WaitGroup
 	s.wg.Add(1)
 	go s.waitUntilStopOrSig()
-	s.logger.Info().Msg(fmt.Sprintf("%s started", s.Name()))
 	return nil
 }
 
@@ -250,7 +252,7 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				srv.Logger().Error().Msg(fmt.Sprintf("run failed on server: %v - error: %v", srv.Name(), err.Error()))
+				srv.Logger().Error().Msg(fmt.Sprintf("%v failed to start, error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(srv)
@@ -300,7 +302,7 @@ outer:
 			break outer
 		case sig := <-sigch:
 			// Waits for signal to stop
-			s.logger.Info().Msg(fmt.Sprintf("%s signal %v received", s.Name(), sig))
+			s.logger.Info().Msg(fmt.Sprintf("shutting down, got signal: %v", sig))
 			s.health.SetServingStatus(s.cfg.ID, 2)
 			s.unregister()
 			s.closeClients()

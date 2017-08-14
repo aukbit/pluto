@@ -1,10 +1,7 @@
 package server
 
 import (
-	"fmt"
-
 	"golang.org/x/net/context"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -20,11 +17,12 @@ func (w *ServerStreamWithContext) SetContext(ctx context.Context) {
 	w.ctx = ctx
 }
 
-func (w *ServerStreamWithContext) Context() context.Context {
-	return w.ctx
-}
-func (w *ServerStreamWithContext) RecvMsg(msg interface{}) error   { return w.ss.RecvMsg(msg) }
-func (w *ServerStreamWithContext) SendMsg(msg interface{}) error   { return w.ss.SendMsg(msg) }
+// Stream interface
+func (w *ServerStreamWithContext) Context() context.Context      { return w.ctx }
+func (w *ServerStreamWithContext) RecvMsg(msg interface{}) error { return w.ss.RecvMsg(msg) }
+func (w *ServerStreamWithContext) SendMsg(msg interface{}) error { return w.ss.SendMsg(msg) }
+
+// ServerStream interface
 func (w *ServerStreamWithContext) SendHeader(md metadata.MD) error { return w.ss.SendHeader(md) }
 func (w *ServerStreamWithContext) SetHeader(md metadata.MD) error  { return w.ss.SetHeader(md) }
 func (w *ServerStreamWithContext) SetTrailer(md metadata.MD)       { w.ss.SetTrailer(md) }
@@ -59,32 +57,4 @@ func wrapStream(uh grpc.StreamHandler, info *grpc.StreamServerInfo, interceptors
 		uh = h(i, uh)
 	}
 	return uh
-}
-
-func serverStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
-	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		ctx := ss.Context()
-		ctx = s.WithContext(ctx)
-		// wrap context
-		wrapped := WrapServerStreamWithContext(ss)
-		wrapped.SetContext(ctx)
-		return handler(srv, wrapped)
-	}
-}
-
-func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
-	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		ctx := ss.Context()
-		e := eidFromIncomingContext(ctx)
-		// sets new logger instance with eventID
-		sublogger := s.logger.With().Str("eid", e).Logger()
-		sublogger.Info().Str("method", info.FullMethod).
-			Msg(fmt.Sprintf("%s request %s", s.Name(), info.FullMethod))
-		// also nice to have a logger available in context
-		ctx = sublogger.WithContext(ctx)
-		// wrap context
-		wrapped := WrapServerStreamWithContext(ss)
-		wrapped.SetContext(ctx)
-		return handler(srv, wrapped)
-	}
 }

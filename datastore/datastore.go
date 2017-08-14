@@ -59,8 +59,7 @@ func (ds *Datastore) clone() *Datastore {
 }
 
 func (ds *Datastore) Init(opts ...Option) error {
-	ds.logger = ds.logger.With().Str("id", ds.cfg.ID).
-		Str("name", ds.cfg.Name).
+	ds.logger = ds.logger.With().Str(ds.cfg.ID, ds.cfg.Name).
 		Str("driver", ds.cfg.driver).Logger()
 	// set last configs
 	if len(opts) > 0 {
@@ -75,7 +74,7 @@ func (ds *Datastore) Init(opts ...Option) error {
 	defer ds.Close(s)
 	// set health
 	ds.health.SetServingStatus(ds.cfg.ID, healthpb.HealthCheckResponse_SERVING)
-	ds.logger.Info().Msg(fmt.Sprintf("%s initialized", ds.Name()))
+	ds.logger.Info().Msg(fmt.Sprintf("starting driver %s in %s", ds.cfg.driver, ds.Name()))
 	return nil
 }
 
@@ -101,7 +100,7 @@ func (ds *Datastore) NewSession() (session interface{}, err error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("datastore driver not available")
+		return nil, fmt.Errorf("driver: %s is not implemented", ds.cfg.driver)
 	}
 	return session, nil
 }
@@ -122,7 +121,7 @@ func (ds *Datastore) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: ds.cfg.ID},
 	)
 	if err != nil {
-		ds.logger.Error().Msg(fmt.Sprintf("%s Health() %v", ds.Name(), err.Error()))
+		ds.logger.Error().Msg(err.Error())
 		return &healthpb.HealthCheckResponse{
 			Status: healthpb.HealthCheckResponse_NOT_SERVING,
 		}

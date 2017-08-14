@@ -47,19 +47,16 @@ func loggerMiddleware(s *Server) router.Middleware {
 			case "/_health":
 				break
 			default:
-				sublogger.Info().Msg(fmt.Sprintf("%v %v %v %v", s.Name(), r.Method, r.URL, r.Proto))
-				if e := s.logger.Debug(); e.Enabled() {
-					h := zerolog.Dict()
-					for k, v := range r.Header {
-						h.Strs(k, v)
-					}
-					s.logger.Debug().Str("method", r.Method).
-						Str("url", r.URL.String()).
-						Str("proto", r.Proto).
-						Str("remote_addr", r.RemoteAddr).
-						Dict("header", h).
-						Msg(fmt.Sprintf("%v %v %v %v", s.Name(), r.Method, r.URL, r.Proto))
+				h := zerolog.Dict()
+				for k, v := range r.Header {
+					h.Strs(k, v)
 				}
+				sublogger.Info().Str("method", r.Method).
+					Str("url", r.URL.String()).
+					Str("proto", r.Proto).
+					Str("remote_addr", r.RemoteAddr).
+					Dict("header", h).
+					Msg(fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto))
 			}
 			// also nice to have a logger available in context
 			ctx = sublogger.WithContext(ctx)

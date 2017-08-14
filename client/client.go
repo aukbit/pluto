@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	g "github.com/aukbit/pluto/client/grpc"
 	"github.com/rs/zerolog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -61,14 +60,16 @@ func (c *Client) applyOptions(opts ...Option) {
 
 // Init initialize logger and interceptors
 func (c *Client) Init(opts ...Option) {
-	c.logger = c.logger.With().Str("id", c.cfg.ID).
-		Str("name", c.cfg.Name).
-		Str("format", c.cfg.Format).Logger()
 	c.applyOptions(opts...)
+	c.logger = c.logger.With().
+		Str(c.cfg.ID, c.cfg.Name).
+		Str("format", c.cfg.Format).Logger()
+	c.logger.Info().Msg(fmt.Sprintf("initializing %s %s, connecting to %s", c.cfg.Format, c.Name(), c.cfg.Target))
 	// append dial interceptor to grpc client
 	c.cfg.mu.Lock()
 	defer c.cfg.mu.Unlock()
 	c.cfg.UnaryClientInterceptors = append(c.cfg.UnaryClientInterceptors, dialUnaryClientInterceptor(c))
+	c.cfg.StreamClientInterceptors = append(c.cfg.StreamClientInterceptors, dialStreamClientInterceptor(c))
 }
 
 // Dial create a gRPC channel to communicate with the server
@@ -82,7 +83,8 @@ func (c *Client) Dial(opts ...Option) (*grpc.ClientConn, error) {
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(c.cfg.Timeout),
-		grpc.WithUnaryInterceptor(g.WrapperUnaryClient(c.cfg.UnaryClientInterceptors...)),
+		grpc.WithUnaryInterceptor(WrapperUnaryClient(c.cfg.UnaryClientInterceptors...)),
+		grpc.WithStreamInterceptor(WrapperStreamClient(c.cfg.StreamClientInterceptors...)),
 	)
 	switch grpc.Code(err) {
 	case codes.OK:
@@ -111,7 +113,7 @@ func (c *Client) Name() string {
 func (c *Client) healthRPC() {
 	conn, err := c.Dial()
 	if err != nil {
-		c.logger.Error().Msg(fmt.Sprintf("%s healthRPC() %v", c.Name(), err.Error()))
+		c.logger.Error().Msg(err.Error())
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -120,7 +122,7 @@ func (c *Client) healthRPC() {
 	h := healthpb.NewHealthClient(conn)
 	hcr, err := h.Check(context.Background(), &healthpb.HealthCheckRequest{})
 	if err != nil {
-		c.logger.Error().Msg(fmt.Sprintf("%s healthRPC() %v", c.Name(), err.Error()))
+		c.logger.Error().Msg(err.Error())
 		c.health.SetServingStatus(c.cfg.ID, healthpb.HealthCheckResponse_NOT_SERVING)
 		return
 	}
@@ -138,7 +140,7 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		&healthpb.HealthCheckRequest{Service: c.cfg.ID},
 	)
 	if err != nil {
-		c.logger.Error().Msg(fmt.Sprintf("%s Health() %v", c.Name(), err.Error()))
+		c.logger.Error().Msg(err.Error())
 		return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_NOT_SERVING}
 	}
 	return hcr

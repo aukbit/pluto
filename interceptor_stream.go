@@ -13,7 +13,6 @@ func serviceContextStreamServerInterceptore(s *Service) grpc.StreamServerInterce
 		ctx := ss.Context()
 		// Note: service instance is always available in handlers context
 		// under the general name > pluto
-		// ctx = context.WithValue(ctx, contextKey("pluto"), s)
 		ctx = s.WithContext(ctx)
 		// wrap context
 		wrapped := server.WrapServerStreamWithContext(ss)
