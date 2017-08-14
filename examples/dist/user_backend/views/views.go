@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"github.com/aukbit/pluto/datastore"
 	pb "github.com/aukbit/pluto/examples/dist/user_backend/proto"
+	"github.com/aukbit/pluto/server/ext"
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
@@ -17,7 +17,7 @@ type UserViews struct{}
 // CreateUser implements UserServiceServer
 func (uv *UserViews) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// generate user id uuid
 	newID := uuid.New().String()
 	// hash password
@@ -33,7 +33,7 @@ func (uv *UserViews) CreateUser(ctx context.Context, nu *pb.NewUser) (*pb.User, 
 // ReadUser implements UserServiceServer
 func (uv *UserViews) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// user object
 	u := &pb.User{}
 	// get data
@@ -46,7 +46,7 @@ func (uv *UserViews) ReadUser(ctx context.Context, nu *pb.User) (*pb.User, error
 // UpdateUser implements UserServiceServer
 func (uv *UserViews) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// update data
 	if err := session.Query(`UPDATE users SET name = ?, email = ? WHERE id = ?`, nu.Name, nu.Email, nu.Id).Exec(); err != nil {
 		return nu, err
@@ -57,7 +57,7 @@ func (uv *UserViews) UpdateUser(ctx context.Context, nu *pb.User) (*pb.User, err
 // DeleteUser implements UserServiceServer
 func (uv *UserViews) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// delete data
 	if err := session.Query(`DELETE FROM users WHERE id = ?`, nu.Id).Exec(); err != nil {
 		return nu, err
@@ -68,7 +68,7 @@ func (uv *UserViews) DeleteUser(ctx context.Context, nu *pb.User) (*pb.User, err
 // FilterUsers implements UserServiceServer
 func (uv *UserViews) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// filter users
 	iter := session.Query(`SELECT id, name, email FROM users WHERE name = ? ALLOW FILTERING;`, f.Name).Iter()
 
@@ -87,7 +87,7 @@ func (uv *UserViews) FilterUsers(ctx context.Context, f *pb.Filter) (*pb.Users, 
 // VerifyUser implements UserServiceServer
 func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.Verification, error) {
 	// get db session from context
-	session := datastore.FromContext(ctx).(*gocql.Session)
+	session := ext.FromContextAny(ctx, "cassandra").(*gocql.Session)
 	// hash credential password
 	challenge := &pb.Credentials{Email: crd.Email, Password: hashPassword(crd.Password)}
 	valid := &pb.Credentials{}

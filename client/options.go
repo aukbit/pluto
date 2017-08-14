@@ -64,6 +64,15 @@ func UnaryClientInterceptors(uci []grpc.UnaryClientInterceptor) Option {
 	})
 }
 
+// StreamClientInterceptors ...
+func StreamClientInterceptors(uci []grpc.StreamClientInterceptor) Option {
+	return optionFunc(func(c *Client) {
+		c.cfg.mu.Lock()
+		defer c.cfg.mu.Unlock()
+		c.cfg.StreamClientInterceptors = append(c.cfg.StreamClientInterceptors, uci...)
+	})
+}
+
 // Logger sets a shallow copy from an input logger
 func Logger(l zerolog.Logger) Option {
 	return optionFunc(func(c *Client) {

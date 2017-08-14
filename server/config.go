@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"sync"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -22,10 +23,11 @@ type Config struct {
 	Mux                      *router.Router
 	TLSConfig                *tls.Config // optional TLS config, used by ListenAndServeTLS
 	GRPCRegister             GRPCRegisterServiceFunc
+	Discovery                discovery.Discovery
+	mu                       sync.Mutex                     // ensures atomic writes; protects the following fields
 	Middlewares              []router.Middleware            // http middlewares
 	UnaryServerInterceptors  []grpc.UnaryServerInterceptor  // gRPC interceptors
 	StreamServerInterceptors []grpc.StreamServerInterceptor // gRPC interceptors
-	Discovery                discovery.Discovery
 }
 
 // GRPCRegisterServiceFunc grpc
@@ -45,8 +47,8 @@ func newConfig() Config {
 	}
 }
 
-// Convert string Addr to int Port
-func (c Config) Port() int {
+// Port converts string Addr to int Port
+func (c *Config) Port() int {
 	// support only numeric
 	reg, err := regexp.Compile("[^0-9]+")
 	if err != nil {

@@ -20,26 +20,21 @@ var (
 func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
-	// get logger from context
-	// log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// new user
 	newUser := &pb.NewUser{}
 	if err := jsonpb.Unmarshal(r.Body, newUser); err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 	// get gRPC client from service
 	c, ok := pluto.FromContext(ctx).Client("client")
 	if !ok {
-		// log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
 		return
 	}
 	// dial
 	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -47,7 +42,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// make a call the backend service
 	user, err := c.Stub(conn).(pb.UserServiceClient).CreateUser(ctx, newUser)
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -57,8 +51,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
-	// get logger from context
-	// log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := router.FromContext(ctx, "id")
 	// set proto user
@@ -66,14 +58,12 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// get gRPC client from service
 	c, ok := pluto.FromContext(ctx).Client("client")
 	if !ok {
-		// log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
 		return
 	}
 	// dial
 	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -81,7 +71,6 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 	// make a call the backend service
 	user, err = c.Stub(conn).(pb.UserServiceClient).ReadUser(ctx, user)
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -91,29 +80,24 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) {
 func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
-	// get logger from context
-	// log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := router.FromContext(ctx, "id")
 	// set proto user
 	user := &pb.User{Id: id}
 	// unmarshal body
 	if err := jsonpb.Unmarshal(r.Body, user); err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 	// get gRPC client from service
 	c, ok := pluto.FromContext(ctx).Client("client")
 	if !ok {
-		// log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())
 		return
 	}
 	// dial
 	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -121,7 +105,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 	// make a call the backend service
 	user, err = c.Stub(conn).(pb.UserServiceClient).UpdateUser(ctx, user)
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -131,8 +114,6 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
-	// get logger from context
-	// log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get id context
 	id := router.FromContext(ctx, "id")
 	// set proto user
@@ -140,14 +121,12 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// get gRPC client from service
 	c, ok := pluto.FromContext(ctx).Client("client")
 	if !ok {
-		// log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable)
 		return
 	}
 	// dial
 	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -155,7 +134,6 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	// make a call the backend service
 	user, err = c.Stub(conn).(pb.UserServiceClient).DeleteUser(ctx, user)
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -165,8 +143,6 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// get context
 	ctx := r.Context()
-	// get logger from context
-	// log := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get parameters
 	n := r.URL.Query().Get("name")
 	// set proto filter
@@ -174,14 +150,12 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// get gRPC client from service
 	c, ok := pluto.FromContext(ctx).Client("client")
 	if !ok {
-		// log.Error(errClientUserNotAvailable.Error())
 		reply.Json(w, r, http.StatusInternalServerError, errClientUserNotAvailable.Error())
 		return
 	}
 	// dial
 	conn, err := c.Dial(client.Timeout(5 * time.Second))
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -189,7 +163,6 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// make a call the backend service
 	users, err := c.Stub(conn).(pb.UserServiceClient).FilterUsers(ctx, filter)
 	if err != nil {
-		// log.Error(err.Error())
 		reply.Json(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}

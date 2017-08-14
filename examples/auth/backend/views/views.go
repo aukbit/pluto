@@ -13,11 +13,6 @@ import (
 )
 
 var (
-	privKeyPath = "./keys/auth.rsa"
-	pubKeyPath  = "./keys/auth.rsa.pub"
-)
-
-var (
 	errCredentials            = errors.New("Invalid credentials")
 	errClientUserNotAvailable = errors.New("Client user not available")
 )
@@ -47,16 +42,13 @@ func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*p
 	if !v.IsValid {
 		return &pba.Token{}, errCredentials
 	}
-	pk, err := jwt.LoadPrivateKey(privKeyPath)
-	if err != nil {
-		return &pba.Token{}, err
-	}
+
 	cs := &jwt.ClaimSet{
 		Identifier: cre.Email,
 		Audience:   "bearer",
 		Expiration: 3650,
 	}
-	token, err := jwt.NewToken(cs, pk)
+	token, err := jwt.NewToken(ctx, cs)
 	if err != nil {
 		return &pba.Token{}, err
 	}
@@ -65,11 +57,8 @@ func (av *AuthViews) Authenticate(ctx context.Context, cre *pba.Credentials) (*p
 
 // Verify implements authentication
 func (av *AuthViews) Verify(ctx context.Context, t *pba.Token) (*pba.Verification, error) {
-	pk, err := jwt.LoadPublicKey(pubKeyPath)
-	if err != nil {
-		return &pba.Verification{IsValid: false}, err
-	}
-	err = jwt.Verify(t.Jwt, pk)
+
+	err := jwt.Verify(ctx, t.Jwt)
 	if err != nil {
 		return &pba.Verification{IsValid: false}, err
 	}

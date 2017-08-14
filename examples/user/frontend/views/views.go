@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -295,7 +294,7 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	}
 	defer conn.Close()
 	// make call
-	stream, err := c.Stub(conn).(pb.UserServiceClient).StreamUsers(context.Background(), filter)
+	stream, err := c.Stub(conn).(pb.UserServiceClient).StreamUsers(ctx, filter)
 	if err != nil {
 		return &router.HandlerErr{
 			Error:   err,

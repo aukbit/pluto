@@ -5,7 +5,7 @@ An implementation of microservices with golang to tackle some of the challenges 
 - Client/Server implementation with [gRPC](http://www.grpc.io/) for communication between services.
 - Service health check.
 - Datastore package currently supports [Cassandra](http://cassandra.apache.org/) via [gocql](https://github.com/gocql/gocql) and [MongoDB](https://www.mongodb.com/) via [mgo](https://labix.org/mgo).
-- Structured Logs by using [zap](https://github.com/uber-go/zap).
+- Structured Logs by using [zerolog](https://github.com/rs/zerolog).
 
 
 ### Inspiration

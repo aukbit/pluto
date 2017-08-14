@@ -35,17 +35,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		hcr = clt.Health()
-	case "db":
-		db, err := s.Datastore()
-		if err != nil {
-			reply.Json(w, r, http.StatusNotFound, hcr)
-			return
-		}
-		if n != db.Name() {
-			reply.Json(w, r, http.StatusNotFound, hcr)
-			return
-		}
-		hcr = db.Health()
 	case "pluto":
 		if n != s.Name() {
 			reply.Json(w, r, http.StatusNotFound, hcr)

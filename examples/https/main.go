@@ -40,14 +40,11 @@ func run() error {
 		server.Mux(mux),
 	)
 
-	// Logger
-	// logger, _ := zap.NewDevelopment()
 	// Init service
 	s := pluto.New(
 		pluto.Name("web"),
 		pluto.Description("web server serving handlers with https/tls"),
 		pluto.Servers(srv),
-		// pluto.Logger(logger),
 		pluto.HealthAddr(":9098"),
 	)
 

@@ -17,9 +17,9 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/reply"
 	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/ext"
 	"github.com/aukbit/pluto/server/router"
 	pb "github.com/aukbit/pluto/test/proto"
 	"google.golang.org/grpc"
@@ -43,6 +43,10 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 }
 
 func TestMain(m *testing.M) {
+	// Create db client
+	cfg := gocql.NewCluster("localhost")
+	cfg.ProtoVersion = 3
+	cfg.Keyspace = "default"
 
 	// Define router
 	mux := router.New()
@@ -53,6 +57,7 @@ func TestMain(m *testing.M) {
 		server.Description("gopher super server"),
 		server.Addr(":8081"),
 		server.Mux(mux),
+		server.Middlewares(ext.CassandraMiddleware("cassandra", cfg)),
 	)
 	// Create grpc pluto server
 	srvGRPC := server.New(
@@ -62,6 +67,8 @@ func TestMain(m *testing.M) {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}),
+		server.UnaryServerInterceptors(ext.CassandraUnaryServerInterceptor("cassandra", cfg)),
+		server.StreamServerInterceptors(ext.CassandraStreamServerInterceptor("cassandra", cfg)),
 	)
 	// Create grpc pluto client
 	cltGRPC := client.New(
@@ -72,14 +79,7 @@ func TestMain(m *testing.M) {
 			return pb.NewGreeterClient(cc)
 		}),
 	)
-	// Create db client
-	cfg := gocql.NewCluster("localhost")
-	cfg.ProtoVersion = 3
-	cfg.Keyspace = "default"
-	db := datastore.New(
-		datastore.Name(serviceName),
-		datastore.Cassandra(cfg),
-	)
+
 	// Define service Discovery
 	// d := discovery.NewDiscovery(discovery.Addr("192.168.99.100:8500"))
 	// Hook functions
@@ -91,8 +91,6 @@ func TestMain(m *testing.M) {
 		log.Print("second run after service starts")
 		return nil
 	}
-	// Logger
-	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := New(
 		Name(serviceName),
@@ -100,9 +98,7 @@ func TestMain(m *testing.M) {
 		Servers(srvGRPC),
 		Clients(cltGRPC),
 		HookAfterStart(fn1, fn2),
-		Datastore(db),
 		HealthAddr(":9091"),
-		// Logger(logger),
 	)
 
 	if !testing.Short() {
@@ -195,16 +191,6 @@ func TestHealth(t *testing.T) {
 		},
 		{
 			Path:         "/pluto/something_wrong",
-			BodyContains: `UNKNOWN`,
-			Status:       http.StatusNotFound,
-		},
-		{
-			Path:         "/db/" + serviceName + "_db",
-			BodyContains: `SERVING`,
-			Status:       http.StatusOK,
-		},
-		{
-			Path:         "/db/something_wrong",
 			BodyContains: `UNKNOWN`,
 			Status:       http.StatusNotFound,
 		},
