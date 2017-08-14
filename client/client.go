@@ -61,9 +61,12 @@ func (c *Client) applyOptions(opts ...Option) {
 // Init initialize logger and interceptors
 func (c *Client) Init(opts ...Option) {
 	c.applyOptions(opts...)
-	c.logger = c.logger.With().
-		Str(c.cfg.ID, c.cfg.Name).
-		Str("format", c.cfg.Format).Logger()
+	c.logger = c.logger.With().Dict("client", zerolog.Dict().
+		Str("id", c.cfg.ID).
+		Str("name", c.cfg.Name).
+		Str("format", c.cfg.Format).
+		Str("target", c.cfg.Target),
+	).Logger()
 	c.logger.Info().Msg(fmt.Sprintf("initializing %s %s, connecting to %s", c.cfg.Format, c.Name(), c.cfg.Target))
 	// append dial interceptor to grpc client
 	c.cfg.mu.Lock()

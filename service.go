@@ -83,7 +83,7 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 
 // Run starts service
 func (s *Service) Run() error {
-	s.logger = s.logger.With().Str(s.cfg.ID, s.cfg.Name).Logger()
+	s.logger = s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name).Logger()
 	// set health server
 	s.setHealthServer()
 	// start service

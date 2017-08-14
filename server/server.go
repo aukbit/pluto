@@ -75,9 +75,12 @@ func (s *Server) Run(opts ...Option) error {
 	for _, opt := range opts {
 		opt.apply(s)
 	}
-	s.logger = s.logger.With().Str(s.cfg.ID, s.cfg.Name).
+	s.logger = s.logger.With().Dict("server", zerolog.Dict().
+		Str("id", s.cfg.ID).
+		Str("name", s.cfg.Name).
 		Str("format", s.cfg.Format).
-		Str("port", s.cfg.Addr).Logger()
+		Str("port", s.cfg.Addr),
+	).Logger()
 	// register at service discovery
 	if err := s.register(); err != nil {
 		return err

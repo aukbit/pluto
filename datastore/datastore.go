@@ -59,8 +59,11 @@ func (ds *Datastore) clone() *Datastore {
 }
 
 func (ds *Datastore) Init(opts ...Option) error {
-	ds.logger = ds.logger.With().Str(ds.cfg.ID, ds.cfg.Name).
-		Str("driver", ds.cfg.driver).Logger()
+	ds.logger = ds.logger.With().Dict("datastore", zerolog.Dict().
+		Str("id", ds.cfg.ID).
+		Str("name", ds.cfg.Name).
+		Str("driver", ds.cfg.driver),
+	).Logger()
 	// set last configs
 	if len(opts) > 0 {
 		for _, opt := range opts {
