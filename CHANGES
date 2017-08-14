@@ -1,3 +1,7 @@
+Version 3.2.2:
+ - default log timestamp as RFC3339Nano
+ - Merge branch release-3.2.1
+
 Version 3.2.1:
  - make rsa interceptor public
  - Merge branch release-3.2.0
