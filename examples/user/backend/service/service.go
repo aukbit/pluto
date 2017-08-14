@@ -4,10 +4,10 @@ import (
 	"flag"
 
 	"github.com/aukbit/pluto"
-	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/examples/user/backend/views"
 	pb "github.com/aukbit/pluto/examples/user/proto"
 	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/server/ext"
 	"github.com/gocql/gocql"
 	"google.golang.org/grpc"
 )
@@ -24,25 +24,25 @@ func init() {
 }
 
 func Run() error {
+	// db connection
+	cfg := gocql.NewCluster(dbAddr)
+	cfg.Keyspace = "examples_user_backend"
+	cfg.ProtoVersion = 3
+
 	// Define Pluto Server
 	srv := server.New(
 		server.Addr(grpcPort),
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterUserServiceServer(g, &backend.UserViews{})
 		}),
+		server.UnaryServerInterceptors(ext.CassandraUnaryServerInterceptor("cassandra", cfg)),
+		server.StreamServerInterceptors(ext.CassandraStreamServerInterceptor("cassandra", cfg)),
 	)
-	// db connection
-	cfg := gocql.NewCluster(dbAddr)
-	cfg.Keyspace = "examples_user_backend"
-	cfg.ProtoVersion = 3
-	db := datastore.New(
-		datastore.Cassandra(cfg),
-	)
+
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
-		pluto.Datastore(db),
 		pluto.Servers(srv),
 		pluto.HealthAddr(":9096"),
 	)
