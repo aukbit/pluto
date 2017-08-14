@@ -101,7 +101,6 @@ func (uv *UserViews) VerifyUser(ctx context.Context, crd *pb.Credentials) (*pb.V
 // StreamUsers implements UserServiceServer
 func (uv *UserViews) StreamUsers(in *pb.Filter, stream pb.UserService_StreamUsersServer) error {
 	ctx := stream.Context()
-	// logger := ctx.Value(server.Key("logger")).(*zap.Logger)
 	// get db session from context
 	session := datastore.FromContext(ctx).(*gocql.Session)
 	// filter users
@@ -110,7 +109,6 @@ func (uv *UserViews) StreamUsers(in *pb.Filter, stream pb.UserService_StreamUser
 
 	u := &pb.User{}
 	for iter.Scan(&u.Id, &u.Name, &u.Email) {
-		// logger.Info(fmt.Sprintf("stream %v ", u))
 		// stream
 		if err := stream.Send(u); err != nil {
 			return err

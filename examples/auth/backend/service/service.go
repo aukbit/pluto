@@ -46,14 +46,12 @@ func Run(pub *rsa.PublicKey, prv *rsa.PrivateKey) error {
 		server.UnaryServerInterceptors(jwt.RsaUnaryServerInterceptor(pub, prv)),
 	)
 	// Logger
-	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("auth_backend"),
 		pluto.Description("Backend service issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization"),
 		pluto.Servers(srv),
 		pluto.Clients(clt),
-		// pluto.Logger(logger),
 		pluto.HealthAddr(":9092"),
 	)
 

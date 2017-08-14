@@ -91,8 +91,6 @@ func TestMain(m *testing.M) {
 		log.Print("second run after service starts")
 		return nil
 	}
-	// Logger
-	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := New(
 		Name(serviceName),
@@ -102,7 +100,6 @@ func TestMain(m *testing.M) {
 		HookAfterStart(fn1, fn2),
 		Datastore(db),
 		HealthAddr(":9091"),
-		// Logger(logger),
 	)
 
 	if !testing.Short() {

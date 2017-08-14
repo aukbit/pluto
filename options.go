@@ -6,6 +6,7 @@ import (
 	"github.com/aukbit/pluto/datastore"
 	"github.com/aukbit/pluto/discovery"
 	"github.com/aukbit/pluto/server"
+	"github.com/rs/zerolog"
 )
 
 // Option is used to set options for the service.
@@ -77,13 +78,12 @@ func HookAfterStart(fn ...HookFunc) Option {
 	})
 }
 
-// Logger sets a shallow copy from an input logger
-// func Logger(l *zap.Logger) Option {
-// 	return optionFunc(func(s *Service) {
-// 		copy := *l
-// 		s.logger = &copy
-// 	})
-// }
+// Logger sets a new configuration for service logger
+func Logger(l zerolog.Logger) Option {
+	return optionFunc(func(s *Service) {
+		s.logger = l
+	})
+}
 
 // HealthAddr health server address
 func HealthAddr(a string) Option {

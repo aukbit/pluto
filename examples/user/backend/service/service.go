@@ -38,15 +38,12 @@ func Run() error {
 	db := datastore.New(
 		datastore.Cassandra(cfg),
 	)
-	// logger
-	// logger, _ := zap.NewDevelopment()
 	// Define Pluto Service
 	s := pluto.New(
 		pluto.Name("backend"),
 		pluto.Description("Backend service is responsible for persist data"),
 		pluto.Datastore(db),
 		pluto.Servers(srv),
-		// pluto.Logger(logger),
 		pluto.HealthAddr(":9096"),
 	)
 
