@@ -1,3 +1,7 @@
+Version 3.1.4:
+ - make logger directly available in hook funcs context
+ - Merge branch release-3.1.3
+
 Version 3.1.3:
  - export service logger
  - Merge branch release-3.1.2

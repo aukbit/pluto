@@ -196,7 +196,11 @@ func (s *Service) hookAfterStart() error {
 		return nil
 	}
 	ctx := context.Background()
+	// make service available in hooks context
 	ctx = s.WithContext(ctx)
+	// make logger available in hooks context
+	sublogger := s.logger.With().Str("hook", "after_start").Logger()
+	ctx = sublogger.WithContext(ctx)
 	for _, h := range hooks {
 		if err := h(ctx); err != nil {
 			return err
