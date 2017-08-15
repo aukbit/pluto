@@ -1,3 +1,7 @@
+Version 4.1.0:
+ - allow context to be changed in router
+ - Merge branch release-4.0.1
+
 Version 4.0.1:
  - update hello world readme example
  - refactor client log
