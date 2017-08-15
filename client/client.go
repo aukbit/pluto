@@ -67,7 +67,7 @@ func (c *Client) Init(opts ...Option) {
 		Str("format", c.cfg.Format).
 		Str("target", c.cfg.Target),
 	).Logger()
-	c.logger.Info().Msg(fmt.Sprintf("initializing %s %s, connecting to %s", c.cfg.Format, c.Name(), c.cfg.Target))
+	c.logger.Info().Msg(fmt.Sprintf("starting %s %s, connecting to %s", c.cfg.Format, c.Name(), c.cfg.Target))
 	// append dial interceptor to grpc client
 	c.cfg.mu.Lock()
 	defer c.cfg.mu.Unlock()

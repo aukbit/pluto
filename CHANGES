@@ -1,3 +1,8 @@
+Version 4.0.1:
+ - update hello world readme example
+ - refactor client log
+ - Merge branch release-4.0.0
+
 Version 4.0.0:
  - update vendor
  - datastore package removed
