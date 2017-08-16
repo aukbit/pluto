@@ -20,10 +20,6 @@ func serverUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 
 func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		// fmt.Println("*** ctx", ctx)
-		// fmt.Println("*** req", req)
-		// fmt.Println("*** info", info)
-		// fmt.Println("*** handler", handler)
 		// get information from peer
 		p, _ := peer.FromContext(ctx)
 		e := eidFromIncomingContext(ctx)
@@ -31,13 +27,13 @@ func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 		sublogger := s.logger.With().
 			Str("eid", e).
 			Str("method", info.FullMethod).Logger()
-		fmt.Printf("*** %T\n", req)
 		sublogger.Info().
 			Str("data", fmt.Sprintf("%v", req)).
 			Dict("peer", zerolog.Dict().
 				Str("addr", fmt.Sprintf("%v", p.Addr)).
 				Str("auth", fmt.Sprintf("%v", p.AuthInfo))).
 			Msg(fmt.Sprintf("request %s from %v", info.FullMethod, p.Addr))
+
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
 		h, err := handler(ctx, req)
