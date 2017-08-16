@@ -67,7 +67,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	log.Ctx(ctx).Info().Msg(fmt.Sprintf("POST user %s created", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path+"/"+user.Id)
-	reply.Json(w, r, http.StatusCreated, user)
+	reply.Jsonpb(w, r, http.StatusCreated, &jsonpb.Marshaler{}, user)
 	return nil
 }
 
@@ -118,7 +118,7 @@ func GetHandlerDetail(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET user %s", user.Id))
 	// set header location
 	w.Header().Add("Location", r.URL.Path)
-	reply.Json(w, r, http.StatusOK, user)
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{}, user)
 	return nil
 }
 
@@ -172,7 +172,7 @@ func PutHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("PUT user %s updated", user.Id))
 	// set header location
 	w.Header().Set("Location", r.URL.Path)
-	reply.Json(w, r, http.StatusOK, user)
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{}, user)
 	return nil
 }
 
@@ -221,7 +221,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("DELETE user %s deleted", user.Id))
-	reply.Json(w, r, http.StatusOK, user)
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{}, user)
 	return nil
 }
 
@@ -262,7 +262,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr {
 		}
 	}
 	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET users %v", users))
-	reply.Json(w, r, http.StatusOK, users)
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{}, users)
 	return nil
 }
 
@@ -318,6 +318,6 @@ func GetStreamHandler(w http.ResponseWriter, r *http.Request) *router.HandlerErr
 		users.Data = append(users.Data, u)
 	}
 	log.Ctx(r.Context()).Info().Msg(fmt.Sprintf("GET Stream users %v", users))
-	reply.Json(w, r, http.StatusOK, users)
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{}, users)
 	return nil
 }
