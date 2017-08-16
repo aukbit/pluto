@@ -1,3 +1,11 @@
+Version 4.2.0:
+ - test jsonpb func reply
+ - add jsonpb func reply
+ - remove context log
+ - log request and response grpc data
+ - log grpc server request and response data
+ - Merge branch release-4.1.0
+
 Version 4.1.0:
  - allow context to be changed in router
  - Merge branch release-4.0.1

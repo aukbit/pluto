@@ -21,9 +21,6 @@ func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
 		e := eidFromIncomingContext(ctx)
-
-		// fmt.Println("stream", ctx)
-
 		// sets new logger instance with eventID
 		sublogger := s.logger.With().Str("eid", e).Logger()
 		sublogger.Info().Str("method", info.FullMethod).Msg(fmt.Sprintf("request %s", info.FullMethod))
