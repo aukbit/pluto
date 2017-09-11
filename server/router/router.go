@@ -29,29 +29,26 @@ func (fn HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fn(w, r)
 }
 
-// HandlerErr struct containing an error and helper fields
-type HandlerErr struct {
-	Error   error
-	Message string
-	Code    int
-}
-
-func NewHandlerErr(err error, code int) *HandlerErr {
-	return &HandlerErr{
-		Error:   err,
-		Message: err.Error(),
-		Code:    code,
-	}
+// Err struct containing an error and helper fields
+type Err struct {
+	Err      error             `json:"-"`
+	Status   int               `json:"-"`
+	Type     string            `json:"type"`
+	Message  string            `json:"message"`
+	Code     string            `json:"code,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 // WrapErr reduces the repetition of dealing with errors in Handlers
 // returning an error
-type WrapErr func(http.ResponseWriter, *http.Request) *HandlerErr
+// https://blog.golang.org/error-handling-and-go
+type WrapErr func(http.ResponseWriter, *http.Request) *Err
 
 func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if e := fn(w, r); e != nil { // e is *HandlerErr, not os.Error.
-		zerolog.Ctx(r.Context()).Error().Msg(e.Message)
-		http.Error(w, e.Message, e.Code)
+	if e := fn(w, r); e != nil { // e is *Err, not os.Error.
+		zerolog.Ctx(r.Context()).Error().Msgf("%v", e.Err)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		reply.Json(w, r, e.Status, e)
 	}
 }
 
@@ -354,5 +351,9 @@ func DefaultRootHandler(w http.ResponseWriter, r *http.Request) {
 
 // NotFoundHandler default not found resource json handler
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	reply.Json(w, r, http.StatusNotFound, "404 page not found")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	reply.Json(w, r, http.StatusNotFound, &Err{
+		Type:    "invalid_request_error",
+		Message: "Invalid request errors arise when your request has invalid parameters.",
+	})
 }
