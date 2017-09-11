@@ -15,6 +15,7 @@ import (
 	"github.com/aukbit/pluto/examples/user/backend/service"
 	"github.com/aukbit/pluto/examples/user/frontend/service"
 	pb "github.com/aukbit/pluto/examples/user/proto"
+	"github.com/aukbit/pluto/server/router"
 	"github.com/paulormart/assert"
 )
 
@@ -66,8 +67,8 @@ func TestExampleUser(t *testing.T) {
 		Body           io.Reader
 		Response       func(string) *pb.User
 		ResponseHeader func(string) *http.Header
-		// ResponseError func(string) *pb.User
-		Status int
+		ResponseError  func() *router.Err
+		Status         int
 	}{
 		{
 			Method: "POST",
@@ -109,8 +110,8 @@ func TestExampleUser(t *testing.T) {
 		{
 			Method: "GET",
 			Path:   func(id string) string { return URL + "/user/abc" },
-			Response: func(id string) *pb.User {
-				return &pb.User{}
+			ResponseError: func() *router.Err {
+				return &router.Err{Message: "Id abc not found"}
 			},
 			Status: http.StatusNotFound,
 		},
@@ -137,8 +138,8 @@ func TestExampleUser(t *testing.T) {
 			Method: "PUT",
 			Path:   func(id string) string { return URL + "/user/abc" },
 			Body:   strings.NewReader(`{"name":"Super Gopher house"}`),
-			Response: func(id string) *pb.User {
-				return &pb.User{}
+			ResponseError: func() *router.Err {
+				return &router.Err{Message: "Id abc not found"}
 			},
 			Status: http.StatusNotFound,
 		},
@@ -146,7 +147,11 @@ func TestExampleUser(t *testing.T) {
 			Method: "DELETE",
 			Path:   func(id string) string { return URL + "/user/" + id },
 			Response: func(id string) *pb.User {
-				return &pb.User{}
+				return &pb.User{
+					Id:    id,
+					Name:  "Super Gopher house",
+					Email: "gopher@email.com",
+				}
 			},
 			ResponseHeader: func(id string) *http.Header {
 				h := &http.Header{}
@@ -158,8 +163,8 @@ func TestExampleUser(t *testing.T) {
 		{
 			Method: "DELETE",
 			Path:   func(id string) string { return URL + "/user/abc" },
-			Response: func(id string) *pb.User {
-				return &pb.User{}
+			ResponseError: func() *router.Err {
+				return &router.Err{Message: "Id abc not found"}
 			},
 			Status: http.StatusNotFound,
 		},
@@ -176,19 +181,39 @@ func TestExampleUser(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer resp.Body.Close()
-		if resp.Request.Method == "DELETE" {
-			user = &pb.User{}
+		if resp.StatusCode > 400 {
+			e := &router.Err{}
+			err = json.NewDecoder(resp.Body).Decode(e)
+			if err != nil {
+				t.Errorf("fail decode: %v", err)
+				return
+			}
+			assert.Equal(t, test.ResponseError().Message, e.Message)
+			return
 		}
-		// decode body into user struct
+		//
 		err = json.NewDecoder(resp.Body).Decode(user)
 		if err != nil {
-			assert.Equal(t, test.Status, resp.StatusCode)
-		} else {
-			assert.Equal(t, test.Status, resp.StatusCode)
-			assert.Equal(t, test.ResponseHeader("").Get("Content-Type"), resp.Header.Get("Content-Type"))
-			assert.Equal(t, test.ResponseHeader(user.Id).Get("Location"), resp.Header.Get("Location"))
-			assert.Equal(t, test.Response(user.Id).String(), user.String())
+			t.Errorf("fail decode: %v", err)
+			return
 		}
+		assert.Equal(t, test.Status, resp.StatusCode)
+		assert.Equal(t, test.ResponseHeader("").Get("Content-Type"), resp.Header.Get("Content-Type"))
+		assert.Equal(t, test.ResponseHeader(user.Id).Get("Location"), resp.Header.Get("Location"))
+		assert.Equal(t, test.Response(user.Id).String(), user.String())
+
+		// // decode body into user struct
+		//
+		// fmt.Println("TESTE", test.Response(user.Id).String(), user.String())
+		// if err != nil {
+		// 	t.Errorf("fail decode: %v", err)
+		// 	// assert.Equal(t, test.Status, resp.StatusCode)
+		// } else {
+		// 	assert.Equal(t, test.Status, resp.StatusCode)
+		// 	// assert.Equal(t, test.ResponseHeader("").Get("Content-Type"), resp.Header.Get("Content-Type"))
+		// 	// assert.Equal(t, test.ResponseHeader(user.Id).Get("Location"), resp.Header.Get("Location"))
+		// 	assert.Equal(t, test.Response(user.Id).String(), user.String())
+		// }
 	}
 }
 

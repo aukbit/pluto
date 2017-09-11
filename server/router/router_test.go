@@ -63,11 +63,11 @@ func GetCategoryDetailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestRouter(t *testing.T) {
-	router := router.NewRouter()
-	router.HandleFunc("GET", "/", IndexHandler)
-	router.HandleFunc("GET", "/home", GetHandler)
-	router.HandleFunc("GET", "/home/home", GetHandler)
-	router.HandleFunc("GET", "/home/home/home", GetHandler)
+	r := router.NewRouter()
+	r.HandleFunc("GET", "/", IndexHandler)
+	r.HandleFunc("GET", "/home", GetHandler)
+	r.HandleFunc("GET", "/home/home", GetHandler)
+	r.HandleFunc("GET", "/home/home/home", GetHandler)
 
 	var tests = []struct {
 		Method       string
@@ -101,7 +101,7 @@ func TestRouter(t *testing.T) {
 			Status:       http.StatusOK,
 		},
 	}
-	server := httptest.NewServer(router)
+	server := httptest.NewServer(r)
 	defer server.Close()
 	for _, test := range tests {
 		r, err := http.NewRequest(test.Method, server.URL+test.Path, test.Body)
@@ -125,14 +125,14 @@ func TestRouter(t *testing.T) {
 }
 
 func TestDynamicRouter(t *testing.T) {
-	router := router.NewRouter()
-	router.HandleFunc("GET", "/", IndexHandler)
-	router.HandleFunc("POST", "/home", PostHandler)
-	router.HandleFunc("GET", "/home/:id", GetDetailHandler)
-	router.HandleFunc("PUT", "/home/:id", PutDetailHandler)
-	router.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
-	router.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
-	router.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
+	r := router.NewRouter()
+	r.HandleFunc("GET", "/", IndexHandler)
+	r.HandleFunc("POST", "/home", PostHandler)
+	r.HandleFunc("GET", "/home/:id", GetDetailHandler)
+	r.HandleFunc("PUT", "/home/:id", PutDetailHandler)
+	r.HandleFunc("DELETE", "/home/:id", DeleteDetailHandler)
+	r.HandleFunc("GET", "/home/:id/room", GetRoomHandler)
+	r.HandleFunc("GET", "/home/:id/room/:category", GetCategoryDetailHandler)
 
 	var tests = []struct {
 		Method       string
@@ -189,23 +189,26 @@ func TestDynamicRouter(t *testing.T) {
 		{
 			Method:       "GET",
 			Path:         "/home/",
-			BodyContains: "404 page not found",
+			Body:         strings.NewReader(`{"type":"invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."}`),
+			BodyContains: map[string]string{"type": "invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."},
 			Status:       http.StatusNotFound,
 		},
 		{
 			Method:       "GET",
 			Path:         "/abc",
-			BodyContains: "404 page not found",
+			Body:         strings.NewReader(`{"type":"invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."}`),
+			BodyContains: map[string]string{"type": "invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."},
 			Status:       http.StatusNotFound,
 		},
 		{
 			Method:       "GET",
 			Path:         "/somethingelse/123/w444/f444",
-			BodyContains: "404 page not found",
+			Body:         strings.NewReader(`{"type":"invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."}`),
+			BodyContains: map[string]string{"type": "invalid_request_error", "message": "Invalid request errors arise when your request has invalid parameters."},
 			Status:       http.StatusNotFound,
 		},
 	}
-	server := httptest.NewServer(router)
+	server := httptest.NewServer(r)
 	defer server.Close()
 	for _, test := range tests {
 		r, err := http.NewRequest(test.Method, server.URL+test.Path, test.Body)
