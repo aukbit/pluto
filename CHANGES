@@ -1,3 +1,7 @@
+Version 5.1.0:
+ - refactor client interceptor to forward eid from incoming context to outgoing context
+ - Merge branch release-5.0.0
+
 Version 5.0.0:
  - refactor http response errors as json by default
  - Merge branch release-4.2.0
