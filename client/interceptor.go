@@ -35,8 +35,8 @@ func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 
 // --- Helper functions
 
-// eidFromOutgoingContext returns metadata if eid is available in outgoing context
-func eidInOutgoingContext(ctx context.Context) (string, metadata.MD) {
+// eidFromOutgoingContext returns context if eid is available in outgoing context
+func eidInOutgoingContext(ctx context.Context) (string, context.Context) {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		return "", nil
@@ -44,11 +44,11 @@ func eidInOutgoingContext(ctx context.Context) (string, metadata.MD) {
 	if _, ok := md["eid"]; !ok {
 		return "", nil
 	}
-	return md["eid"][0], md
+	return md["eid"][0], ctx
 }
 
-// eidInIncomingContext returns metadata if eid is available in incoming context
-func eidInIncomingContext(ctx context.Context) (string, metadata.MD) {
+// eidInIncomingContext returns context if eid is available in incoming context
+func eidInIncomingContext(ctx context.Context) (string, context.Context) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", nil
@@ -56,21 +56,33 @@ func eidInIncomingContext(ctx context.Context) (string, metadata.MD) {
 	if _, ok := md["eid"]; !ok {
 		return "", nil
 	}
-	return md["eid"][0], md
+	eid := md["eid"][0]
+	// get metadata from outgoing context and join the eid
+	md, ok = metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.New(map[string]string{})
+	}
+	md = md.Copy()
+	md = metadata.Join(md, metadata.Pairs("eid", eid))
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	return md["eid"][0], ctx
 }
 
 // eidFromContext returns eid and context with eid in context metadata
 func eidFromContext(ctx context.Context) (string, context.Context) {
 	if eid, md := eidInIncomingContext(ctx); md != nil {
-		md = md.Copy()
-		ctx = metadata.NewOutgoingContext(ctx, md)
 		return eid, ctx
 	}
 	if eid, md := eidInOutgoingContext(ctx); md != nil {
 		return eid, ctx
 	}
 	// if not in context create new outgoing context with new eid
-	md := metadata.New(map[string]string{})
+	// get metadata from outgoing context and join the eid
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.New(map[string]string{})
+	}
+	md = md.Copy()
 	md = metadata.Join(md, metadata.Pairs("eid", common.RandID("", 16)))
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	return md["eid"][0], ctx
