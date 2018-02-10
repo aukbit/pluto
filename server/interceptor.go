@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 )
 
@@ -42,23 +41,4 @@ func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 			Msg(fmt.Sprintf("response %s to %v", info.FullMethod, p.Addr))
 		return h, err
 	}
-}
-
-// --- Helper functions
-
-// eidFromIncomingContext returns eid from incoming context
-func eidFromIncomingContext(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		s := FromContext(ctx)
-		s.Logger().Warn().Msg("metadata not available in incoming context")
-		return ""
-	}
-	_, ok = md["eid"]
-	if !ok {
-		s := FromContext(ctx)
-		s.Logger().Warn().Msg("eid not available in metadata")
-		return ""
-	}
-	return md["eid"][0]
 }

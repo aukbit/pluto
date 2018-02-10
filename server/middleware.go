@@ -21,13 +21,19 @@ func serverMiddleware(s *Server) router.Middleware {
 	}
 }
 
-// eidMiddleware sets eid in outgoing metadata context
+// eidMiddleware sets eid in incoming metadata context
 func eidMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			eid := common.RandID("", 16)
-			ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("eid", common.RandID("", 16)))
+			md, ok := metadata.FromIncomingContext(ctx)
+			if !ok {
+				md = metadata.New(map[string]string{})
+			}
+			md = md.Copy()
+			md = metadata.Join(md, metadata.Pairs("eid", eid))
+			ctx = metadata.NewIncomingContext(ctx, md)
 			w.Header().Set("X-PLUTO-EID", eid)
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
@@ -40,7 +46,7 @@ func loggerMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			e := eidFromOutgoingContext(ctx)
+			e := eidFromIncomingContext(ctx)
 			// sets new logger instance with eid
 			sublogger := s.logger.With().Str("eid", e).Logger()
 			switch r.URL.Path {
@@ -78,6 +84,24 @@ func strictSecurityHeaderMiddleware() router.Middleware {
 
 // --- Helper functions
 
+// eidFromIncomingContext returns eid from incoming context
+func eidFromIncomingContext(ctx context.Context) string {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		s := FromContext(ctx)
+		s.Logger().Warn().Msg("metadata not available in incoming context")
+		return ""
+	}
+	_, ok = md["eid"]
+	if !ok {
+		s := FromContext(ctx)
+		s.Logger().Warn().Msg("eid not available in metadata")
+		return ""
+	}
+	return md["eid"][0]
+}
+
+// eidFromOutgoingContext returns eid from outgoing context
 func eidFromOutgoingContext(ctx context.Context) string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
