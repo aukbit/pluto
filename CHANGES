@@ -1,3 +1,7 @@
+Version 5.1.2:
+ - refactor client and server to always get eid from incoming and forward it to outgoing
+ - Merge branch release-5.1.1
+
 Version 5.1.1:
  - join eid from incoming context to outgoing context
  - Merge branch release-5.1.0
