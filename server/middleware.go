@@ -89,13 +89,15 @@ func eidFromIncomingContext(ctx context.Context) string {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		s := FromContext(ctx)
-		s.Logger().Warn().Msg("metadata not available in incoming context")
+		l := s.Logger()
+		l.Warn().Msg("metadata not available in incoming context")
 		return ""
 	}
 	_, ok = md["eid"]
 	if !ok {
 		s := FromContext(ctx)
-		s.Logger().Warn().Msg("eid not available in metadata")
+		l := s.Logger()
+		l.Warn().Msg("eid not available in metadata")
 		return ""
 	}
 	return md["eid"][0]
@@ -106,13 +108,15 @@ func eidFromOutgoingContext(ctx context.Context) string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		s := FromContext(ctx)
-		s.Logger().Warn().Msg(fmt.Sprintf("%s metadata not available in outgoing context", s.Name()))
+		l := s.Logger()
+		l.Warn().Msg(fmt.Sprintf("%s metadata not available in outgoing context", s.Name()))
 		return ""
 	}
 	_, ok = md["eid"]
 	if !ok {
 		s := FromContext(ctx)
-		s.Logger().Warn().Msg(fmt.Sprintf("%s eid not available in metadata", s.Name()))
+		l := s.Logger()
+		l.Warn().Msg(fmt.Sprintf("%s eid not available in metadata", s.Name()))
 		return ""
 	}
 	return md["eid"][0]
