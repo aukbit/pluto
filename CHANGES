@@ -1,3 +1,7 @@
+Version 5.1.5:
+ - refactor logger message at service
+ - Merge branch release-5.1.4
+
 Version 5.1.4:
  - refactor log messages at server middleware
  - Merge branch release-5.1.3
