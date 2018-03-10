@@ -222,7 +222,8 @@ func (s *Service) startServers() {
 				if err == nil {
 					return
 				}
-				srv.Logger().Error().Msg(fmt.Sprintf("%v failed to start, error: %v", srv.Name(), err.Error()))
+				l := srv.Logger()
+				l.Error().Msg(fmt.Sprintf("%v failed to start, error: %v", srv.Name(), err.Error()))
 				time.Sleep(time.Duration(f()) * time.Second)
 			}
 		}(s, srv)
