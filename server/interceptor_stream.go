@@ -32,3 +32,15 @@ func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 		return handler(srv, wrapped)
 	}
 }
+
+// InterfaceStreamServerInterceptor wraps any type to grpc stream server
+func InterfaceStreamServerInterceptor(name string, val interface{}) grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		ctx := ss.Context()
+		ctx = WithContextAny(ctx, name, val)
+		// wrap context
+		wrapped := WrapServerStreamWithContext(ss)
+		wrapped.SetContext(ctx)
+		return handler(srv, wrapped)
+	}
+}
