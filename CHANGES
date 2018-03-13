@@ -1,3 +1,7 @@
+Version 5.1.7:
+ - add generic interceptor functions
+ - Merge branch release-5.1.6
+
 Version 5.1.6:
  - copy ext context helpers to server package
  - Merge branch release-5.1.5
