@@ -140,6 +140,11 @@ func (s *Service) Health() *healthpb.HealthCheckResponse {
 	return hcr
 }
 
+// ID returns service id
+func (s *Service) ID() string {
+	return s.cfg.ID
+}
+
 // Name returns service name
 func (s *Service) Name() string {
 	return s.cfg.Name
