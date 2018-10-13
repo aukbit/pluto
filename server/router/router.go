@@ -354,6 +354,6 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	reply.Json(w, r, http.StatusNotFound, &Err{
 		Type:    "invalid_request_error",
-		Message: "Invalid request errors arise when your request has invalid parameters.",
+		Message: fmt.Sprintf("Invalid request errors arise when your request has invalid parameters. path: %v query: %v", r.URL.EscapedPath(), r.URL.RawQuery),
 	})
 }
