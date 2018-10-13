@@ -150,6 +150,11 @@ func (s *Service) Logger() zerolog.Logger {
 	return s.logger
 }
 
+// WaitUntilFinish returns service name
+func (s *Service) WaitUntilFinish() {
+	<-s.close
+}
+
 func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
