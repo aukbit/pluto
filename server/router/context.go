@@ -18,7 +18,10 @@ func FromContext(ctx context.Context, param string) string {
 
 // FromContextParam returns value for repective param available in context
 func FromContextParam(ctx context.Context, param string) string {
-	return ctx.Value(contextKey{param}).(string)
+	if v, ok := ctx.Value(contextKey{param}).(string); ok {
+		return v
+	}
+	return ""
 }
 
 // WithContextParam returns a copy of ctx with param value associated.
