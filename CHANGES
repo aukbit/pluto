@@ -1,3 +1,7 @@
+Version 5.2.5:
+ - refactor eidMiddleware
+ - Merge branch release-5.2.4
+
 Version 5.2.4:
  - review eidMiddleware headers
  - Merge branch release-5.2.3
