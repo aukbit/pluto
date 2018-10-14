@@ -25,12 +25,15 @@ func serverMiddleware(s *Server) router.Middleware {
 func eidMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			eid := r.Header.Get("X-PLUTO-EID")
+			eidHeader := "X-PLUTO-EID"
+			eid := r.Header.Get(eidHeader)
 			if eid == "" {
 				eid = common.RandID("", 16)
+				r.Header.Add(eidHeader, eid)
 			}
-			r.Header.Add("X-PLUTO-EID", eid)
-			w.Header().Add("X-PLUTO-EID", eid)
+			if w.Header().Get(eidHeader) == "" {
+				w.Header().Add(eidHeader, eid)
+			}
 			ctx := r.Context()
 			md, ok := metadata.FromIncomingContext(ctx)
 			if !ok {
@@ -39,7 +42,6 @@ func eidMiddleware(s *Server) router.Middleware {
 			md = md.Copy()
 			md = metadata.Join(md, metadata.Pairs("eid", eid))
 			ctx = metadata.NewIncomingContext(ctx, md)
-
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
