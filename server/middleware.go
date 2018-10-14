@@ -25,8 +25,12 @@ func serverMiddleware(s *Server) router.Middleware {
 func eidMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			eid := r.Header.Get("X-PLUTO-EID")
+			if eid == "" {
+				eid = common.RandID("", 16)
+			}
 			ctx := r.Context()
-			eid := common.RandID("", 16)
+
 			md, ok := metadata.FromIncomingContext(ctx)
 			if !ok {
 				md = metadata.New(map[string]string{})
