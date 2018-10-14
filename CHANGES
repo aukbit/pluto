@@ -1,3 +1,7 @@
+Version 5.2.2:
+ - use eid from request header if available
+ - Merge branch release-5.2.1
+
 Version 5.2.1:
  - Merge branch 'develop' of github.com:aukbit/pluto into develop
  - specify message in NotFoundHandler
