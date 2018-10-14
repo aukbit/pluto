@@ -1,3 +1,7 @@
+Version 5.2.4:
+ - review eidMiddleware headers
+ - Merge branch release-5.2.3
+
 Version 5.2.3:
  - add eid to request header
  - Merge branch release-5.2.2
