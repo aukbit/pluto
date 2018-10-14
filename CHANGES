@@ -1,3 +1,7 @@
+Version 5.2.6:
+ - fix error FromContextParam check if value exists
+ - Merge branch release-5.2.5
+
 Version 5.2.5:
  - refactor eidMiddleware
  - Merge branch release-5.2.4
