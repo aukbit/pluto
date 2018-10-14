@@ -1,3 +1,7 @@
+Version 5.2.3:
+ - add eid to request header
+ - Merge branch release-5.2.2
+
 Version 5.2.2:
  - use eid from request header if available
  - Merge branch release-5.2.1

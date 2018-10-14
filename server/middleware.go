@@ -29,8 +29,9 @@ func eidMiddleware(s *Server) router.Middleware {
 			if eid == "" {
 				eid = common.RandID("", 16)
 			}
+			r.Header.Add("X-PLUTO-EID", eid)
+			w.Header().Add("X-PLUTO-EID", eid)
 			ctx := r.Context()
-
 			md, ok := metadata.FromIncomingContext(ctx)
 			if !ok {
 				md = metadata.New(map[string]string{})
@@ -38,7 +39,7 @@ func eidMiddleware(s *Server) router.Middleware {
 			md = md.Copy()
 			md = metadata.Join(md, metadata.Pairs("eid", eid))
 			ctx = metadata.NewIncomingContext(ctx, md)
-			w.Header().Set("X-PLUTO-EID", eid)
+
 			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
