@@ -1,3 +1,7 @@
+Version 5.3.1:
+ - review jwt context
+ - Merge branch release-5.3.0
+
 Version 5.3.0:
  - compile proto files - dep init
  - Merge branch release-5.2.6
