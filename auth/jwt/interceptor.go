@@ -1,9 +1,8 @@
 package jwt
 
 import (
+	"context"
 	"crypto/rsa"
-
-	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 )

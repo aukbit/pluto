@@ -20,9 +20,11 @@ var (
 )
 
 var (
-	ErrExpiredToken      = errors.New("token has expired")
-	ErrInvalidAudience   = errors.New("token has invalid audience")
-	ErrInvalidIdentifier = errors.New("token has invalid identifier")
+	ErrExpiredToken           = errors.New("token has expired")
+	ErrInvalidAudience        = errors.New("token has invalid audience")
+	ErrInvalidIdentifier      = errors.New("token has invalid identifier")
+	ErrPrivateKeyNotAvailable = errors.New("private key not available in context")
+	ErrPublicKeyNotAvailable  = errors.New("public key not available in context")
 )
 
 // LoadPublicKey loads a public key from PEM encoded data.
@@ -74,7 +76,10 @@ type ClaimSet struct {
 
 // NewToken returns a JWT token signed with the given RSA private key.
 func NewToken(ctx context.Context, cs *ClaimSet) (string, error) {
-	prv := PrivateKeyFromContext(ctx)
+	prv, ok := PrivateKeyFromContext(ctx)
+	if !ok {
+		return "", ErrPrivateKeyNotAvailable
+	}
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
@@ -100,7 +105,10 @@ func NewToken(ctx context.Context, cs *ClaimSet) (string, error) {
 // private key associated with the supplied public key.
 // Also verifies if Token as expired
 func Verify(ctx context.Context, token string) error {
-	pub := PublicKeyFromContext(ctx)
+	pub, ok := PublicKeyFromContext(ctx)
+	if !ok {
+		return ErrPublicKeyNotAvailable
+	}
 	err := jws.Verify(token, pub)
 	if err != nil {
 		return err
