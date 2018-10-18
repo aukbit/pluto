@@ -23,12 +23,14 @@ var (
 	PrivateKeyContextKey = &contextKey{"private-key"}
 )
 
-// PublicKeyFromContext retuns public key pointer from a context
-func PublicKeyFromContext(ctx context.Context) *rsa.PublicKey {
-	return ctx.Value(PublicKeyContextKey).(*rsa.PublicKey)
+// PublicKeyFromContext retuns public key pointer from a context if it exists.
+func PublicKeyFromContext(ctx context.Context) (p *rsa.PublicKey, ok bool) {
+	p, ok = ctx.Value(PublicKeyContextKey).(*rsa.PublicKey)
+	return
 }
 
 // PrivateKeyFromContext returns private key pointer from a context
-func PrivateKeyFromContext(ctx context.Context) *rsa.PrivateKey {
-	return ctx.Value(PrivateKeyContextKey).(*rsa.PrivateKey)
+func PrivateKeyFromContext(ctx context.Context) (p *rsa.PrivateKey, ok bool) {
+	p, ok = ctx.Value(PrivateKeyContextKey).(*rsa.PrivateKey)
+	return
 }
