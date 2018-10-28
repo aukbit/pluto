@@ -58,12 +58,16 @@ func (fn WrapErr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Router ..
 type Router struct {
-	trie *trie
+	trie              *trie
+	notFoundHandlerFn HandlerFunc
 }
 
 // NewRouter creates a new router instance
 func NewRouter() *Router {
-	return &Router{trie: newTrie()}
+	return &Router{
+		trie:              newTrie(),
+		notFoundHandlerFn: NotFoundHandler,
+	}
 }
 
 // Handle takes a method, pattern, and http handler for a route.
@@ -115,7 +119,7 @@ func (r *Router) DELETE(path string, handlerFn HandlerFunc) {
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	m := r.findMatch(req)
 	if m == nil {
-		NotFoundHandler(w, req)
+		r.notFoundHandlerFn(w, req)
 		return
 	}
 	m.ServeHTTP(w, req)
@@ -130,6 +134,11 @@ func (r *Router) WrapperMiddleware(mids ...Middleware) {
 			r.trie.Put(k, data)
 		}
 	}
+}
+
+// NotFoundHandler is configuraton method to alow clients to customize NotFoundHandler
+func (r *Router) NotFoundHandler(handlerFn HandlerFunc) {
+	r.notFoundHandlerFn = handlerFn
 }
 
 // func (r *Router) findMatch(req *http.Request) *Match {
