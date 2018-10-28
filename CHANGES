@@ -1,3 +1,7 @@
+Version 5.4.0:
+ - allow client to define custom NotFoundHandler
+ - Merge branch release-5.3.2
+
 Version 5.3.2:
  - add jwt middleware
  - Merge branch release-5.3.1
