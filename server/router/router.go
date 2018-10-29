@@ -3,6 +3,9 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"os"
+	p "path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -139,6 +142,30 @@ func (r *Router) WrapperMiddleware(mids ...Middleware) {
 // NotFoundHandler is configuraton method to alow clients to customize NotFoundHandler
 func (r *Router) NotFoundHandler(handlerFn HandlerFunc) {
 	r.notFoundHandlerFn = handlerFn
+}
+
+// FileServer returns a handler that serves HTTP requests
+// with the contents of the file system rooted at root.
+func (r *Router) FileServer(path string, root http.Dir) {
+	r.GET(path, func(w http.ResponseWriter, req *http.Request) {
+		upath := req.URL.Path
+		if !strings.HasPrefix(upath, "/") {
+			upath = "/" + upath
+			req.URL.Path = upath
+		}
+		upath = p.Clean(upath)
+
+		f, err := root.Open(upath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				r.notFoundHandlerFn(w, req)
+				return
+			}
+		}
+		defer f.Close()
+		fullName := filepath.Join(string(root), filepath.FromSlash(p.Clean("/"+upath)))
+		http.ServeFile(w, req, fullName)
+	})
 }
 
 // func (r *Router) findMatch(req *http.Request) *Match {
