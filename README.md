@@ -1,4 +1,4 @@
-# Pluto [![Circle CI](https://circleci.com/gh/aukbit/pluto.svg?style=svg)](https://circleci.com/gh/aukbit/pluto)
+# Pluto
 An implementation of microservices with golang to tackle some of the challenges in distributed systems.
 ### Features
 - Currently supports a multiplexer HTTP router with dynamic paths and still compatible with the standard net/http library.
