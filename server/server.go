@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -153,11 +152,11 @@ func (s *Server) setHTTPServer() {
 
 		// ReadTimeout is used by the http server to set a maximum duration before
 		// timing out read of the request. The default timeout is 10 seconds.
-		ReadTimeout: 10 * time.Second,
+		ReadTimeout: s.cfg.ReadTimeout,
 
 		// WriteTimeout is used by the http server to set a maximum duration before
 		// timing out write of the response. The default timeout is 10 seconds.
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: s.cfg.WriteTimeout,
 
 		TLSConfig: s.cfg.TLSConfig,
 	}
@@ -295,13 +294,13 @@ func (s *Server) register() error {
 		}
 		// define check
 		dck := discovery.Check{
-			Name:  fmt.Sprintf("Service '%s' check", s.cfg.Name),
-			Notes: fmt.Sprintf("Ensure the server is listening on port %s", s.cfg.Addr),
+			Name:                           fmt.Sprintf("Service '%s' check", s.cfg.Name),
+			Notes:                          fmt.Sprintf("Ensure the server is listening on port %s", s.cfg.Addr),
 			DeregisterCriticalServiceAfter: "10m",
-			HTTP:      fmt.Sprintf("http://%s:9090/_health/server/%s", common.IPaddress(), s.cfg.Name),
-			Interval:  "30s",
-			Timeout:   "1s",
-			ServiceID: s.cfg.Name,
+			HTTP:                           fmt.Sprintf("http://%s:9090/_health/server/%s", common.IPaddress(), s.cfg.Name),
+			Interval:                       "30s",
+			Timeout:                        "1s",
+			ServiceID:                      s.cfg.Name,
 		}
 		if err := s.cfg.Discovery.Register(discovery.ServicesCfg(dse), discovery.ChecksCfg(dck)); err != nil {
 			return err

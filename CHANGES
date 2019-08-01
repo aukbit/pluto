@@ -1,3 +1,7 @@
+Version 5.6.0:
+ - add options ReadTimeout and WriteTimeout
+ - Merge branch release-5.5.0
+
 Version 5.5.0:
  - add custom router fileserver handler
  - Merge branch release-5.4.0

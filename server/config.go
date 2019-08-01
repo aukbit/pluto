@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -24,6 +25,8 @@ type Config struct {
 	TLSConfig                *tls.Config // optional TLS config, used by ListenAndServeTLS
 	GRPCRegister             GRPCRegisterServiceFunc
 	Discovery                discovery.Discovery
+	ReadTimeout              time.Duration
+	WriteTimeout             time.Duration
 	mu                       sync.Mutex                     // ensures atomic writes; protects the following fields
 	Middlewares              []router.Middleware            // http middlewares
 	UnaryServerInterceptors  []grpc.UnaryServerInterceptor  // gRPC interceptors
@@ -40,10 +43,12 @@ var (
 
 func newConfig() Config {
 	return Config{
-		ID:     common.RandID("srv_", 6),
-		Name:   DefaultName,
-		Addr:   defaultAddr,
-		Format: defaultFormat,
+		ID:           common.RandID("srv_", 6),
+		Name:         DefaultName,
+		Addr:         defaultAddr,
+		Format:       defaultFormat,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 }
 

@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"log"
+	"time"
 
 	"github.com/aukbit/pluto/common"
 	"github.com/aukbit/pluto/discovery"
@@ -122,5 +123,21 @@ func Discovery(d discovery.Discovery) Option {
 func Logger(l zerolog.Logger) Option {
 	return optionFunc(func(s *Server) {
 		s.logger = l
+	})
+}
+
+// ReadTimeout is used by the http server to set a maximum duration before
+// timing out read of the request. The default timeout is 10 seconds.
+func ReadTimeout(t time.Duration) Option {
+	return optionFunc(func(s *Server) {
+		s.cfg.ReadTimeout = t
+	})
+}
+
+// WriteTimeout is used by the http server to set a maximum duration before
+// timing out write of the response. The default timeout is 10 seconds.
+func WriteTimeout(t time.Duration) Option {
+	return optionFunc(func(s *Server) {
+		s.cfg.WriteTimeout = t
 	})
 }
