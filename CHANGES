@@ -1,3 +1,6 @@
+Version v5.7.0:
+ - Merge branch release-5.6.0
+
 Version 5.6.0:
  - add options ReadTimeout and WriteTimeout
  - Merge branch release-5.5.0
