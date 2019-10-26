@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aukbit/pluto"
-	pba "github.com/aukbit/pluto/auth/proto"
-	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/v6"
+	pba "github.com/aukbit/pluto/v6/auth/proto"
+	"github.com/aukbit/pluto/v6/client"
+	"github.com/aukbit/pluto/v6/reply"
 )
 
 var (

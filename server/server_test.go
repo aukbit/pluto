@@ -13,10 +13,10 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/aukbit/pluto/reply"
-	"github.com/aukbit/pluto/server"
-	"github.com/aukbit/pluto/server/router"
-	pb "github.com/aukbit/pluto/test/proto"
+	"github.com/aukbit/pluto/v6/reply"
+	"github.com/aukbit/pluto/v6/server"
+	"github.com/aukbit/pluto/v6/server/router"
+	pb "github.com/aukbit/pluto/v6/test/proto"
 	"github.com/paulormart/assert"
 	"golang.org/x/net/context"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"

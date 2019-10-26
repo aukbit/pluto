@@ -1,7 +1,7 @@
 package pluto
 
 import (
-	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/v6/server"
 	"google.golang.org/grpc"
 )
 

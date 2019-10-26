@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/v6/reply"
 	"golang.org/x/net/context"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )

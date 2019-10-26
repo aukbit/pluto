@@ -1,7 +1,7 @@
 package ext
 
 import (
-	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/v6/server"
 	"github.com/go-redis/redis"
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog"

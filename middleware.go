@@ -3,7 +3,7 @@ package pluto
 import (
 	"net/http"
 
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/server/router"
 )
 
 // serviceContextMiddleware Middleware that adds service instance

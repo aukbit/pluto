@@ -6,12 +6,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/aukbit/pluto"
-	"github.com/aukbit/pluto/client"
-	pb "github.com/aukbit/pluto/examples/dist/user_bff/proto"
-	"github.com/aukbit/pluto/examples/dist/user_bff/views"
-	"github.com/aukbit/pluto/server"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6"
+	"github.com/aukbit/pluto/v6/client"
+	pb "github.com/aukbit/pluto/v6/examples/dist/user_bff/proto"
+	"github.com/aukbit/pluto/v6/examples/dist/user_bff/views"
+	"github.com/aukbit/pluto/v6/server"
+	"github.com/aukbit/pluto/v6/server/router"
 )
 
 var (

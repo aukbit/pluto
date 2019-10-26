@@ -5,7 +5,7 @@ import (
 
 	mgo "gopkg.in/mgo.v2"
 
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/server/router"
 	"github.com/go-redis/redis"
 	"github.com/gocql/gocql"
 	"github.com/rs/zerolog"

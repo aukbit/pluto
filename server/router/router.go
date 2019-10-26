@@ -11,7 +11,7 @@ import (
 
 	context "golang.org/x/net/context"
 
-	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/v6/reply"
 	"github.com/rs/zerolog"
 )
 

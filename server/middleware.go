@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/common"
+	"github.com/aukbit/pluto/v6/server/router"
 	"github.com/rs/zerolog"
 )
 

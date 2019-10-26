@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aukbit/pluto/reply"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/reply"
+	"github.com/aukbit/pluto/v6/server/router"
 	"github.com/paulormart/assert"
 )
 

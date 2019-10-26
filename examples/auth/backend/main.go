@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/aukbit/pluto/auth/jwt"
-	"github.com/aukbit/pluto/examples/auth/backend/service"
+	"github.com/aukbit/pluto/v6/auth/jwt"
+	"github.com/aukbit/pluto/v6/examples/auth/backend/service"
 )
 
 var (

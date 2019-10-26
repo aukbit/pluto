@@ -3,7 +3,7 @@ package client
 import (
 	"time"
 
-	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/v6/common"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
