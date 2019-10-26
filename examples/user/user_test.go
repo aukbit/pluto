@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aukbit/pluto/examples/user/backend/service"
-	"github.com/aukbit/pluto/examples/user/frontend/service"
-	pb "github.com/aukbit/pluto/examples/user/proto"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/examples/user/backend/service"
+	"github.com/aukbit/pluto/v6/examples/user/frontend/service"
+	pb "github.com/aukbit/pluto/v6/examples/user/proto"
+	"github.com/aukbit/pluto/v6/server/router"
 	"github.com/paulormart/assert"
 )
 

@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/aukbit/pluto"
-	"github.com/aukbit/pluto/reply"
-	"github.com/aukbit/pluto/server"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6"
+	"github.com/aukbit/pluto/v6/reply"
+	"github.com/aukbit/pluto/v6/server"
+	"github.com/aukbit/pluto/v6/server/router"
 )
 
 var (

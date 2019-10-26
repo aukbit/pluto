@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/v6/common"
 
 	"golang.org/x/net/context"
 

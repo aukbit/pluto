@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"net/http"
 
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/server/router"
 )
 
 // Middleware adds *rsa.PublicKey and *rsa.PrivateKey to the context.

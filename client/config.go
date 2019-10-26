@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aukbit/pluto/common"
+	"github.com/aukbit/pluto/v6/common"
 
 	"google.golang.org/grpc"
 )

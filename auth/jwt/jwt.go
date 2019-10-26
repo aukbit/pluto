@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aukbit/pluto/auth/jws"
+	"github.com/aukbit/pluto/v6/auth/jws"
 )
 
 var (

@@ -1,10 +1,10 @@
 package pluto
 
 import (
-	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/discovery"
-	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/v6/client"
+	"github.com/aukbit/pluto/v6/common"
+	"github.com/aukbit/pluto/v6/discovery"
+	"github.com/aukbit/pluto/v6/server"
 	"github.com/rs/zerolog"
 )
 

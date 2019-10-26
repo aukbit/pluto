@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aukbit/pluto/reply"
+	"github.com/aukbit/pluto/v6/reply"
 	"github.com/paulormart/assert"
 )
 

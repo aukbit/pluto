@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/aukbit/pluto/examples/user/frontend/service"
+	"github.com/aukbit/pluto/v6/examples/user/frontend/service"
 )
 
 func main() {

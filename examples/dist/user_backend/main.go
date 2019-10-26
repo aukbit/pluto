@@ -6,11 +6,11 @@ import (
 
 	"github.com/gocql/gocql"
 
-	"github.com/aukbit/pluto"
-	pb "github.com/aukbit/pluto/examples/dist/user_backend/proto"
-	"github.com/aukbit/pluto/examples/dist/user_backend/views"
-	"github.com/aukbit/pluto/server"
-	"github.com/aukbit/pluto/server/ext"
+	"github.com/aukbit/pluto/v6"
+	pb "github.com/aukbit/pluto/v6/examples/dist/user_backend/proto"
+	"github.com/aukbit/pluto/v6/examples/dist/user_backend/views"
+	"github.com/aukbit/pluto/v6/server"
+	"github.com/aukbit/pluto/v6/server/ext"
 	"google.golang.org/grpc"
 )
 

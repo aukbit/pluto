@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/aukbit/pluto/common"
-	"github.com/aukbit/pluto/discovery"
-	"github.com/aukbit/pluto/server/router"
+	"github.com/aukbit/pluto/v6/common"
+	"github.com/aukbit/pluto/v6/discovery"
+	"github.com/aukbit/pluto/v6/server/router"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )

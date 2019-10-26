@@ -4,13 +4,13 @@ import (
 	"crypto/rsa"
 	"flag"
 
-	"github.com/aukbit/pluto"
-	"github.com/aukbit/pluto/auth/jwt"
-	pba "github.com/aukbit/pluto/auth/proto"
-	"github.com/aukbit/pluto/client"
-	"github.com/aukbit/pluto/examples/auth/backend/views"
-	pbu "github.com/aukbit/pluto/examples/user/proto"
-	"github.com/aukbit/pluto/server"
+	"github.com/aukbit/pluto/v6"
+	"github.com/aukbit/pluto/v6/auth/jwt"
+	pba "github.com/aukbit/pluto/v6/auth/proto"
+	"github.com/aukbit/pluto/v6/client"
+	"github.com/aukbit/pluto/v6/examples/auth/backend/views"
+	pbu "github.com/aukbit/pluto/v6/examples/user/proto"
+	"github.com/aukbit/pluto/v6/server"
 	"google.golang.org/grpc"
 )
 
