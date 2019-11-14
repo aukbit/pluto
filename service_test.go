@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/paulormart/assert"
 
 	context "golang.org/x/net/context"
@@ -19,7 +18,6 @@ import (
 	"github.com/aukbit/pluto/v6/client"
 	"github.com/aukbit/pluto/v6/reply"
 	"github.com/aukbit/pluto/v6/server"
-	"github.com/aukbit/pluto/v6/server/ext"
 	"github.com/aukbit/pluto/v6/server/router"
 	pb "github.com/aukbit/pluto/v6/test/proto"
 	"google.golang.org/grpc"
@@ -27,12 +25,37 @@ import (
 )
 
 const serviceURL = "http://localhost:8081"
+const serviceCallURL = "http://localhost:8081/call"
 const healthURL = "http://localhost:9091/_health"
 
 var serviceName = "gopher"
 
+func CallWithReflect(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	in := &pb.HelloRequest{Name: "World"}
+	response, err := Call(ctx, serviceName, "SayHello", in)
+	if err != nil {
+		panic(err)
+	}
+	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
+}
+
 func Index(w http.ResponseWriter, r *http.Request) {
-	reply.Json(w, r, http.StatusOK, "Hello World")
+	ctx := r.Context()
+	c, ok := FromContext(ctx).Client(serviceName)
+	if !ok {
+		panic("grpc client not available")
+	}
+	conn, err := c.Dial(client.Timeout(2 * time.Second))
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+	res, err := c.Stub(conn).(pb.GreeterClient).SayHello(ctx, &pb.HelloRequest{Name: "World"})
+	if err != nil {
+		panic(err)
+	}
+	reply.Json(w, r, http.StatusOK, res.GetMessage())
 }
 
 type greeter struct{}
@@ -44,20 +67,21 @@ func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloR
 
 func TestMain(m *testing.M) {
 	// Create db client
-	cfg := gocql.NewCluster("localhost")
-	cfg.ProtoVersion = 3
-	cfg.Keyspace = "default"
+	// cfg := gocql.NewCluster("localhost")
+	// cfg.ProtoVersion = 3
+	// cfg.Keyspace = "default"
 
 	// Define router
 	mux := router.New()
 	mux.GET("/", Index)
+	mux.GET("/call", CallWithReflect)
 	// Create pluto server
 	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
 		server.Description("gopher super server"),
 		server.Addr(":8081"),
 		server.Mux(mux),
-		server.Middlewares(ext.CassandraMiddleware("cassandra", cfg)),
+		// server.Middlewares(ext.CassandraMiddleware("cassandra", cfg)),
 	)
 	// Create grpc pluto server
 	srvGRPC := server.New(
@@ -67,8 +91,8 @@ func TestMain(m *testing.M) {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}),
-		server.UnaryServerInterceptors(ext.CassandraUnaryServerInterceptor("cassandra", cfg)),
-		server.StreamServerInterceptors(ext.CassandraStreamServerInterceptor("cassandra", cfg)),
+		// server.UnaryServerInterceptors(ext.CassandraUnaryServerInterceptor("cassandra", cfg)),
+		// server.StreamServerInterceptors(ext.CassandraStreamServerInterceptor("cassandra", cfg)),
 	)
 	// Create grpc pluto client
 	cltGRPC := client.New(
@@ -101,15 +125,15 @@ func TestMain(m *testing.M) {
 		HealthAddr(":9091"),
 	)
 
-	if !testing.Short() {
-		// Run Server
-		go func() {
-			if err := s.Run(); err != nil {
-				log.Fatal(err)
-			}
-		}()
-		time.Sleep(time.Second)
-	}
+	// if !testing.Short() {
+	// Run Server
+	go func() {
+		if err := s.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	time.Sleep(time.Second)
+	// }
 	result := m.Run()
 	if !testing.Short() {
 		// Stop Server
@@ -122,6 +146,28 @@ func TestMain(m *testing.M) {
 func TestService(t *testing.T) {
 	time.Sleep(time.Second)
 	r, err := http.Get(serviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	var message string
+	if err := json.Unmarshal(b, &message); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "Hello World", message)
+}
+
+func TestServiceCall(t *testing.T) {
+	time.Sleep(time.Second)
+	r, err := http.Get(serviceCallURL)
 	if err != nil {
 		t.Fatal(err)
 	}

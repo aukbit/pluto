@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -318,4 +319,33 @@ func (s *Service) stopServers() {
 			srv.Stop()
 		}(s, srv)
 	}
+}
+
+// Call invoque's the methodName in the specific clientName initialize
+func Call(ctx context.Context, clientName, methodName string, args ...interface{}) (interface{}, error) {
+
+	c, ok := FromContext(ctx).Client(clientName)
+	if !ok {
+		return nil, fmt.Errorf("grpc client: %v not available", clientName)
+	}
+	conn, err := c.Dial(client.Timeout(2 * time.Second))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	inputs := make([]reflect.Value, len(args)+1)
+	// add context to the first position
+	inputs[0] = reflect.ValueOf(ctx)
+	for i := range args {
+		inputs[i+1] = reflect.ValueOf(args[i])
+	}
+
+	resp := reflect.ValueOf(c.Stub(conn)).MethodByName(methodName).Call(inputs)
+
+	if resp[1].Interface() != nil {
+		return nil, resp[1].Interface().(error)
+	}
+
+	return resp[0].Interface(), nil
 }
