@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/paulormart/assert"
 
 	context "golang.org/x/net/context"
@@ -28,6 +29,7 @@ import (
 const serviceURL = "http://localhost:8081"
 const serviceCallURL = "http://localhost:8081/call"
 const serviceCallWithCredentialsURL = "http://localhost:8081/call-with-credentials"
+const serviceCallWithCredentialsWrapErrorURL = "http://localhost:8081/call-with-credentials-wrap-error"
 const healthURL = "http://localhost:9091/_health"
 
 var serviceName = "gopher"
@@ -71,6 +73,18 @@ func CallWithCredentialsHandler(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
 }
 
+func CallWithCredentialsHandlerWrapError(w http.ResponseWriter, r *http.Request) *router.Err {
+	ctx := r.Context()
+
+	in := &pb.HelloRequest{Name: "World"}
+	response, err := CallWithCredentials(ctx, serviceName, "SayHello", in)
+	if err != nil {
+		panic(err)
+	}
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{OrigName: true}, response.(*pb.HelloReply))
+	return nil
+}
+
 type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
@@ -109,6 +123,7 @@ func TestMain(m *testing.M) {
 	mux.GET("/", IndexHandler)
 	mux.GET("/call", CallHandler)
 	mux.GET("/call-with-credentials", jwt.WrapBearerToken(CallWithCredentialsHandler))
+	mux.Handle("GET", "/call-with-credentials-wrap-error", jwt.WrapBearerTokenErr(router.WrapErr(CallWithCredentialsHandlerWrapError)))
 	// Create pluto server
 	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
@@ -249,6 +264,30 @@ func TestServiceCallWithCredentials(t *testing.T) {
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Hello World", message)
+}
+
+func TestServiceCallWithCredentialsErr(t *testing.T) {
+	time.Sleep(time.Second)
+	req, err := http.NewRequest("GET", serviceCallWithCredentialsWrapErrorURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer my-token-123")
+	c := &http.Client{}
+	r, err := c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reply := &pb.HelloReply{}
+	if err := jsonpb.Unmarshal(r.Body, reply); err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "Hello World", reply.GetMessage())
 }
 
 func TestHealth(t *testing.T) {
