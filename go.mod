@@ -11,7 +11,6 @@ require (
 	github.com/onsi/ginkgo v1.10.2 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/paulormart/assert v0.1.0
-	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.15.0
 	golang.org/x/net v0.0.0-20191021144547-ec77196f6094
 	google.golang.org/grpc v1.24.0

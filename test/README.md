@@ -16,3 +16,11 @@ The following command starts another Cassandra container instance and runs cqlsh
 ```
 $ docker run --link cassandra:cassandra -v $PWD/test/config/cassandra:/config --rm cassandra:3.7 /config/wait-for-cassandra.sh cassandra cqlsh -f /config/commands.cql cassandra
 ```
+
+## Compile Eventstore proto file
+```
+protoc \
+    --go_out=plugins=grpc:./proto \
+    --proto_path=./proto \
+    proto/helloworld.proto
+```
