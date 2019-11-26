@@ -98,6 +98,33 @@ func (c *Client) Dial(opts ...Option) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+// Dial create a gRPC channel to communicate with the server
+func (c *Client) DialWithCredentials(token string, opts ...Option) (*grpc.ClientConn, error) {
+	c.applyOptions(opts...)
+	// TODO use TLS
+	c.cfg.mu.Lock()
+	defer c.cfg.mu.Unlock()
+	conn, err := grpc.Dial(
+		c.cfg.Target,
+		grpc.WithInsecure(),
+		grpc.WithPerRPCCredentials(TokenAuth{
+			token: token,
+		}),
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(c.cfg.Timeout),
+		grpc.WithUnaryInterceptor(WrapperUnaryClient(c.cfg.UnaryClientInterceptors...)),
+		grpc.WithStreamInterceptor(WrapperStreamClient(c.cfg.StreamClientInterceptors...)),
+	)
+	switch grpc.Code(err) {
+	case codes.OK:
+		break
+	default:
+		return nil, err
+	}
+	return conn, nil
+}
+
 // Stub to perform RPCs
 func (c *Client) Stub(conn *grpc.ClientConn) interface{} {
 	return c.cfg.GRPCRegister(conn)
@@ -147,4 +174,20 @@ func (c *Client) Health() *healthpb.HealthCheckResponse {
 		return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_NOT_SERVING}
 	}
 	return hcr
+}
+
+// Token based authentication
+type TokenAuth struct {
+	token string
+}
+
+// Return value is mapped to request headers.
+func (t TokenAuth) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": "Bearer " + t.token,
+	}, nil
+}
+
+func (TokenAuth) RequireTransportSecurity() bool {
+	return false
 }

@@ -15,6 +15,7 @@ import (
 
 	context "golang.org/x/net/context"
 
+	"github.com/aukbit/pluto/v6/auth/jwt"
 	"github.com/aukbit/pluto/v6/client"
 	"github.com/aukbit/pluto/v6/reply"
 	"github.com/aukbit/pluto/v6/server"
@@ -26,21 +27,12 @@ import (
 
 const serviceURL = "http://localhost:8081"
 const serviceCallURL = "http://localhost:8081/call"
+const serviceCallWithCredentialsURL = "http://localhost:8081/call-with-credentials"
 const healthURL = "http://localhost:9091/_health"
 
 var serviceName = "gopher"
 
-func CallWithReflect(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	in := &pb.HelloRequest{Name: "World"}
-	response, err := Call(ctx, serviceName, "SayHello", in)
-	if err != nil {
-		panic(err)
-	}
-	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
-}
-
-func Index(w http.ResponseWriter, r *http.Request) {
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	c, ok := FromContext(ctx).Client(serviceName)
 	if !ok {
@@ -58,11 +50,52 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	reply.Json(w, r, http.StatusOK, res.GetMessage())
 }
 
+func CallHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	in := &pb.HelloRequest{Name: "World"}
+	response, err := Call(ctx, serviceName, "SayHello", in)
+	if err != nil {
+		panic(err)
+	}
+	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
+}
+
+func CallWithCredentialsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	in := &pb.HelloRequest{Name: "World"}
+	response, err := CallWithCredentials(ctx, serviceName, "SayHello", in)
+	if err != nil {
+		panic(err)
+	}
+	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
+}
+
 type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+
+	r, err := CallWithCredentials(ctx, serviceName, "SayGoodbye", &pb.GoodbyeRequest{Name: in.Name})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(r)
+
 	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
+}
+
+// SayGoodbye implements helloworld.GreeterServer
+func (s *greeter) SayGoodbye(ctx context.Context, in *pb.GoodbyeRequest) (*pb.GoodbyeReply, error) {
+
+	t, ok := jwt.TokenFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("token not available in context")
+	}
+
+	fmt.Println(t)
+
+	return &pb.GoodbyeReply{Message: fmt.Sprintf("Bye Bye %v", in.Name)}, nil
 }
 
 func TestMain(m *testing.M) {
@@ -73,8 +106,9 @@ func TestMain(m *testing.M) {
 
 	// Define router
 	mux := router.New()
-	mux.GET("/", Index)
-	mux.GET("/call", CallWithReflect)
+	mux.GET("/", IndexHandler)
+	mux.GET("/call", CallHandler)
+	mux.GET("/call-with-credentials", jwt.WrapBearerToken(CallWithCredentialsHandler))
 	// Create pluto server
 	srvHTTP := server.New(
 		server.Name(serviceName+"_http"),
@@ -91,6 +125,7 @@ func TestMain(m *testing.M) {
 		server.GRPCRegister(func(g *grpc.Server) {
 			pb.RegisterGreeterServer(g, &greeter{})
 		}),
+		server.UnaryServerInterceptors(jwt.BearerTokenUnaryServerInterceptor()),
 		// server.UnaryServerInterceptors(ext.CassandraUnaryServerInterceptor("cassandra", cfg)),
 		// server.StreamServerInterceptors(ext.CassandraStreamServerInterceptor("cassandra", cfg)),
 	)
@@ -171,6 +206,35 @@ func TestServiceCall(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	var message string
+	if err := json.Unmarshal(b, &message); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "Hello World", message)
+}
+
+func TestServiceCallWithCredentials(t *testing.T) {
+	time.Sleep(time.Second)
+	req, err := http.NewRequest("GET", serviceCallWithCredentialsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer my-token-123")
+	c := &http.Client{}
+	r, err := c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		t.Fatal(err)

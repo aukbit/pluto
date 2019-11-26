@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aukbit/fibonacci"
+	"github.com/aukbit/pluto/v6/auth/jwt"
 	"github.com/aukbit/pluto/v6/client"
 	"github.com/aukbit/pluto/v6/common"
 	"github.com/aukbit/pluto/v6/server"
@@ -329,6 +330,42 @@ func Call(ctx context.Context, clientName, methodName string, args ...interface{
 		return nil, fmt.Errorf("grpc client: %v not available", clientName)
 	}
 	conn, err := c.Dial(client.Timeout(2 * time.Second))
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	inputs := make([]reflect.Value, len(args)+1)
+	// add context to the first position
+	inputs[0] = reflect.ValueOf(ctx)
+	for i := range args {
+		inputs[i+1] = reflect.ValueOf(args[i])
+	}
+
+	resp := reflect.ValueOf(c.Stub(conn)).MethodByName(methodName).Call(inputs)
+
+	if resp[1].Interface() != nil {
+		return nil, resp[1].Interface().(error)
+	}
+
+	return resp[0].Interface(), nil
+}
+
+// CallWithCredentials invoque's the methodName in the specific clientName initialize
+func CallWithCredentials(ctx context.Context, clientName, methodName string, args ...interface{}) (interface{}, error) {
+
+	// Get token from context
+	t, ok := jwt.TokenFromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("token not available in context")
+	}
+
+	c, ok := FromContext(ctx).Client(clientName)
+	if !ok {
+		return nil, fmt.Errorf("grpc client: %v not available", clientName)
+	}
+
+	conn, err := c.DialWithCredentials(t, client.Timeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}
