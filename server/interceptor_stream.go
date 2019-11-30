@@ -33,7 +33,7 @@ func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 			Dict("peer", zerolog.Dict().
 				Str("addr", fmt.Sprintf("%v", p.Addr)).
 				Str("auth", fmt.Sprintf("%v", p.AuthInfo))).
-			Msgf("request from %v %s", p.Addr, info.FullMethod)
+			Msgf("call %s received from %v", info.FullMethod, p.Addr)
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
 		// wrap context
