@@ -15,7 +15,7 @@ func dialStreamClientInterceptor(clt *Client) grpc.StreamClientInterceptor {
 		ctx = eidToOutgoingContext(ctx, e)
 		// sets new logger instance with eventID
 		sublogger := clt.logger.With().Str("eid", e).Logger()
-		sublogger.Info().Str("method", method).Msg(fmt.Sprintf("request %s", method))
+		sublogger.Info().Str("method", method).Msg(fmt.Sprintf("call %s", method))
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
 		return streamer(ctx, desc, cc, method, opts...)
