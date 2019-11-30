@@ -33,7 +33,7 @@ func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 			Dict("peer", zerolog.Dict().
 				Str("addr", fmt.Sprintf("%v", p.Addr)).
 				Str("auth", fmt.Sprintf("%v", p.AuthInfo))).
-			Msgf("request %s from %v", info.FullMethod, p.Addr)
+			Msgf("request from %v %s ", p.Addr, info.FullMethod)
 
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
@@ -41,7 +41,7 @@ func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 		end := time.Now()
 		sublogger.Info().
 			Str("data", fmt.Sprintf("%v", h)).
-			Msgf("response %s to %v duration: %v", info.FullMethod, p.Addr, end.Sub(start))
+			Msgf("response to %v %s duration: %v", p.Addr, info.FullMethod, end.Sub(start))
 		return h, err
 	}
 }
