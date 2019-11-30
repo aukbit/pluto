@@ -3,7 +3,9 @@ package server
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
 func serverStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
@@ -20,10 +22,18 @@ func serverStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 func loggerStreamServerInterceptor(s *Server) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := ss.Context()
+		// get information from peer
+		p, _ := peer.FromContext(ctx)
 		e := eidFromIncomingContext(ctx)
 		// sets new logger instance with eventID
-		sublogger := s.logger.With().Str("eid", e).Logger()
-		sublogger.Info().Str("method", info.FullMethod).Msg(fmt.Sprintf("request %s", info.FullMethod))
+		sublogger := s.logger.With().
+			Str("eid", e).
+			Str("method", info.FullMethod).Logger()
+		sublogger.Info().
+			Dict("peer", zerolog.Dict().
+				Str("addr", fmt.Sprintf("%v", p.Addr)).
+				Str("auth", fmt.Sprintf("%v", p.AuthInfo))).
+			Msgf("request %s from %v", info.FullMethod, p.Addr)
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
 		// wrap context

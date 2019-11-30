@@ -64,24 +64,22 @@ func CallHandler(w http.ResponseWriter, r *http.Request) {
 
 func CallWithCredentialsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	in := &pb.HelloRequest{Name: "World"}
-	response, err := CallWithCredentials(ctx, serviceName, "SayHello", in)
+	in := &pb.GoodbyeRequest{Name: "Traffic!"}
+	response, err := CallWithCredentials(ctx, serviceName, "SayGoodbye", in)
 	if err != nil {
 		panic(err)
 	}
-	reply.Json(w, r, http.StatusOK, response.(*pb.HelloReply).GetMessage())
+	reply.Json(w, r, http.StatusOK, response.(*pb.GoodbyeReply).GetMessage())
 }
 
 func CallWithCredentialsHandlerWrapError(w http.ResponseWriter, r *http.Request) *router.Err {
 	ctx := r.Context()
-
-	in := &pb.HelloRequest{Name: "World"}
-	response, err := CallWithCredentials(ctx, serviceName, "SayHello", in)
+	in := &pb.GoodbyeRequest{Name: "Car"}
+	response, err := CallWithCredentials(ctx, serviceName, "SayGoodbye", in)
 	if err != nil {
 		panic(err)
 	}
-	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{OrigName: true}, response.(*pb.HelloReply))
+	reply.Jsonpb(w, r, http.StatusOK, &jsonpb.Marshaler{OrigName: true}, response.(*pb.GoodbyeReply))
 	return nil
 }
 
@@ -89,18 +87,23 @@ type greeter struct{}
 
 // SayHello implements helloworld.GreeterServer
 func (s *greeter) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-
-	r, err := CallWithCredentials(ctx, serviceName, "SayGoodbye", &pb.GoodbyeRequest{Name: in.Name})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(r)
-
 	return &pb.HelloReply{Message: fmt.Sprintf("Hello %v", in.Name)}, nil
 }
 
 // SayGoodbye implements helloworld.GreeterServer
 func (s *greeter) SayGoodbye(ctx context.Context, in *pb.GoodbyeRequest) (*pb.GoodbyeReply, error) {
+
+	r, err := CallWithCredentials(ctx, serviceName, "SayGoodbyeAgain", &pb.GoodbyeRequest{Name: in.Name})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(r)
+
+	return &pb.GoodbyeReply{Message: fmt.Sprintf("Bye Bye %v", in.Name)}, nil
+}
+
+// SayGoodbye implements helloworld.GreeterServer
+func (s *greeter) SayGoodbyeAgain(ctx context.Context, in *pb.GoodbyeRequest) (*pb.GoodbyeReply, error) {
 
 	t, ok := jwt.TokenFromContext(ctx)
 	if !ok {
@@ -215,7 +218,7 @@ func TestService(t *testing.T) {
 	assert.Equal(t, "Hello World", message)
 }
 
-func TestServiceCall(t *testing.T) {
+func TestCallMethod(t *testing.T) {
 	time.Sleep(time.Second)
 	r, err := http.Get(serviceCallURL)
 	if err != nil {
@@ -237,7 +240,7 @@ func TestServiceCall(t *testing.T) {
 	assert.Equal(t, "Hello World", message)
 }
 
-func TestServiceCallWithCredentials(t *testing.T) {
+func TestCredentials(t *testing.T) {
 	time.Sleep(time.Second)
 	req, err := http.NewRequest("GET", serviceCallWithCredentialsURL, nil)
 	if err != nil {
@@ -263,10 +266,10 @@ func TestServiceCallWithCredentials(t *testing.T) {
 
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
-	assert.Equal(t, "Hello World", message)
+	assert.Equal(t, "Bye Bye Traffic!", message)
 }
 
-func TestServiceCallWithCredentialsErr(t *testing.T) {
+func TestWrapErr(t *testing.T) {
 	time.Sleep(time.Second)
 	req, err := http.NewRequest("GET", serviceCallWithCredentialsWrapErrorURL, nil)
 	if err != nil {
@@ -287,7 +290,7 @@ func TestServiceCallWithCredentialsErr(t *testing.T) {
 
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
-	assert.Equal(t, "Hello World", reply.GetMessage())
+	assert.Equal(t, "Bye Bye Car", reply.GetMessage())
 }
 
 func TestHealth(t *testing.T) {
