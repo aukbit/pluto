@@ -4,6 +4,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aukbit/pluto/v6/common"
 
@@ -20,6 +21,7 @@ var (
 
 func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		start := time.Now()
 		e := eidFromIncomingContext(ctx)
 		ctx = eidToOutgoingContext(ctx, e)
 		// sets new logger instance with eventID
@@ -27,10 +29,13 @@ func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 		sublogger.Info().
 			Str("method", method).
 			Str("data", fmt.Sprintf("%v", req)).
-			Msg(fmt.Sprintf("request %s", method))
+			Msgf("call %s", method)
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
-		return invoker(ctx, method, req, reply, cc, opts...)
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		end := time.Now()
+		sublogger.Info().Msgf("rpc duration: %v", end.Sub(start))
+		return err
 	}
 }
 

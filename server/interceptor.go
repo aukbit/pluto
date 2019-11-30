@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog"
 
@@ -19,6 +20,7 @@ func serverUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 
 func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		start := time.Now()
 		// get information from peer
 		p, _ := peer.FromContext(ctx)
 		e := eidFromIncomingContext(ctx)
@@ -31,14 +33,15 @@ func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 			Dict("peer", zerolog.Dict().
 				Str("addr", fmt.Sprintf("%v", p.Addr)).
 				Str("auth", fmt.Sprintf("%v", p.AuthInfo))).
-			Msg(fmt.Sprintf("request %s from %v", info.FullMethod, p.Addr))
+			Msgf("request %s from %v", info.FullMethod, p.Addr)
 
 		// also nice to have a logger available in context
 		ctx = sublogger.WithContext(ctx)
 		h, err := handler(ctx, req)
+		end := time.Now()
 		sublogger.Info().
 			Str("data", fmt.Sprintf("%v", h)).
-			Msg(fmt.Sprintf("response %s to %v", info.FullMethod, p.Addr))
+			Msgf("response %s to %v duration: %v", info.FullMethod, p.Addr, end.Sub(start))
 		return h, err
 	}
 }
