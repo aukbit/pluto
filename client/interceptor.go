@@ -34,7 +34,7 @@ func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 		ctx = sublogger.WithContext(ctx)
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		end := time.Now()
-		sublogger.Info().Msgf("response received %s - duration: %v", method, end.Sub(start))
+		sublogger.Info().Msgf("response %s received - duration: %v", method, end.Sub(start))
 		return err
 	}
 }
