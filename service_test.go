@@ -30,7 +30,7 @@ const serviceURL = "http://localhost:8081"
 const serviceCallURL = "http://localhost:8081/call"
 const serviceCallWithCredentialsURL = "http://localhost:8081/call-with-credentials"
 const serviceCallWithCredentialsWrapErrorURL = "http://localhost:8081/call-with-credentials-wrap-error"
-const healthURL = "http://localhost:9091/_health"
+const healthURL = "http://localhost:9090/_health"
 
 var serviceName = "gopher"
 
@@ -175,7 +175,7 @@ func TestMain(m *testing.M) {
 		Servers(srvGRPC),
 		Clients(cltGRPC),
 		HookAfterStart(fn1, fn2),
-		HealthAddr(":9091"),
+		HealthAddr(":9090"),
 	)
 
 	// if !testing.Short() {
@@ -291,6 +291,26 @@ func TestWrapErr(t *testing.T) {
 	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 	assert.Equal(t, "Bye Bye Car", reply.GetMessage())
+}
+
+func TestAllHealth(t *testing.T) {
+	r, err := http.Get(healthURL + "z")
+	if err != nil {
+		log.Fatal(err)
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer r.Body.Close()
+	hcr := &healthpb.HealthCheckResponse{}
+	if err := json.Unmarshal(b, hcr); err != nil {
+		log.Fatal(err)
+	}
+	assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.Equal(t, "SERVING", hcr.Status.String())
+	time.Sleep(time.Millisecond * 100)
 }
 
 func TestHealth(t *testing.T) {
