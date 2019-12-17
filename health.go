@@ -15,6 +15,25 @@ func readyHealthHandler(w http.ResponseWriter, r *http.Request) {
 	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
 	s := FromContext(ctx)
+	if len(s.cfg.Servers) == 0 {
+		reply.Json(w, r, http.StatusServiceUnavailable, hcr)
+		return
+	}
+	// Test all servers
+	for _, srv := range s.cfg.Servers {
+		hcr = srv.Health()
+		if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
+			reply.Json(w, r, http.StatusServiceUnavailable, hcr)
+			return
+		}
+	}
+	reply.Json(w, r, http.StatusOK, hcr)
+}
+
+func liveHealthHandler(w http.ResponseWriter, r *http.Request) {
+	var hcr = &healthpb.HealthCheckResponse{Status: 0}
+	ctx := r.Context()
+	s := FromContext(ctx)
 	// Test all servers
 	for _, srv := range s.cfg.Servers {
 		hcr = srv.Health()
@@ -36,26 +55,6 @@ func readyHealthHandler(w http.ResponseWriter, r *http.Request) {
 	if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
 		reply.Json(w, r, http.StatusServiceUnavailable, hcr)
 		return
-	}
-	reply.Json(w, r, http.StatusOK, hcr)
-
-}
-
-func liveHealthHandler(w http.ResponseWriter, r *http.Request) {
-	var hcr = &healthpb.HealthCheckResponse{Status: 0}
-	ctx := r.Context()
-	s := FromContext(ctx)
-	if len(s.cfg.Servers) == 0 {
-		reply.Json(w, r, http.StatusServiceUnavailable, hcr)
-		return
-	}
-	// Test all servers
-	for _, srv := range s.cfg.Servers {
-		hcr = srv.Health()
-		if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
-			reply.Json(w, r, http.StatusServiceUnavailable, hcr)
-			return
-		}
 	}
 	reply.Json(w, r, http.StatusOK, hcr)
 }
