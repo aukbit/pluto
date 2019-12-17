@@ -51,28 +51,28 @@ func eidMiddleware(s *Server) router.Middleware {
 func loggerMiddleware(s *Server) router.Middleware {
 	return func(h router.HandlerFunc) router.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			e := eidFromIncomingContext(ctx)
-			// sets new logger instance with eid
-			sublogger := s.logger.With().Str("eid", e).Logger()
 			switch r.URL.Path {
-			case "/_health":
-				break
+			case "/_health", "/healthz/ready", "/healthz/live":
+				h.ServeHTTP(w, r)
 			default:
-				h := zerolog.Dict()
+				ctx := r.Context()
+				header := zerolog.Dict()
 				for k, v := range r.Header {
-					h.Strs(k, v)
+					header.Strs(k, v)
 				}
+				e := eidFromIncomingContext(ctx)
+				// sets new logger instance with eid
+				sublogger := s.logger.With().Str("eid", e).Logger()
 				sublogger.Info().Str("method", r.Method).
 					Str("url", r.URL.String()).
 					Str("proto", r.Proto).
 					Str("remote_addr", r.RemoteAddr).
-					Dict("header", h).
+					Dict("header", header).
 					Msg(fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto))
+					// also nice to have a logger available in context
+				ctx = sublogger.WithContext(ctx)
+				h.ServeHTTP(w, r.WithContext(ctx))
 			}
-			// also nice to have a logger available in context
-			ctx = sublogger.WithContext(ctx)
-			h.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
 }

@@ -21,6 +21,9 @@ var (
 
 func dialUnaryClientInterceptor(clt *Client) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if method == "/grpc.health.v1.Health/Check" {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
 		start := time.Now()
 		e := eidFromIncomingContext(ctx)
 		ctx = eidToOutgoingContext(ctx, e)
