@@ -11,6 +11,36 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+func allHealthHandler(w http.ResponseWriter, r *http.Request) {
+	var hcr = &healthpb.HealthCheckResponse{Status: 0}
+	ctx := r.Context()
+	s := FromContext(ctx)
+	// Test all servers
+	for _, srv := range s.cfg.Servers {
+		hcr = srv.Health()
+		if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
+			reply.Json(w, r, http.StatusServiceUnavailable, hcr)
+			return
+		}
+	}
+	// Test all clients
+	for _, clt := range s.cfg.Clients {
+		hcr = clt.Health()
+		if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
+			reply.Json(w, r, http.StatusServiceUnavailable, hcr)
+			return
+		}
+	}
+	// Test service
+	hcr = s.Health()
+	if hcr.Status.String() != healthpb.HealthCheckResponse_SERVING.String() {
+		reply.Json(w, r, http.StatusServiceUnavailable, hcr)
+		return
+	}
+	reply.Json(w, r, http.StatusOK, hcr)
+
+}
+
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	var hcr = &healthpb.HealthCheckResponse{Status: 0}
 	ctx := r.Context()
