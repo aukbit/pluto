@@ -166,7 +166,8 @@ func (s *Service) setHealthServer() {
 	s.health.SetServingStatus(s.cfg.ID, 1)
 	// Define Router
 	mux := router.New()
-	mux.GET("/_healthz", allHealthHandler)
+	mux.GET("/healthz/ready", readyHealthHandler)
+	mux.GET("/healthz/live", liveHealthHandler)
 	mux.GET("/_health/:module/:name", healthHandler)
 	// Define server
 	srv := server.New(
