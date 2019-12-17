@@ -20,6 +20,9 @@ func serverUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 
 func loggerUnaryServerInterceptor(s *Server) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if info.FullMethod == "/grpc.health.v1.Health/Check" {
+			return handler(ctx, req)
+		}
 		start := time.Now()
 		// get information from peer
 		p, _ := peer.FromContext(ctx)
