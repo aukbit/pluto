@@ -80,6 +80,11 @@ func NewToken(ctx context.Context, cs *ClaimSet) (string, error) {
 	if !ok {
 		return "", ErrPrivateKeyNotAvailable
 	}
+	return NewTokenWithPrivateKey(cs, prv)
+}
+
+// NewTokenWithPrivateKey returns a JWT token signed with the given RSA private key.
+func NewTokenWithPrivateKey(cs *ClaimSet, key *rsa.PrivateKey) (string, error) {
 	header := &jws.Header{
 		Algorithm: "RS256",
 		Typ:       "JWT",
@@ -93,7 +98,7 @@ func NewToken(ctx context.Context, cs *ClaimSet) (string, error) {
 		Sub:   cs.Jti,
 		Prn:   cs.Principal,
 	}
-	t, err := jws.Encode(header, payload, prv)
+	t, err := jws.Encode(header, payload, key)
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +114,14 @@ func Verify(ctx context.Context, token string) error {
 	if !ok {
 		return ErrPublicKeyNotAvailable
 	}
-	err := jws.Verify(token, pub)
+	return VerifyWithPublicKey(token, pub)
+}
+
+// VerifyWithPublicKey tests whether the provided JWT token's signature was produced by the
+// private key associated with the supplied public key.
+// Also verifies if Token as expired
+func VerifyWithPublicKey(token string, key *rsa.PublicKey) error {
+	err := jws.Verify(token, key)
 	if err != nil {
 		return err
 	}
