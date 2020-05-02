@@ -85,8 +85,8 @@ func (s *Service) WithOptions(opts ...Option) *Service {
 // Run starts service
 func (s *Service) Run() error {
 	s.logger = s.logger.With().Str("id", s.cfg.ID).Str("name", s.cfg.Name).Logger()
-	// set health server
-	s.setHealthServer()
+	// // set health server
+	// s.setHealthServer()
 	// start service
 	if err := s.start(); err != nil {
 		return err
