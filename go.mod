@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/paulormart/assert v0.1.0
 	github.com/rs/zerolog v1.15.0
-	golang.org/x/net v0.0.0-20191021144547-ec77196f6094
+	golang.org/x/net v0.7.0
 	google.golang.org/grpc v1.24.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
